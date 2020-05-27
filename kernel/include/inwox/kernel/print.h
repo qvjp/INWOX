@@ -26,7 +26,7 @@
  * 声明函数-格式化输出至屏幕
  */
 
-#ifndef kERNEL_PRINT_H
+#ifndef KERNEL_PRINT_H
 #define KERNEL_PRINT_H
 
 namespace Print

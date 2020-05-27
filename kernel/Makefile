@@ -3,7 +3,8 @@ include $(TO_ROOT)/build-config/config.mk
 
 BUILD = $(BUILD_DIR)/$(ARCH)/kernel
 
-OBJ := kernel.o \
+OBJ := gdt.o \
+	kernel.o \
 	print.o
 OBJ += arch/i686/loader.o
 
@@ -21,7 +22,7 @@ $(BUILD)/%.o: src/%.cpp
 
 $(BUILD)/%.o: src/%.s
 	@mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) -c -o $@ $^
+	$(CC) $(ASFLAGS) $(CXXFLAGS) -c -o $@ $^
 
 clean:
 	rm -rf $(BUILD)

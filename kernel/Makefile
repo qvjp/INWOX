@@ -8,8 +8,13 @@ OBJ := gdt.o \
 	print.o
 OBJ += arch/i686/loader.o
 
-OBJ := $(addprefix $(BUILD)/, $(OBJ))
+CRTBEGIN_0 := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtbegin.o)
+CRTEND_0 := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtend.o)
 
+START_OBJ := $(BUILD)/arch/i686/crti.o $(CRTBEGIN_0)
+END_OBJ := $(CRTEND_0) $(BUILD)/arch/i686/crtn.o
+
+OBJ := $(START_OBJ) $(addprefix $(BUILD)/, $(OBJ)) $(END_OBJ)
 
 all: $(BUILD)/kernel
 

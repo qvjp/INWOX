@@ -56,11 +56,15 @@ extern "C"
 class AddressSpace
 {
     public:
+        inwox_vir_addr_t allocate(size_t pages);
+        void free(inwox_vir_addr_t virtualAddress, size_t pages);
         inwox_phy_addr_t getPhysicalAddress(inwox_vir_addr_t virtualAddress);
 
         inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, uint16_t flags);
         inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, uint16_t flags);
         inwox_vir_addr_t mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, uint16_t flags);
+        inwox_vir_addr_t mapRange(inwox_phy_addr_t* physicalAddress, uint16_t flags);
+        inwox_vir_addr_t mapRangeAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t* physicalAddress, uint16_t flags);
 
         void unMap(inwox_vir_addr_t virtualAddress);
         static void initialize();

@@ -27,6 +27,7 @@
  */
 
 #include <inwox/kernel/addressspace.h>
+#include <inwox/kernel/physicalmemory.h> /* pushPageFrame popPageFrame */   
 #include <inwox/kernel/print.h> /* Print::printf() */
 
 /**
@@ -74,6 +75,36 @@ void AddressSpace::initialize()
 }
 
 /**
+ * 分配指向pages_number个页大小的虚拟地址
+ */
+inwox_vir_addr_t AddressSpace::allocate(size_t pages_number)
+{
+    inwox_phy_addr_t physicalAddresses[pages_number + 1];
+    for (size_t i = 0; i < pages_number; i++)
+    {
+        physicalAddresses[i] = PhysicalMemory::popPageFrame();
+        if (!physicalAddresses[i])
+            return 0;
+    }
+    physicalAddresses[pages_number] = 0;
+    return mapRange(physicalAddresses, 0x3);
+}
+
+/**
+ * 将virtualAddress开始的pages_number大小（单位字节）的虚拟内存释放
+ */
+void AddressSpace::free(inwox_vir_addr_t virtualAddress, size_t pages_number)
+{
+    for (size_t i = 0; i < pages_number; i++)
+    {
+        inwox_phy_addr_t physicalAddress = getPhysicalAddress(virtualAddress);
+        unMap(virtualAddress);
+        PhysicalMemory::pushPageFrame(physicalAddress);
+        virtualAddress += 0x1000;
+    }
+}
+
+/**
  * 获取虚拟地址对应的物理地址
  */
 inwox_phy_addr_t AddressSpace::getPhysicalAddress(inwox_vir_addr_t virtualAddress)
@@ -112,6 +143,9 @@ inwox_vir_addr_t AddressSpace::map(inwox_phy_addr_t physicalAddress, uint16_t fl
     /* 在高一半（PDE 768-1023）找到没有映射的页，并映射 */
     for (size_t pdOffset = 0x300; pdOffset < 0x400; pdOffset++)
     {
+        uintptr_t* pageDirItem = (uintptr_t*)(RECURSIVE_MAPPING + 0x3FF000 + 4 * pdOffset);
+        if (!*pageDirItem)
+            continue;
         for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++)
         {
             uintptr_t* pageTableItem = (uintptr_t*)(RECURSIVE_MAPPING + 0x1000 * pdOffset + 4 * ptOffset);
@@ -142,14 +176,14 @@ inwox_vir_addr_t AddressSpace::mapAt(size_t pdOffset, size_t ptOffset, inwox_phy
     if (this == kernelSpace) {
         /* 页目录从0xFFFFF000（RECURSIVE_MAPPING+0x3FF000）开始 */
         uintptr_t* pageDirItem = (uintptr_t*)(RECURSIVE_MAPPING + 0x3FF000 + 4 * pdOffset);
-        if (*pageDirItem) {
-            uintptr_t* pageTableItem = (uintptr_t*)(RECURSIVE_MAPPING + 0x1000 * pdOffset + 4 * ptOffset);
-            *pageTableItem = physicalAddress | flags;
-        } else {
-            /* TODO: 分配新页目录项 */
-            Print::printf("Error: Page Table does not exist.\n");
-            return 0;
+        uintptr_t* pageTableItem = (uintptr_t*)(RECURSIVE_MAPPING + 0x1000 * pdOffset + 4 * ptOffset);
+        if (!*pageDirItem) {
+            inwox_phy_addr_t pageTablePhys = PhysicalMemory::popPageFrame();
+            uintptr_t* pageTableVirt = (uintptr_t*)mapAt(0x3FF, pdOffset, pageTablePhys, 0x3);
+            for (size_t i = 0; i < 1024; i++)
+                pageTableVirt[i] = 0;
         }
+        *pageTableItem = physicalAddress | flags;
     } else {
         /* 现在只有内核空看，稍后实现其他地址空间的操作 */
         return 0;
@@ -164,9 +198,92 @@ inwox_vir_addr_t AddressSpace::mapAt(size_t pdOffset, size_t ptOffset, inwox_phy
 }
 
 /**
+ * 将一串物理地址（不一定连续）映射到 连续 的虚拟地址
+ * 然后将这个虚拟地址首地址返回
+ */
+inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t* physicalAddresses, uint16_t flags)
+{
+    inwox_phy_addr_t* phys = physicalAddresses;
+    size_t pages_number = 0;
+    /* 找到一共有多少个物理页要处理 */
+    while (*phys++)
+        pages_number++;
+
+    /* 在高地址空间找到足够的连续页 */
+    for (size_t pdOffset = 0x300; pdOffset < 0x400; pdOffset++)
+    {
+        for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++)
+        {
+            size_t pd = pdOffset;
+            size_t pt = ptOffset;
+            size_t foundPages = 0;
+
+            while (foundPages <= pages_number)
+            {
+                uintptr_t* pageDirItem = (uintptr_t*)(RECURSIVE_MAPPING + 0x3FF000 + 4 * pd);
+                uintptr_t* pageTableItem = (uintptr_t*)(RECURSIVE_MAPPING + 0x1000 * pd + 4 * pt);
+
+                /* 若当前页目录项没有被使用，则直接有4M（1024页）可以使用 */
+                if (!*pageDirItem)
+                {
+                    foundPages += 1024;
+                    pd++;
+                    pt = 0;
+                    continue;
+                }
+                /* 若遇到页表项被使用，则前后不连续，break掉，重新找 */
+                if (*pageTableItem)
+                    break;
+                pt++;
+                foundPages++;
+                if (pt >= 1024)
+                {
+                    pd++;
+                    pt = 0;
+                }
+            }
+            if (foundPages >= pages_number)
+                return mapRangeAt(offset2address(pdOffset, ptOffset), physicalAddresses, flags);
+        }
+    }
+    return 0;
+}
+
+/**
+ * 将传入的物理地址和虚拟地址映射起来
+ * 判断物理地址结束标志是通过在物理地址最后设置一个结束标志0
+ */
+inwox_vir_addr_t AddressSpace::mapRangeAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t* physicalAddresses, uint16_t flags)
+{
+    inwox_vir_addr_t addr = virtualAddress;
+    while (*physicalAddresses)
+    {
+        if (!mapAt(addr, *physicalAddresses, flags))
+        {
+            return 0;
+        }
+        addr += 0x1000;
+        physicalAddresses++;
+    }
+    return virtualAddress;
+}
+/**
  * 取消虚拟地址到物理地址映射，通过将其映射到物理地址0，并将flags设为0.
  */
 void AddressSpace::unMap(inwox_vir_addr_t virtualAddress)
 {
     mapAt(virtualAddress, 0, 0);
+}
+
+/**
+ * 下边两个函数供libk调用
+ * 分配/释放大小为pages_number个页的连续内存
+ */
+extern "C" void* __mapPages(size_t pages_number)
+{
+    return (void*) kernelSpace->allocate(pages_number);
+}
+extern "C" void __unmapPages(void* addr, size_t pages_number)
+{
+    kernelSpace->free((inwox_vir_addr_t) addr, pages_number);
 }

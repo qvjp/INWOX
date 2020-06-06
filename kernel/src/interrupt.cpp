@@ -143,8 +143,10 @@ extern "C" void interrupt_handler(struct regs *r)
          * 定义一个空函数指针用来放具体的IRQ处理程序
          */
         void (*handler)(struct regs *r);
-
-        Print::printf("IRQ %d occurred!\n", r->int_no - 32);
+        if (r->int_no != 32)
+        {
+            Print::printf("IRQ %d occurred!\n", r->int_no - 32);
+        }
         handler = isr_routines[r->int_no];
         if (handler)
         {

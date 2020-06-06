@@ -3,11 +3,14 @@ include $(TO_ROOT)/build-config/config.mk
 
 BUILD = $(BUILD_DIR)/$(ARCH)/kernel
 
-OBJ := gdt.o \
+OBJ := \
+	addressspace.o \
+	gdt.o \
 	idt.o \
 	interrupt.o \
 	kernel.o \
 	pic.o \
+	physicalmemory.o \
 	print.o
 OBJ += arch/i686/interrupt.o \
 	arch/i686/loader.o

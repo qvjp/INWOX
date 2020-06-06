@@ -27,6 +27,12 @@
  */
 .extern kernel_main
 
+/* 使这几个地址在C中可用 */
+.extern bootstrapBegin
+.extern bootstrapEnd
+.extern kernelPhysicalBegin
+.extern kernelPhysicalEnd
+
 .global _start
 .type _start, @function
 
@@ -55,6 +61,8 @@
         .skip 4096
     kernelPageTable:
         .skip 4096
+    physicalMemroyStackPageTable:
+        .skip 4096
 
 /* 设置页，开启虚拟内存，跳到高地址内核 */
 .section bootstrap_text, "ax"
@@ -78,6 +86,12 @@
          */
         movl $(bootstrapPageTable + 0x3), pageDirectory
         movl $(kernelPageTable + 0x3), pageDirectory + 0xC00
+
+        /* 倒数第二个PDT指向虚拟内存的 4G-8M->4G-4M，这里用来存放物理内存管理的栈 */
+        movl $(physicalMemroyStackPageTable + 0x3), pageDirectory + 0xFF8
+
+        /* 页目录中最后一项指向自己，开启递归页目录，也就是将页目录映射到虚拟地址的0xFFC0 0000（4G-4M） */
+        movl $(pageDirectory + 0x3), pageDirectory + 0xFFC
 
         /* identity mapping bootstrap section */
         mov $numBootstrapPages, %ecx
@@ -202,10 +216,18 @@
 
         /*
          * 在高级别内核被调用前初始化好处理器状态是很有必要的，这里已经做了
-         * 最小化的初始化工作，但要注意的是，并没有完全初始化，例如GDT没有
-         * 被加载，分页没有开启等。
+         * 最小化的初始化工作
          */
 
+        /*
+         * 将multiboot和magic压入栈中，使C语言内核可以访问。
+         */
+        push %ebx /* multiboot */
+        push %eax /* magic */
+
+        /**
+         * 调用全局构造函数
+         */
         call _init
 
         /*

@@ -1,12 +1,17 @@
 TO_ROOT = .
 include $(TO_ROOT)/build-config/config.mk
 
-all: kernel iso
+all: kernel strip-debug iso
 
 kernel:
 	$(MAKE) -C kernel
 
 iso: $(ISO)
+
+# 为调试生成kernel.sym，并删除kernel.elf中的多余调试信息
+strip-debug:
+	objcopy --only-keep-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(BUILD_DIR)/kernel.sym
+	objcopy --strip-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 
 $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 	mkdir iso
@@ -25,6 +30,9 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 
 qemu-curses: $(ISO)
 	qemu-system-i386 -cdrom $^ -curses
+
+qemu-curses-dbg: $(ISO)
+	qemu-system-i386 -cdrom $^ -S -s -curses
 
 install-toolchain:
 	$(TO_ROOT)/build-config/install-toolchains.sh

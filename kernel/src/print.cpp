@@ -31,8 +31,8 @@
 #include <stdint.h> /* uint8_t uint32_t */
 #include <inwox/kernel/print.h>
 
-// 0xB8000是视频内存首地址
-static uint8_t *video = (uint8_t*) 0xB8000;
+// 0xC0000000是视频内存首地址
+static uint8_t *video = (uint8_t*) 0xC0000000;
 static uint8_t cursorPostX = 0;
 static uint8_t cursorPostY = 0;
 static uint8_t FontColor = 0x83; /* 灰底青字 */

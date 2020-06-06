@@ -21,50 +21,74 @@
  * SOFTWARE.
  */
 
+ /**
+  * kernel/linker.ld
+  * 加载内核到1MB位置，1M以下部分被BIOS和GRUB占用。
+  */
+
 /**
  * bootloader在系统镜像中找下边指出的入口
  */
-ENTRY(_start)
+ENTRY(_start);
 
-/**
- * 指定各个段在最终镜像中的位置
- */
+ /**
+  * 内核虚拟空间开始位置
+  */
+KERNEL_VIRTUAL = 0xC0000000;
+
 SECTIONS {
     /**
-     * 从1M处开始放各种段，因为1M以内是x86保留的，我们不能用
+     * 从1M处开始放我们的各种段，因为1M以内是x86保留的，我们不能用
      */
     . = 1M;
+    bootstrapBegin = .;
 
-    /**
-     * 首先放置multiboot header，因为bootloader只会在最开始的8KiB内找设置好的魔法数字
-     * 接着放 .text section
-     */
-    .text BLOCK(4K) : ALIGN(4K)
+    bootstrap_text : ALIGN(4K)
     {
+        /* 首先放置multiboot header，因为bootloader只会在最开始的8K内找我们设置好的魔法数字 */
         *(.multiboot)
-        *(.text)
+        *(bootstrap_text)
     }
 
-    /* 只读数据 */
-    .rodata BLOCK(4K) : ALIGN(4K)
+    bootstrap_bss : ALIGN(4K)
     {
-        *(.rodata)
+        *(bootstrap_bss)
     }
 
-    /* 可读可写数据（已被初始化）*/
-    .data BLOCK(4K) : ALIGN(4K)
+    bootstrapEnd = ALIGN(4K);
+    numBootstrapPages = (bootstrapEnd - bootstrapBegin) / 4K;
+
+    /* 内核0xC0100000开始 */
+    . += KERNEL_VIRTUAL;
+    kernelVirtualBegin = ALIGN(4K);
+    kernelPhysicalBegin = kernelVirtualBegin - KERNEL_VIRTUAL;
+
+    /* 4K（页大小）对齐，加载到1M处。*/
+    .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_VIRTUAL)
     {
-        *(.data)
+        *(.text)    /* 所有文件的所有text section */
     }
 
-    /* 可读可写数据（未被初始化）和栈 */
-    .bss BLOCK(4K) : ALIGN(4K)
+    /* 只读数据 4K对齐，加载到1M + .处。 */
+    .rodata ALIGN(4K) : AT(ADDR(.rodata) - KERNEL_VIRTUAL)
     {
-        *(COMMON)
-        *(.bss)
+        *(.rodata)  /* 所有文件的所有只读section */
     }
-    /*
-     * 编译器可能会生成其他的section，默认情况下，会将它们
-     * 放在具有相同名称的段中。 只需根据需要添加内容即可。
-     */
+
+    /* 可读可写数据（已被初始化）4K对齐，加载到1M + .处。*/
+    .data ALIGN(4K) : AT(ADDR(.data) - KERNEL_VIRTUAL)
+    {
+        *(.data)    /* 所有文件的所有data section */
+    }
+
+    /* 可读可写数据（未被初始化）和栈 4K对齐，加载到1M + .处。*/
+    .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_VIRTUAL)
+    {
+        *(COMMON)   /* 所有文件的所有COMMON section */
+        *(.bss)     /* 所有文件的所有bss section */
+    }
+
+    kernelVirtualEnd = ALIGN(4K);
+    kernelPhysicalEnd = kernelVirtualEnd - KERNEL_VIRTUAL;
+    numKernelPages = (kernelVirtualEnd - kernelVirtualBegin) / 4K;
 }

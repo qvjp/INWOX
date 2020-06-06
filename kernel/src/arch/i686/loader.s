@@ -28,6 +28,7 @@
 .extern kernel_main
 
 .global _start
+.type _start, @function
 
 /*
  * 声明multiboot header所用到的内容
@@ -41,6 +42,89 @@
 .set MB_MAGIC,      0x1BADB002              /* 这个魔法常量（magic number）让grub可以找到*/ 
 .set MB_FLAGS,      MB_ALIGN | MB_MEMINFO   /* 这是Multiboot的“flag” */
 .set MB_CHECKSUM,   - (MB_MAGIC + MB_FLAGS) /* 校验上边的常量，提供的Multiboot */
+
+/**
+ * 下边两个section是启用分页前，以地址0x100000起始运行的代码
+ */
+/* 存放页目录和页表 */
+.section bootstrap_bss, "aw", @nobits
+    .align 4096
+    pageDirectory:
+        .skip 4096
+    bootstrapPageTable:
+        .skip 4096
+    kernelPageTable:
+        .skip 4096
+
+/* 设置页，开启虚拟内存，跳到高地址内核 */
+.section bootstrap_text, "ax"
+    _start:
+        /* 添加页表到页目录 
+         * 页目录项的结构如下：
+         *   +-----------------------------------------+-----+-+-+-+-+-+-+-+-+-+
+         *   |     Page table 4K aligned address       |Avail|G|S|0|A|D|W|U|R|P|
+         *   +-----------------------------------------+-----+-+-+-+-+-+-+-+-+-+
+         *   31 
+         * 页表项的结构如下：
+         *   +-----------------------------------------+-----+-+-+-+-+-+-+-+-+-+
+         *   |          Physical Page Address          |Avail|G|0|D|A|C|W|U|R|P|
+         *   +-----------------------------------------+-----+-+-+-+-+-+-+-+-+-+
+         *   31 
+         * 具体介绍请见博客，但页表和页目录项的低2位一样，都是Present位和Read/Wirte位，所以
+         * 下边代码的加0x3就是设置这两位使其可读可可用。
+         * bootstrapPageTable是内核在开启分页时必须使用的直接映射（identity mapping）所用
+         * 到的页表。
+         * kernelPageTable是跳到高地址空间执行后，所使用的页表。
+         */
+        movl $(bootstrapPageTable + 0x3), pageDirectory
+        movl $(kernelPageTable + 0x3), pageDirectory + 0xC00
+
+        /* identity mapping bootstrap section */
+        mov $numBootstrapPages, %ecx
+        /* 最低的1M空间被BISO和GRUB使用，为了使映射更加明了，直接映射没有映射最开始1M */
+        mov $(bootstrapPageTable + 1024), %edi
+        mov $(bootstrapBegin + 0x3), %edx
+
+    1:
+        mov %edx, (%edi)
+        /* bootstrapPageTable中每项大小为4 bytes */
+        add $4, %edi
+        /* 页大小为4096 bytes */
+        add $4096, %edx
+        /* 循环直到最后一个页表项 */
+        loop 1b     /** loop指令执行分两步：
+                     *  1. %ecx = %ecx - $1
+                     *  2. 如果%ecx == 0，向下执行，!= 0 跳转到标号执行
+                     **/
+
+        /* 映射高地址内核 */
+        mov $numKernelPages, %ecx
+        add $(kernelPageTable - bootstrapPageTable), %edi
+        mov $(kernelPhysicalBegin + 0x3), %edx
+
+    1:
+        mov %edx, (%edi)
+        /* kernelPageTable中每项大小为4 bytes */
+        add $4, %edi
+        /* 页大小为4096 bytes */
+        add $4096, %edx
+        /* 循环直到最后一个页表项 */
+        loop 1b
+
+        /* 映射视频内存到0xC000 0000 */
+        movl $0xB8003, kernelPageTable
+
+        /* 开启分页 */
+        mov $pageDirectory, %ecx /* 保存顶级页表（页目录）地址 */
+        mov %ecx, %cr3           /* 告诉CPU页目录地址 */
+        mov %cr0, %ecx           /* 保存cr0原来的值到%ecx */
+        or $0x80000001, %ecx     /* 开启分页和保护 */
+        mov %ecx, %cr0           /* 更新cr0 ，分页开启*/
+
+        /* 跳到高地址空间执行 */
+        jmp _start_high
+
+.size _start, . - _start
 
 /*
  * 这个section包含标记为内核的Multiboot header
@@ -72,7 +156,7 @@
  * 这里没有返回值的原因是grub在加载好内核后就不运行了。
  */
 .section .text
-    _start:
+    _start_high:
         /*
          * grub把内核加载到32位保护模式运行，中断被关闭，分页被关闭，处理器的
          * 状态由Multiboot标准定义。内核有对机器的完全控制权。内核只能使用硬件
@@ -148,4 +232,4 @@
 /*
  * 用_start保存当前位置减去它开始的位置的大小，后边用的着。
  */
-.size _start, . - _start
+.size _start_high, . - _start_high

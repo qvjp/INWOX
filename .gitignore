@@ -57,3 +57,5 @@ Documents/*
 # INWOX
 build/*
 sysroot/*
+.vscode/*
+

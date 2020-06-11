@@ -21,28 +21,32 @@
  * SOFTWARE.
  */
 
-/**
- * lib/include/stdlib.h
- * 标准库定义
+/* libc/src/cxx/new.cpp
+ * C++ operators new and delete.
  */
-#ifndef STRING_H__
-#define STRING_H__
 
-#include <stddef.h> /* size_t NULL */
+#include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
-
-int memcmp(const void*, const void*, size_t);
-void* memcpy(void* __restrict, const void* __restrict, size_t);
-void* memmove(void* __restrict, const void* __restrict, size_t);
-void* memset(void*, int, size_t);
-
-size_t strlen(const char*);
-#ifdef __cplusplus
+void* operator new(size_t size) {
+    return malloc(size);
 }
-#endif /* __cplusplus */
 
-#endif /* STRING_H__ */
+void* operator new[](size_t size) {
+    return malloc(size);
+}
+
+void operator delete(void* addr) {
+    free(addr);
+}
+
+void operator delete[](void* addr) {
+    free(addr);
+}
+
+void operator delete(void* addr, size_t /*size*/) {
+    free(addr);
+}
+
+void operator delete[](void* addr, size_t /*size*/) {
+    free(addr);
+}

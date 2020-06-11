@@ -29,6 +29,7 @@
 #include <inwox/kernel/addressspace.h>
 #include <inwox/kernel/physicalmemory.h> /* pushPageFrame popPageFrame */           
 #include <inwox/kernel/print.h>          /* Print::printf() */
+#include <assert.h>
 #include <stdlib.h>                      /* malloc() */
 #include <string.h>                      /* memset() */
 
@@ -53,6 +54,8 @@ AddressSpace::AddressSpace()
  */
 static inline inwox_vir_addr_t offset2address(size_t pdOffset, size_t ptOffset)
 {
+    assert(pdOffset <= 0x3FF);
+    assert(ptOffset <= 0x3FF);
     return (pdOffset << 22) | (ptOffset << 12);
 }
 
@@ -61,6 +64,7 @@ static inline inwox_vir_addr_t offset2address(size_t pdOffset, size_t ptOffset)
  */
 static inline void address2offset(inwox_vir_addr_t virtualAddress, size_t& pdOffset, size_t& ptOffset)
 {
+    assert(!(virtualAddress & 0xFFF));
     /* 高10位是页目录偏移 */
     pdOffset = virtualAddress >> 22;
     /* 中间10位是页表偏移 */
@@ -288,6 +292,7 @@ inwox_vir_addr_t AddressSpace::mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_
 
 inwox_vir_addr_t AddressSpace::mapAt(size_t pdOffset, size_t ptOffset, inwox_phy_addr_t physicalAddress, uint16_t flags)
 {
+    assert(!(flags & ~0xFFF));
     uintptr_t* pageDirectory;
     uintptr_t* pageTable = nullptr;
 

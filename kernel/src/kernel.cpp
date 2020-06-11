@@ -26,6 +26,7 @@
  * 内核main函数
  */
 
+#include <assert.h>
 #include <stddef.h>                     /* size_t */
 #include <stdint.h>                     /* uint8_t */
 #include <inwox/kernel/addressspace.h>  /**/
@@ -50,6 +51,7 @@ static void processB()
     static int b = 0;
     while (1)
     {
+        assert(b == 1);
         Print::printf("B:%x\n", &b);
     }
 }

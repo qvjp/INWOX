@@ -25,6 +25,7 @@
  * libc/src/stdlib/malloc.c
  * 实现libc中malloc函数
  */
+#include <assert.h>
 #include "malloc.h"
 
 /**
@@ -49,6 +50,7 @@ Mem_Ctrl_Blk* firstBigBlock = emptyBigBlock;
  */
 Mem_Ctrl_Blk* __allocateBigBlock(Mem_Ctrl_Blk* lastBigBlock, size_t size)
 {
+    assert(lastBigBlock->magic == MAGIC_BIG_MCB);
     /* 每次申请都会多出两个头尾MCB，所以要多申请两个的空间 */
     size += 2 * sizeof(Mem_Ctrl_Blk);
     /* 因为是按页申请，所以页对齐 */

@@ -9,9 +9,12 @@ BUILD = $(BUILD_DIR)/libc
 ARFLAGS := -rcs
 CFLAGS ?= -O0 -g
 CFLAGS += -std=gnu11 -ffreestanding -Wall -Wextra
+CXXFLAGS ?= -O2 -g
+CXXFLAGS += -std=gnu++14 -ffreestanding -Wall -Wextra
 CPPFLAGS += -I include
 
 LIBK_OBJ := \
+	cxx/new \
 	stdlib/free \
 	stdlib/malloc \
 	string/memcmp \
@@ -44,6 +47,10 @@ $(BUILD)/libk.a: $(LIBK_OBJ)
 $(BUILD)/%.libk.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $^
+
+$(BUILD)/%.libk.o: src/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $^
 
 clean:
 	rm -rf $(BUILD)

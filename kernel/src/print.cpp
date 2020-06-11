@@ -115,7 +115,6 @@ void Print::warnTerminal()
     for (size_t i = 0; i < 25; i++)
     for (size_t j = 0; j < 80; j++)
     {
-        video[2 * (80 * i + j)] = ' ';
         video[2 * (80 * i + j) + 1] = FontColor;
     }
 }

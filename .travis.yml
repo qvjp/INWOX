@@ -1,0 +1,28 @@
+language: cpp
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - bison
+    - flex
+    - libgmp-dev
+    - libmpfr-dev
+    - libmpc-dev
+    - texinfo
+    - grub-pc-bin
+    - xorriso
+
+cache:
+  directories:
+  - $HOME/inwox-toolchain
+
+before_install:
+- unset CC CXX
+- export PATH="$HOME/inwox-toolchain/bin:$PATH"
+install: make install-toolchain
+script: make
+
+notifications:
+  email:
+    - qvjunping@gmail.com

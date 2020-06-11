@@ -33,6 +33,7 @@
 #include <inwox/kernel/interrupt.h> /* Interrupt::initPic() Interrupt::enable() */
 #include <inwox/kernel/physicalmemory.h>
 #include <inwox/kernel/print.h> /* printf() */
+#include <stdlib.h> /* malloc() free() */
 
 
 extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
@@ -54,5 +55,19 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     kernelSpace->unMap((inwox_vir_addr_t)multiboot);
     Interrupt::initPic();
     Interrupt::enable();
+    uint32_t *a = (uint32_t*)malloc(sizeof(uint32_t)*10000);
+    uint32_t *b = (uint32_t*)malloc(sizeof(uint8_t));
+    uint32_t *c = (uint32_t*)malloc(sizeof(uint32_t));
+    uint32_t *d = (uint32_t*)malloc(sizeof(uint32_t));
+    Print::printf("a: %x\n", a);
+    Print::printf("b: %x\n", b);
+    Print::printf("c: %x\n", c);
+    Print::printf("d: %x\n", d);
+    free(a);
+    free(b);
+    free(c);
+    free(d);
+    b = NULL;
+    Print::printf("b: %x\n", b);
     while(1);
 }

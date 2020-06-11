@@ -1,7 +1,16 @@
 TO_ROOT = .
 include $(TO_ROOT)/build-config/config.mk
 
-all: kernel strip-debug iso
+all: install-headers libc install-libc kernel strip-debug iso
+
+install-headers:
+	$(MAKE) -C libc install-headers
+
+libc:
+	$(MAKE) -C libc
+
+install-libc:
+	$(MAKE) -C libc install
 
 kernel:
 	$(MAKE) -C kernel
@@ -32,10 +41,10 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 # Windows Terminal: Alt + 2 -> q
 # macOS Terminal: esc + 2 -> q
 qemu-curses: $(ISO)
-	qemu-system-i386 -cdrom $^ -curses
+	qemu-system-i386 -cdrom $^ -curses -m 4M
 
 qemu-curses-dbg: $(ISO)
-	qemu-system-i386 -cdrom $^ -S -s -curses
+	qemu-system-i386 -cdrom $^ -S -s -curses -m 4M
 
 install-toolchain:
 	$(TO_ROOT)/build-config/install-toolchains.sh
@@ -43,5 +52,6 @@ install-toolchain:
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf $(ISO)
+	rm -rf ./sysroot
 
-.PHONY: all kernel iso qemu clean
+.PHONY: all kernel iso qemu clean libc install-headers install-libc strip-debug distclean

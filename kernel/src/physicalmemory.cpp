@@ -60,9 +60,10 @@ void PhysicalMemory::initialize(multiboot_info* multiboot)
 {
     /* mem_* 是否有效？ */
     if (CHECK_MULTIBOOT_FLAG (multiboot->flags, 0))
-        Print::printf("mem_lower = %uKB, mem_upper = %uKB, Available Memory = %uKB\n",
+        Print::printf("mem_lower = %uKB, mem_upper = %uKB, Available Memory = %uKB(%uM)\n",
         (uint32_t)multiboot->mem_lower, (uint32_t)multiboot->mem_upper, 
-        (uint32_t)(multiboot->mem_lower+multiboot->mem_upper));
+        (uint32_t)(multiboot->mem_lower+multiboot->mem_upper),
+        (uint32_t)(multiboot->mem_lower+multiboot->mem_upper)>>10);
     /* mmap_* 是否有效 */
     if(!CHECK_MULTIBOOT_FLAG(multiboot->flags,6))
         return;

@@ -22,20 +22,27 @@
  */
 
 /**
- * kernel/include/inwox/kernel/print.h
- * 声明函数-格式化输出至屏幕
+ * kernel/include/inwox/kernel/port.h
+ * 向I/O读写数据
  */
+#ifndef KERNEL_PORT_H__
+#define KERNEL_PORT_H__
 
-#ifndef KERNEL_PRINT_H
-#define KERNEL_PRINT_H
+#include <stdint.h> /* uint16_t uint8_t */
 
-namespace Print
+namespace Hardwarecommunication
 {
-    /* 格式化输出 */
-    void printf(const char *format, ...);
-    /* 调用此函数将改变屏幕显示颜色，用来提醒或警告，若要恢复之前颜色，需要再次调用initTerminal() */
-    void warnTerminal();
-    /* 初始化终端 */
-    void initTerminal();
+    /**
+     * x86处理器有两套独立的地址空间---内存地址空间和I/O地址空间
+     * I/O地址空间的读写用到汇编OUT/IN
+     * 发送8/16/32位的值到I/O地址，分别用outb/outw/outl
+     */
+    static inline void outportb(uint16_t port, uint8_t value)
+    {
+        __asm__ __volatile__ ("outb %0, %1"
+                               :
+                               : "a"(value), "Nd"(port));
+    }
 }
-#endif
+
+#endif /* KERNEL_PORT_H__ */ 

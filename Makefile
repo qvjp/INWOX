@@ -23,7 +23,7 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 	grub-mkrescue --output=$(ISO) iso
 	rm -rf iso
 
-qemu: $(ISO)
+qemu-curses: $(ISO)
 	qemu-system-i386 -cdrom $^ -curses
 
 install-toolchain:

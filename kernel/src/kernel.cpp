@@ -28,17 +28,16 @@
 
 #include <stddef.h> /* size_t */
 #include <stdint.h> /* uint8_t */
+#include <inwox/kernel/interrupt.h> /* Interrupt::initPic() Interrupt::enable() */
 #include <inwox/kernel/print.h> /* printf() */
 
 extern "C" void kernel_main()
 {
     Print::initTerminal();
     Print::printf("HELLO WORLD!\n");
-    Print::printf("I'm INLOW!\n");
-    Print::printf("I'm %d years old!\n", 2);
-    Print::printf("unsigned int max %u\n", 4294967295);
-    Print::printf("unsigned int min %u\n", 0);
-    Print::printf("signed int max %d\n", 2147483647);
-    Print::printf("signed int min %d\n", -2147483648);
-    Print::printf("hex number 0x%x\n", 4294967295);
+    Print::printf("I'm INWOX!\n");
+    Interrupt::initPic();
+    Interrupt::enable();
+    // Print::printf("%d\n", 1/0);
+    while(1);
 }

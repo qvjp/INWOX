@@ -22,20 +22,18 @@
  */
 
 /**
- * kernel/include/inwox/kernel/print.h
- * 声明函数-格式化输出至屏幕
+ * kernel/include/inwox/kernel/pic.h
+ * 初始化PIC
  */
+#ifndef KERNEL_PIC_H__
+#define KERNEL_PIC_H__
 
-#ifndef KERNEL_PRINT_H
-#define KERNEL_PRINT_H
+#define PIC1_COMMAND 0x20
+#define PIC1_DATA 0x21
+#define PIC2_COMMAND 0xA0
+#define PIC2_DATA 0xA1
+#define PIC_EOI 0x20 // End of Interrupt 
 
-namespace Print
-{
-    /* 格式化输出 */
-    void printf(const char *format, ...);
-    /* 调用此函数将改变屏幕显示颜色，用来提醒或警告，若要恢复之前颜色，需要再次调用initTerminal() */
-    void warnTerminal();
-    /* 初始化终端 */
-    void initTerminal();
-}
-#endif
+void pic_remap(void);
+
+#endif /* end KERNEL_PIC_H__ */ 

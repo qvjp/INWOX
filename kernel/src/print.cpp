@@ -35,6 +35,7 @@
 static uint8_t *video = (uint8_t*) 0xB8000;
 static uint8_t cursorPostX = 0;
 static uint8_t cursorPostY = 0;
+static uint8_t FontColor = 0x83; /* 灰底青字 */
 
 static void printChar(char c);
 static void printString(const char* s);
@@ -106,16 +107,31 @@ void Print::printf(const char* format, ...)
 }
 
 /**
+ * 将屏幕输出设为警告色
+ */
+void Print::warnTerminal()
+{
+    FontColor = 0xCF; /* 红底白字 */
+    for (size_t i = 0; i < 25; i++)
+    for (size_t j = 0; j < 80; j++)
+    {
+        video[2 * (80 * i + j)] = ' ';
+        video[2 * (80 * i + j) + 1] = FontColor;
+    }
+}
+
+/**
  * 初始化终端
  * 将屏幕背景设置为灰色
  */
 void Print::initTerminal()
 {
+    FontColor = 0x83; /* 灰底青字 */
     for (size_t i = 0; i < 25; i++)
         for (size_t j = 0; j < 80; j++)
         {
             video[2 * (80 * i + j)] = ' ';
-            video[2 * (80 * i + j) + 1] = 0x88;
+            video[2 * (80 * i + j) + 1] = FontColor;
         }
 }
 
@@ -166,7 +182,7 @@ static void printChar(char c)
             /* 最后一行全部置成灰色 */
             for (size_t i = 2 * 24 * 80; i < 2 * 25 * 80; i++)
             {
-                video[i] = 0x88;
+                video[i] = (FontColor & 0xF0) | (FontColor >> 4);
             }
             cursorPostY = 24;
         }
@@ -174,7 +190,7 @@ static void printChar(char c)
                 return;
     }
     video[cursorPostY * 2 * 80 + 2 * cursorPostX] = c;
-    video[cursorPostY * 2 * 80 + 2 * cursorPostX + 1] = 0x83;
+    video[cursorPostY * 2 * 80 + 2 * cursorPostX + 1] = FontColor;
 
     cursorPostX++;
 }

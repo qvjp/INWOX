@@ -55,26 +55,15 @@ isr_\no:
  */
 
 isr_commonHandler:
-    pusha               /* push edi, esi, ebp, esp, ebx, edx, ecx, eax */
-    push %ds
-    push %es
-    push %fs
-    push %gs
+    pusha           /* push eax, ecx, edx, ebx, esp, ebp, esi, edi. */
 
-    mov $0x10, %ax      /* 0x10是数据段的offset */
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %gs
-    mov %esp, %eax
-    push %eax
-    call interrupt_handler
+    /* 删除段寄存器是因为段寄存器没有改变 */
+
+    push %esp       /* interrupt_handler的参数，指向刚pusha后的栈d顶 */
+    call interrupt_handler  /* 调用C语言编写的中断处理程序 */
 
     /* 恢复现场的顺序和保存现场的顺序正好相反 */
-    pop %eax
-    pop %gs
-    pop %fs
-    pop %es
-    pop %ds
+    mov %eax, %esp  /* eax是interrupt_handler的返回值，也就是newContext */
     popa            /* pop edi, esi, ebp, esp, ebx, edx, ecx, eax */
 
     add $8, %esp    /* 从堆栈中移除错误码和ISR号 */

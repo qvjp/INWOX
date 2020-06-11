@@ -41,10 +41,10 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 # Windows Terminal: Alt + 2 -> q
 # macOS Terminal: esc + 2 -> q
 qemu-curses: $(ISO)
-	qemu-system-i386 -cdrom $^ -curses -m 4M
+	qemu-system-i386 -cdrom $^ -curses -m 8M
 
 qemu-curses-dbg: $(ISO)
-	qemu-system-i386 -cdrom $^ -S -s -curses -m 4M
+	qemu-system-i386 -cdrom $^ -S -s -curses -m 8M
 
 install-toolchain:
 	$(TO_ROOT)/build-config/install-toolchains.sh

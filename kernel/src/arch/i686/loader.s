@@ -32,6 +32,7 @@
 .extern bootstrapEnd
 .extern kernelPhysicalBegin
 .extern kernelPhysicalEnd
+.global kernelPageDirectory
 
 .global _start
 .type _start, @function
@@ -55,7 +56,7 @@
 /* 存放页目录和页表 */
 .section bootstrap_bss, "aw", @nobits
     .align 4096
-    pageDirectory:
+    kernelPageDirectory:
         .skip 4096
     bootstrapPageTable:
         .skip 4096
@@ -84,14 +85,14 @@
          * 到的页表。
          * kernelPageTable是跳到高地址空间执行后，所使用的页表。
          */
-        movl $(bootstrapPageTable + 0x3), pageDirectory
-        movl $(kernelPageTable + 0x3), pageDirectory + 0xC00
+        movl $(bootstrapPageTable + 0x3), kernelPageDirectory
+        movl $(kernelPageTable + 0x3), kernelPageDirectory + 0xC00
 
         /* 倒数第二个PDT指向虚拟内存的 4G-8M->4G-4M，这里用来存放物理内存管理的栈 */
-        movl $(physicalMemroyStackPageTable + 0x3), pageDirectory + 0xFF8
+        movl $(physicalMemroyStackPageTable + 0x3), kernelPageDirectory + 0xFF8
 
         /* 页目录中最后一项指向自己，开启递归页目录，也就是将页目录映射到虚拟地址的0xFFC0 0000（4G-4M） */
-        movl $(pageDirectory + 0x3), pageDirectory + 0xFFC
+        movl $(kernelPageDirectory + 0x3), kernelPageDirectory + 0xFFC
 
         /* identity mapping bootstrap section */
         mov $numBootstrapPages, %ecx
@@ -129,11 +130,11 @@
         movl $0xB8003, kernelPageTable
 
         /* 开启分页 */
-        mov $pageDirectory, %ecx /* 保存顶级页表（页目录）地址 */
-        mov %ecx, %cr3           /* 告诉CPU页目录地址 */
-        mov %cr0, %ecx           /* 保存cr0原来的值到%ecx */
-        or $0x80000001, %ecx     /* 开启分页和保护 */
-        mov %ecx, %cr0           /* 更新cr0 ，分页开启*/
+        mov $kernelPageDirectory, %ecx  /* 保存顶级页表（页目录）地址 */
+        mov %ecx, %cr3                  /* 告诉CPU页目录地址 */
+        mov %cr0, %ecx                  /* 保存cr0原来的值到%ecx */
+        or $0x80000001, %ecx            /* 开启分页和保护 */
+        mov %ecx, %cr0                  /* 更新cr0 ，分页开启*/
 
         /* 跳到高地址空间执行 */
         jmp _start_high

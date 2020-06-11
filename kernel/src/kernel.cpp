@@ -26,15 +26,33 @@
  * 内核main函数
  */
 
-#include <stddef.h> /* size_t */
-#include <stdint.h> /* uint8_t */
-#include <inwox/kernel/addressspace.h> /**/
-#include <inwox/kernel/inwox.h> /* MULTIBOOT_BOOTLOADER_MAGIC */
-#include <inwox/kernel/interrupt.h> /* Interrupt::initPic() Interrupt::enable() */
+#include <stddef.h>                     /* size_t */
+#include <stdint.h>                     /* uint8_t */
+#include <inwox/kernel/addressspace.h>  /**/
+#include <inwox/kernel/inwox.h>         /* MULTIBOOT_BOOTLOADER_MAGIC */
+#include <inwox/kernel/interrupt.h>     /* Interrupt::initPic() Interrupt::enable() */
 #include <inwox/kernel/physicalmemory.h>
-#include <inwox/kernel/print.h> /* printf() */
-#include <stdlib.h> /* malloc() free() */
+#include <inwox/kernel/print.h>         /* printf() */
+#include <inwox/kernel/process.h>
+#include <stdlib.h>                     /* malloc() free() */
 
+static void processA()
+{
+    static int a = 0;
+    while (1)
+    {
+        Print::printf("A:%x\n", &a);
+    }
+}
+
+static void processB()
+{
+    static int b = 0;
+    while (1)
+    {
+        Print::printf("B:%x\n", &b);
+    }
+}
 
 extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
 {
@@ -47,27 +65,29 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
 
     Print::initTerminal();
     Print::printf("HELLO WORLD!\n");
+
     AddressSpace::initialize();
-    Print::printf("AddressSpace Inited\n");
+    Print::printf("AddressSpace Initialized\n");
+
     multiboot_info* multiboot = (multiboot_info*)kernelSpace->map(multibootAddress, 0x3);
     PhysicalMemory::initialize(multiboot);
-
     kernelSpace->unMap((inwox_vir_addr_t)multiboot);
+    Print::printf("Physical Memory Initialized\n");
+
+
     Interrupt::initPic();
     Interrupt::enable();
-    uint32_t *a = (uint32_t*)malloc(sizeof(uint32_t)*10000);
-    uint32_t *b = (uint32_t*)malloc(sizeof(uint8_t));
-    uint32_t *c = (uint32_t*)malloc(sizeof(uint32_t));
-    uint32_t *d = (uint32_t*)malloc(sizeof(uint32_t));
-    Print::printf("a: %x\n", a);
-    Print::printf("b: %x\n", b);
-    Print::printf("c: %x\n", c);
-    Print::printf("d: %x\n", d);
-    free(a);
-    free(b);
-    free(c);
-    free(d);
-    b = NULL;
-    Print::printf("b: %x\n", b);
-    while(1);
+    Print::printf("Interrrupt Initialized\n");
+
+    Process::initialize();
+    Print::printf("Processes Initialized\n");
+
+    Process::startProcess((void*) processA);
+    Process::startProcess((void*) processB);
+
+    while(1)
+    {
+        /* 暂停CPU，当中断到来再开始执行 */
+        __asm__ __volatile__ ("hlt");
+    }
 }

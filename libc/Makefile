@@ -13,7 +13,12 @@ CPPFLAGS += -I include
 
 LIBK_OBJ := \
 	stdlib/free \
-	stdlib/malloc
+	stdlib/malloc \
+	string/memcmp \
+	string/memcpy \
+	string/memmove \
+	string/memset \
+	string/strlen
 
 LIBK_OBJ := $(addprefix $(BUILD)/, $(addsuffix .libk.o, $(LIBK_OBJ)))
 

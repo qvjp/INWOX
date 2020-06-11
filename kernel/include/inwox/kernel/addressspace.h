@@ -48,6 +48,7 @@ extern "C"
     void bootstrapEnd();
     void kernelPhysicalBegin();
     void kernelPhysicalEnd();
+    void kernelPageDirectory();
 }
 
 /**
@@ -56,9 +57,13 @@ extern "C"
 class AddressSpace
 {
     public:
+        void activate();
         inwox_vir_addr_t allocate(size_t pages);
+        AddressSpace* fork();
         void free(inwox_vir_addr_t virtualAddress, size_t pages);
         inwox_phy_addr_t getPhysicalAddress(inwox_vir_addr_t virtualAddress);
+        bool isFree(inwox_vir_addr_t virtualAddress);
+        bool isFree(size_t pdOffset, size_t ptOffset);
 
         inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, uint16_t flags);
         inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, uint16_t flags);
@@ -68,6 +73,15 @@ class AddressSpace
 
         void unMap(inwox_vir_addr_t virtualAddress);
         static void initialize();
+    private:
+        /**
+         * 每个进程对应一个地址空间，每个地址空间都有自己的页表，使得某逻辑地址对应于某个物理地址。
+         * 正因为每个进程都有自己的页表，才使相同的逻辑地址映射到不同的物理内存。每次创建新进程（地址空间）
+         * 都会将fork父进程的页表，然后更新%cr3寄存器
+         */
+        inwox_phy_addr_t pageDir;
+        AddressSpace* next;
+
     private:
         AddressSpace();
         static AddressSpace _kernelSpace;

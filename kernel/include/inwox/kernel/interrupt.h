@@ -137,7 +137,8 @@ extern "C"{
  */
 struct regs
 {
-    uint32_t gs, fs, es, ds;                          /* 最后push的几个寄存器 */
+    /* uint32_t gs, fs, es, ds; */                          /* 最后push的几个寄存器 */
+    /* 为不混淆视听，遂将几个段寄存器删掉，用时再说 */
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;  /* "pasha" 将数据压如这几个寄存器 */
     uint32_t int_no, err_code;                        /* 我们"push $\no"就是将错误吗push到int_no中 */
     uint32_t eip, cs, eflags, useresp, ss;            /* CPU自动压入 */

@@ -28,6 +28,9 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 	grub-mkrescue --output=$(ISO) iso
 	rm -rf iso
 
+# How To Exit
+# Windows Terminal: Alt + 2 -> q
+# macOS Terminal: esc + 2 -> q
 qemu-curses: $(ISO)
 	qemu-system-i386 -cdrom $^ -curses
 

@@ -1,5 +1,6 @@
+os: linux
+dist: xenial
 language: cpp
-sudo: false
 
 addons:
   apt:

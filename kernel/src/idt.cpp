@@ -59,6 +59,7 @@ void idt_set_gate(uint8_t num, uint32_t offset, uint16_t selector, uint8_t attr)
  */
 struct idt_desc idt_descriptor = 
 {
+    /*和GDTR一样，也是表长度减去1*/
     sizeof(idt) - 1,
     idt
 };

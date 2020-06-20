@@ -86,6 +86,7 @@
          * kernelPageTable是跳到高地址空间执行后，所使用的页表。
          */
         movl $(bootstrapPageTable + 0x3), kernelPageDirectory
+        /* 将内核映射到0xC00即3GB地址*/
         movl $(kernelPageTable + 0x3), kernelPageDirectory + 0xC00
 
         /* 倒数第二个PDT指向虚拟内存的 4G-8M->4G-4M，这里用来存放物理内存管理的栈 */
@@ -99,7 +100,6 @@
         /* 最低的1M空间被BISO和GRUB使用，为了使映射更加明了，直接映射没有映射最开始1M */
         mov $(bootstrapPageTable + 1024), %edi
         mov $(bootstrapBegin + 0x3), %edx
-
     1:
         mov %edx, (%edi)
         /* bootstrapPageTable中每项大小为4 bytes */
@@ -116,7 +116,6 @@
         mov $numKernelPages, %ecx
         add $(kernelPageTable - bootstrapPageTable), %edi
         mov $(kernelPhysicalBegin + 0x3), %edx
-
     1:
         mov %edx, (%edi)
         /* kernelPageTable中每项大小为4 bytes */

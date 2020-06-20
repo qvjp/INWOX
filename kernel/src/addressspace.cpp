@@ -281,7 +281,7 @@ inwox_vir_addr_t AddressSpace::map(inwox_phy_addr_t physicalAddress, uint16_t fl
 }
 
 /**
- * 下边两个函数是将虚拟地址映射和物理地址映射起来
+ * 下边两个函数是将虚拟地址和物理地址映射起来
  * 分别通过具体的虚拟地址和通过PDE、PTE
  * flags和map函数一样，都是0x3是可读可写，0x1是只读，0x0不可用
  */

@@ -101,7 +101,7 @@ struct gdt_entry gdt[] = {
               GDT_GRANULARITY_4K | GDT_PROTECTED_MODE),
 
     /* Task Status Segment(TSS）*/
-    GDT_ENTRY(0, sizeof(tss) - 1, GDT_PRESENT | GDT_EXECUTABLE | GDT_ACCESSED, 0),
+    GDT_ENTRY(/* &tss */0, sizeof(tss) - 1, GDT_PRESENT | GDT_EXECUTABLE | GDT_ACCESSED, 0),
 };
 
 /**
@@ -109,6 +109,10 @@ struct gdt_entry gdt[] = {
  */
 struct gdt_desc gdt_descriptor = 
 {
+    /**
+     * 注意：下边的第一个字段是GDTR的limit字段，此字段是GDT表长度减去1，
+     * https://en.wikibooks.org/wiki/X86_Assembly/Global_Descriptor_Table
+     */
     sizeof(gdt) - 1,
     gdt
 };

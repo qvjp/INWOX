@@ -73,6 +73,7 @@ void Syscall::pad()
 void __attribute__((__noreturn__)) Syscall::exit(int status)
 {
     Process::current->exit(status);
+    /*退出后，调用int $49进行进程调度*/
     __asm__ __volatile__ ("int $49");
     __builtin_unreachable();
 }

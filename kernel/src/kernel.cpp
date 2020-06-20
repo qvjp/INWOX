@@ -36,24 +36,20 @@
 #include <inwox/kernel/print.h>         /* printf() */
 #include <inwox/kernel/process.h>
 #include <stdlib.h>                     /* malloc() free() */
+#include <string.h>
 
-static void processA()
-{
-    static int a = 0;
-    while (1)
-    {
-        Print::printf("A:%x\n", &a);
-    }
+static void processA() {
+    while (true);
 }
 
-static void processB()
-{
-    static int b = 0;
-    while (1)
-    {
-        assert(b == 1);
-        Print::printf("B:%x\n", &b);
-    }
+static Process* startProcesses(void* function) {
+    AddressSpace* addressSpace = kernelSpace->fork();
+    inwox_phy_addr_t phys = PhysicalMemory::popPageFrame();
+    void* processCode = (void*) addressSpace->map(phys, PAGE_PRESENT | PAGE_USER);
+    inwox_vir_addr_t processMapped = kernelSpace->map(phys, PAGE_PRESENT | PAGE_WRITABLE);
+    memcpy((void*) processMapped, function, 0x1000);
+    kernelSpace->unMap(processMapped);
+    return Process::startProcess(processCode, addressSpace);
 }
 
 extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
@@ -73,19 +69,16 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
 
     multiboot_info* multiboot = (multiboot_info*)kernelSpace->map(multibootAddress, 0x3);
     PhysicalMemory::initialize(multiboot);
-    kernelSpace->unMap((inwox_vir_addr_t)multiboot);
     Print::printf("Physical Memory Initialized\n");
-
-
-    Interrupt::initPic();
-    Interrupt::enable();
-    Print::printf("Interrrupt Initialized\n");
 
     Process::initialize();
     Print::printf("Processes Initialized\n");
 
-    Process::startProcess((void*) processA);
-    Process::startProcess((void*) processB);
+    startProcesses((void*) processA);
+
+    Interrupt::initPic();
+    Interrupt::enable();
+    Print::printf("Interrrupt Initialized\n");
 
     while(1)
     {

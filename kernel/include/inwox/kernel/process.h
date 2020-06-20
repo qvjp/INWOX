@@ -39,11 +39,14 @@ private:
     AddressSpace* addressSpace;       /* 每个进程都有自己独立的地址空间 */
     struct regs* interruptContext;
     Process* next;
-    void* kstack;
+    void* kstack;                     /* 内核栈 */
+    void* stack;                      /* 用户栈 */
 public:
     static void initialize();
     static struct regs* schedule(struct regs* context);
-    static Process* startProcess(void* entry);
+    static Process* startProcess(void* entry, AddressSpace* addressspace);
 };
+
+void setKernelStack(void* kstack);
 
 #endif

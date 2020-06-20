@@ -35,13 +35,14 @@ static Process* idleProcess;
 
 /**
  * 这里的进程我们只指一个程序的基本可执行实体，并不代表线程的容器（区别于现代面向线程设计的系统）。
- * 当前的INWOX中进程控制块比较简单，包括一个独立的地址空间、运行上下文、指向下一个进程的指针和内核堆栈
+ * 当前的INLOW中进程控制块比较简单，包括一个独立的地址空间、运行上下文、指向下一个进程的指针和内核堆栈、用户堆栈
  */
 Process::Process()
 {
     addressSpace = kernelSpace;
     interruptContext = nullptr;
     next = nullptr;
+    stack = nullptr;
     kstack = nullptr;
 }
 
@@ -55,6 +56,7 @@ void Process::initialize()
     idleProcess->addressSpace = kernelSpace;
     idleProcess->next = 0;
     idleProcess->kstack = 0;
+    idleProcess->stack = 0;
     idleProcess->interruptContext = (struct regs*)malloc(sizeof(struct regs));
     currentProcess = idleProcess;
     firstProcess = nullptr;
@@ -84,19 +86,25 @@ struct regs* Process::schedule(struct regs* context)
             currentProcess = idleProcess;
         }
     }
+    setKernelStack(currentProcess->kstack);
     currentProcess->addressSpace->activate();
     return currentProcess->interruptContext;
 }
 
 /**
  * 开始新进程
- * 分配进程空间等初始化后将此进程放到进程链表的最开始
+ * 传入地址空间是为能在调用处确定内核态或用户态
  * 最后返回新创建的进程
  */
-Process* Process::startProcess(void* entry)
+Process* Process::startProcess(void* entry, AddressSpace* addressSpace)
 {
     Process* process = (Process*)malloc(sizeof(Process));
+    /**
+     * 分配两个栈，内核栈用来保存上下文信息
+     * 用户栈处理其他
+     */
     process->kstack = (void*) kernelSpace->allocate(1);
+    process->stack = (void*) addressSpace->allocate(1);
 
     process->interruptContext = (struct regs*)((uintptr_t) process->kstack + 0x1000 - sizeof(struct regs));
     process->interruptContext->eax = 0;
@@ -108,13 +116,17 @@ Process* Process::startProcess(void* entry)
     process->interruptContext->ebp = 0;
     process->interruptContext->int_no = 0;
     process->interruptContext->err_code = 0;
-    process->interruptContext->eip = (uint32_t)entry; /* 设置%eip是重中之重 */
-    process->interruptContext->cs = 0x8;              /* 代码段是0x8 */
-    process->interruptContext->eflags = 0x200;        /* 开启中断 */
+    process->interruptContext->eip = (uint32_t)entry; 
+    process->interruptContext->cs = 0x1B;         /* 用户代码段是0x18 因为在ring3， 
+                                                   * 按Intel规定，要使用(0x18 | 0x3)
+                                                   * 下边作为段选择子偏移ss的0x23也是
+                                                   * 一样道理。
+                                                   */
+    process->interruptContext->eflags = 0x200;    /* 开启中断 */
+    process->interruptContext->useresp = (uint32_t) process->stack + 0x1000;
+    process->interruptContext->ss = 0x23;         /* 用户数据段 */
 
-    process->addressSpace = kernelSpace->fork();      /* 给新进程分配地址空间
-                                                       * 也就是将当前进程的地址空间拷贝一份
-                                                       */
+    process->addressSpace = addressSpace;
 
     process->next = firstProcess;
     firstProcess = process;

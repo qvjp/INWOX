@@ -84,6 +84,41 @@ struct gdt_entry
 } __attribute__((__packed__));
 
 /**
+ * Task State Segment (TSS)是x86中保存任务信息的数据结构
+ * INLOW没有采用基于硬件的上下文切换，所以只使用了esp0，用来保存内核堆栈指针
+ */
+struct tss_entry
+{
+    uint32_t prev_tss;
+    uint32_t esp0;
+    uint32_t ss0;
+    uint32_t esp1;
+    uint32_t ss1;
+    uint32_t esp2;
+    uint32_t ss2;
+    uint32_t cr3;
+    uint32_t eip;
+    uint32_t eflags;
+    uint32_t eax;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t ebx;
+    uint32_t esp;
+    uint32_t ebp;
+    uint32_t esi;
+    uint32_t edi;
+    uint32_t es;
+    uint32_t cs;
+    uint32_t ss;
+    uint32_t ds;
+    uint32_t fs;
+    uint32_t gs;
+    uint32_t ldtr;
+    uint16_t reserved;
+    uint16_t iomapBase;
+};
+
+/**
  * 定义指向gdt的结构，也就是GDT Descriptor，包括gdt的大小和gdt的首地址，
  * 同样这里设置为packed
  */
@@ -106,13 +141,17 @@ struct gdt_desc
     ((base) >> 24)   & 0xFF \
 }
 
-#define GDT_PRESENT ((1 << 7) | (1 << 4))  // 1001 0000
-#define GDT_RING0 0
-#define GDT_EXECUTABLE (1 << 3)            // 1000 可执行
-#define GDT_READ_WRITE (1 << 1)            // 0010 可读写
+/* Access Byte */
+#define GDT_ACCESSED (1 << 0)              /* 0000 0001 已经被访问 */
+#define GDT_READ_WRITE (1 << 1)            /* 0000 0010 可读写 */
+#define GDT_EXECUTABLE (1 << 3)            /* 0000 1000 可执行 */
+#define GDT_SEGMENT (1 << 4)               /* 0001 0000 描述符类型 */
+#define GDT_RING0 (0 << 5)                 /* 0010 0000 特权级0 */
+#define GDT_RING3 (3 << 5)                 /* 0110 0000 特权级3 */
+#define GDT_PRESENT (1 << 7)               /* 1000 0000 存在位 */
 
-#define GDT_GRANULARITY_4K (1 << 7)        // 1000 0000 粒度是4Kbyte
-#define GDT_PROTECTED_MODE (1 << 6)        // 0100 0000 32位保护模式
-
+/* Flags Byte */
+#define GDT_GRANULARITY_4K (1 << 7)        /* 1000 0000 粒度是4Kbyte */
+#define GDT_PROTECTED_MODE (1 << 6)        /* 0100 0000 32位保护模式 */
 
 #endif /* KERNEL_GDT_H__ */

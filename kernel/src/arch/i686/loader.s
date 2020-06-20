@@ -181,6 +181,15 @@
          * 上的权限。
          */
 
+        mov $stack_top, %esp
+
+        /* 将tss设置到GDT中 */
+        mov $tss, %ecx
+        mov %cx, gdt + 5 * 8 + 2       /* 5(tss索引是5) * 8(每个GDTR8字节) + 2(GDTR中Base 0:15) */
+        shr $16, %ecx                  /* 再处理tss地址的高16位 */
+        mov %cl, gdt + 5 * 8 + 4       /* Base 16:23 */
+        mov %ch, gdt + 5 * 8 + 7       /* Base 24:31 */
+
         /**
          * 加载GDT
          */
@@ -203,10 +212,12 @@
 
         ljmp $0x8, $1f
 
+    1:  mov $0x2B, %cx
+        ltr %cx         /* 加载tss */
+
         /*
          * 加载IDT
          */
-    1:
         mov $idt_descriptor, %ecx
         lidt (%ecx)
         /*

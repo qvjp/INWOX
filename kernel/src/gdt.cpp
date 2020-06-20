@@ -28,6 +28,40 @@
  */
 
 #include <inwox/kernel/gdt.h>
+#include <inwox/kernel/process.h>
+
+/**
+ * 申明系统唯一的tss，以后每次任务调度只需修改esp0
+ */
+struct tss_entry tss = {
+    0, /* prev_tss */
+    0, /* esp0 */
+    0x10, /* ss0设置为内核数据段偏移 */
+    0, /* esp1在任务调度时更新 */
+    0, /* ss1 */
+    0, /* esp2 */
+    0, /* ss2 */
+    0, /* cr3 */
+    0, /* eip */
+    0, /* eflags */
+    0, /* eax */
+    0, /* ecx */
+    0, /* edx */
+    0, /* ebx */
+    0, /* esp */
+    0, /* ebp */
+    0, /* esi */
+    0, /* edi */
+    0, /* es */
+    0, /* cs */
+    0, /* ss */
+    0, /* ds */
+    0, /* fs */
+    0, /* gs */
+    0, /* ldtr */
+    0, /* reserved */
+    0, /* iomapBase */  
+};
 
 /**
  * x86支持两种虚拟内存方案
@@ -44,17 +78,30 @@ struct gdt_entry gdt[] = {
     /* NUll Segment */
     GDT_ENTRY(0,0,0,0),
 
-    /* Kernel Code Segment access: 10011010, flags: 1100
-     * 第二个段是代码段，基地址是0，最大地址单元4GBytes，粒度是4Kbyte，使用32位保护模式
+    /*
+     * Kernel Code Segment access: 10011010, flags: 1100
+     * 第二个段是内核代码段，基地址是0，最大地址单元4GBytes，粒度是4Kbyte，使用32位保护模式
      */
-    GDT_ENTRY(0, 0xFFFFFFFF,GDT_PRESENT | GDT_RING0 | GDT_EXECUTABLE | GDT_READ_WRITE,
+    GDT_ENTRY(0, 0xFFFFFFFF, GDT_PRESENT | GDT_SEGMENT | GDT_RING0 | GDT_EXECUTABLE | GDT_READ_WRITE,
               GDT_GRANULARITY_4K | GDT_PROTECTED_MODE),
 
-    /* Kernel Data Segment access: 10010010, flags: 1100
-     * 第三个是数据段，和代码段类似
+    /* 
+     * Kernel Data Segment access: 10010010, flags: 1100
+     * 第三个是内核数据段
      */
-    GDT_ENTRY(0, 0xFFFFFFFF, GDT_PRESENT | GDT_RING0 | GDT_READ_WRITE,
+    GDT_ENTRY(0, 0xFFFFFFFF, GDT_PRESENT | GDT_SEGMENT | GDT_RING0 | GDT_READ_WRITE,
               GDT_GRANULARITY_4K | GDT_PROTECTED_MODE),
+
+    /* 用户代码段 */
+    GDT_ENTRY(0, 0xFFFFFFFF, GDT_PRESENT | GDT_SEGMENT | GDT_RING3 | GDT_EXECUTABLE |  GDT_READ_WRITE,
+              GDT_GRANULARITY_4K | GDT_PROTECTED_MODE),
+
+    /* 用户数据段 */
+    GDT_ENTRY(0, 0xFFFFFFFF, GDT_PRESENT | GDT_SEGMENT | GDT_RING3 | GDT_READ_WRITE,
+              GDT_GRANULARITY_4K | GDT_PROTECTED_MODE),
+
+    /* Task Status Segment(TSS）*/
+    GDT_ENTRY(0, sizeof(tss) - 1, GDT_PRESENT | GDT_EXECUTABLE | GDT_ACCESSED, 0),
 };
 
 /**
@@ -65,3 +112,12 @@ struct gdt_desc gdt_descriptor =
     sizeof(gdt) - 1,
     gdt
 };
+
+/**
+ * 设置内核栈
+ * 在进行进程调度时将当前内核栈设置到tss的esp0中
+ */
+void setKernelStack(void* kstack)
+{
+    tss.esp0 = (uint32_t) kstack;
+}

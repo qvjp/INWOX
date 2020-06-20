@@ -57,13 +57,20 @@ isr_\no:
 isr_commonHandler:
     pusha           /* push eax, ecx, edx, ebx, esp, ebp, esi, edi. */
 
-    /* 删除段寄存器是因为段寄存器没有改变 */
+    /* 切换到内核数据段处理中断 */
+    mov $0x10, %ax
+    mov %ax, %ds
 
     push %esp       /* interrupt_handler的参数，指向刚pusha后的栈d顶 */
     call interrupt_handler  /* 调用C语言编写的中断处理程序 */
 
     /* 恢复现场的顺序和保存现场的顺序正好相反 */
     mov %eax, %esp  /* eax是interrupt_handler的返回值，也就是newContext */
+
+    /* 处理完中断切换到用户数据段 */
+    mov $0x23, %ax  /* 0x23 = 0x18 | 0x3 */
+    mov %ax, %ds
+
     popa            /* pop edi, esi, ebp, esp, ebx, edx, ecx, eax */
 
     add $8, %esp    /* 从堆栈中移除错误码和ISR号 */

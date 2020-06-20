@@ -34,6 +34,10 @@
 
 #define RECURSIVE_MAPPING 0xFFC00000
 
+#define PAGE_PRESENT 0x1
+#define PAGE_WRITABLE 0x2
+#define PAGE_USER 0x4
+
 /**
  * 获取linker.ld中
  * bootstapBegin
@@ -69,9 +73,11 @@ class AddressSpace
         inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, uint16_t flags);
         inwox_vir_addr_t mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, uint16_t flags);
         inwox_vir_addr_t mapRange(inwox_phy_addr_t* physicalAddress, uint16_t flags);
+        inwox_vir_addr_t mapRange(inwox_phy_addr_t firstPhysicalAddress, size_t page_number, uint16_t flags);
         inwox_vir_addr_t mapRangeAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t* physicalAddress, uint16_t flags);
 
         void unMap(inwox_vir_addr_t virtualAddress);
+        void unMapRange(inwox_vir_addr_t firstVirtualAddress, size_t page_number);
         static void initialize();
     private:
         /**

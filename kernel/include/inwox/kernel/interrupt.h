@@ -131,6 +131,10 @@ extern "C"{
     extern void isr_45(void);      /* FPU / Coprocessor / Inter-processor */
     extern void isr_46(void);      /* Primary ATA Hard Disk */
     extern void isr_47(void);      /* Secondary ATA Hard Disk */
+
+    extern void isr_48(void);      /* Padding */
+    extern void isr_49(void);      /* Schedule */
+    extern void syscallHandler(void); /* Syscall */
 }
 /**
  * 这个结构定义ISR运行后栈的样子

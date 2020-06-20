@@ -88,6 +88,10 @@ void irqs_install()
     idt_set_gate(45, (unsigned)isr_45, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
     idt_set_gate(46, (unsigned)isr_46, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
     idt_set_gate(47, (unsigned)isr_47, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+
+    idt_set_gate(48, (unsigned)isr_48, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idt_set_gate(49, (unsigned)isr_49, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idt_set_gate(73, (unsigned)syscallHandler, 0x08, IDT_INTERRUPT_GATE | IDT_RING3 | IDT_PRESENT);
 }
 
 /**
@@ -135,7 +139,7 @@ extern "C" struct regs* interrupt_handler(struct regs *r)
         Print::printf(" Exception. System Halted!\n");
         while(1);
     }
-
+    /* 设备IRQ */
     if (r->int_no <= 47 && r->int_no >= 32)
     {
         /**
@@ -166,6 +170,11 @@ extern "C" struct regs* interrupt_handler(struct regs *r)
             Hardwarecommunication::outportb(PIC2_COMMAND, PIC_EOI);
         }
         Hardwarecommunication::outportb(PIC1_COMMAND, PIC_EOI);
+    }
+    /* 0x31 任务调度 */
+    else if (r->int_no == 0x31)
+    {
+        newContext = Process::schedule(r);
     }
     else
     {

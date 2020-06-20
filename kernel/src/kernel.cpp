@@ -39,7 +39,16 @@
 #include <string.h>
 
 static void processA() {
-    while (true);
+    /* 内连汇编中如下边的"a"表示*ax寄存器"b"是*bx寄存器 */
+    __asm__ __volatile__ ("int $73" :: "a"(1), "b"(0));
+}
+
+static void processB() {
+    __asm__ __volatile__ ("int $73" :: "a"(1), "b"(1));
+}
+
+static void processC() {
+    __asm__ __volatile__ ("int $73" :: "a"(1), "b"(2));
 }
 
 static Process* startProcesses(void* function) {
@@ -75,6 +84,8 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     Print::printf("Processes Initialized\n");
 
     startProcesses((void*) processA);
+    startProcesses((void*) processB);
+    startProcesses((void*) processC);
 
     Interrupt::initPic();
     Interrupt::enable();

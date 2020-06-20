@@ -127,3 +127,8 @@ isr 44
 isr 45
 isr 46
 isr 47
+
+isr 48 # Padding
+isr 49 # Schedule
+
+# isr 73 # Syscall

@@ -22,34 +22,16 @@
  */
 
 /**
- * kernel/include/inwox/kernel/process.h
- * 定义进程控制块和进程的操作方法
+ * kernel/include/inwox/syscall.h
+ * 系统调用号
  */
-#ifndef KERNEL_PROCESS_H__
-#define KERNEL_PROCESS_H__
+#ifndef INWOX_SYSCALL_H__
+#define INWOX_SYSCALL_H__
 
-#include <inwox/kernel/addressspace.h> /* AddressSpace s*/
-#include <inwox/kernel/interrupt.h>    /* struct regs */
+#define SYSCALL_PAD 0
+#define SYSCALL_EXIT 1
 
-class Process
-{
-public:
-    Process();
-    void exit(int status);
-private:
-    AddressSpace* addressSpace;       /* 每个进程都有自己独立的地址空间 */
-    struct regs* interruptContext;
-    Process* prev;
-    Process* next;
-    void* kstack;                     /* 内核栈 */
-    void* stack;                      /* 用户栈 */
-public:
-    static void initialize();
-    static struct regs* schedule(struct regs* context);
-    static Process* startProcess(void* entry, AddressSpace* addressspace);
-    static Process* current;
-};
+#define NUM_SYSCALLS 2
 
-void setKernelStack(uintptr_t kstack);
 
-#endif
+#endif /* INWOX_SYSCALL_H__ */

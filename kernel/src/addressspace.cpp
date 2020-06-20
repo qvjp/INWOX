@@ -387,6 +387,8 @@ inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t* physicalAddresses, uin
     {
         for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++)
         {
+            if (pdOffset == 0 && ptOffset == 0)
+                continue;
             size_t pd = pdOffset;
             size_t pt = ptOffset;
             size_t foundPages = 0;

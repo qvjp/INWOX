@@ -85,7 +85,7 @@ struct gdt_entry
 
 /**
  * Task State Segment (TSS)是x86中保存任务信息的数据结构
- * INLOW没有采用基于硬件的上下文切换，所以只使用了esp0，用来保存内核堆栈指针
+ * INWOX没有采用基于硬件的上下文切换，所以只使用了esp0，用来保存内核堆栈指针
  */
 struct tss_entry
 {
@@ -116,7 +116,7 @@ struct tss_entry
     uint32_t ldtr;
     uint16_t reserved;
     uint16_t iomapBase;
-};
+} __attribute__((__packed__));
 
 /**
  * 定义指向gdt的结构，也就是GDT Descriptor，包括gdt的大小和gdt的首地址，

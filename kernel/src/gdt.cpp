@@ -117,7 +117,7 @@ struct gdt_desc gdt_descriptor =
  * 设置内核栈
  * 在进行进程调度时将当前内核栈设置到tss的esp0中
  */
-void setKernelStack(void* kstack)
+void setKernelStack(uintptr_t kstack)
 {
-    tss.esp0 = (uint32_t) kstack;
+    tss.esp0 = kstack;
 }

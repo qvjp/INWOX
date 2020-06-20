@@ -22,34 +22,30 @@
  */
 
 /**
- * kernel/include/inwox/kernel/process.h
- * 定义进程控制块和进程的操作方法
+ * kernel/src/arch/i686/syscall.s
+ * 系统调用Handler
  */
-#ifndef KERNEL_PROCESS_H__
-#define KERNEL_PROCESS_H__
+.section .text
+.global syscallHandler
+.type syscallHandler, @function
+syscallHandler:
 
-#include <inwox/kernel/addressspace.h> /* AddressSpace s*/
-#include <inwox/kernel/interrupt.h>    /* struct regs */
+    push %ebx       /* 系统调用参数 %ebx %eax是通过*/
+    push %eax       /* 调用处int $73" :: "a"(1), "b"(0)
+                     * 规定的*ax和*bx
+                     */
 
-class Process
-{
-public:
-    Process();
-    void exit(int status);
-private:
-    AddressSpace* addressSpace;       /* 每个进程都有自己独立的地址空间 */
-    struct regs* interruptContext;
-    Process* prev;
-    Process* next;
-    void* kstack;                     /* 内核栈 */
-    void* stack;                      /* 用户栈 */
-public:
-    static void initialize();
-    static struct regs* schedule(struct regs* context);
-    static Process* startProcess(void* entry, AddressSpace* addressspace);
-    static Process* current;
-};
+    mov $0x10, %cx  /* 内核数据段 */
+    mov %cx, %ds
 
-void setKernelStack(uintptr_t kstack);
+    call getSyscallHandler
 
-#endif
+    add $4, %esp    /* %esp加4是为了将栈顶原素指向前边push的%ebx，作为具体系统调用的参数 */
+    call *%eax      /* 系统调用处理程序 */
+
+    mov $0x23, %cx  /* 切换回用户段 */
+    mov %cx, %ds
+
+    iret            /* 返回用户态 */
+
+.size syscallHandler, . - syscallHandler

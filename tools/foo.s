@@ -22,35 +22,12 @@
  */
 
 /**
- * kernel/include/inwox/kernel/process.h
- * 定义进程控制块和进程的操作方法
+ * tools/foo.s
+ * 测试模块，直接退出，状态码0
  */
-#ifndef KERNEL_PROCESS_H__
-#define KERNEL_PROCESS_H__
 
-#include <inwox/kernel/addressspace.h> /* AddressSpace s*/
-#include <inwox/kernel/interrupt.h>    /* struct regs */
-
-class Process
-{
-public:
-    Process();
-    void exit(int status);
-private:
-    AddressSpace* addressSpace;       /* 每个进程都有自己独立的地址空间 */
-    struct regs* interruptContext;
-    Process* prev;
-    Process* next;
-    void* kstack;                     /* 内核栈 */
-    void* stack;                      /* 用户栈 */
-public:
-    static void initialize();
-    static struct regs* schedule(struct regs* context);
-    static Process* loadELF(inwox_vir_addr_t elf);
-    static Process* startProcess(void* entry, AddressSpace* addressspace);
-    static Process* current;
-};
-
-void setKernelStack(uintptr_t kstack);
-
-#endif
+.global _start
+_start:
+    mov $1, %eax
+    mov $0, %ebx
+    int $73

@@ -90,12 +90,12 @@ struct multiboot_elf_section_header_table {
 */
 struct multiboot_info {
     uint32_t flags;
-    uint32_t mem_lower;  /* BIOS所给可用内存 */
+    uint32_t mem_lower;   /* BIOS所给可用内存 */
     uint32_t mem_upper;
     uint32_t boot_device;
     uint32_t cmdline;
-    uint32_t mods_count;
-    uint32_t mods_addr;
+    uint32_t mods_count;  /* 和内核一起被加载的模块数量*/
+    uint32_t mods_addr;   /* 第一个模块的地址 模块的结构在下边的multiboot_mod_list中定义 */
     multiboot_elf_section_header_table elf_sec;
     uint32_t mmap_length; /* 内存映射缓存 */
     uint32_t mmap_addr;
@@ -129,9 +129,24 @@ struct multiboot_mmap_entry {
     uint64_t base_addr;
     uint64_t length;
     uint32_t type;
-} __attribute__((__packed__));;
+} __attribute__((__packed__));
 
 /* multiboot_mmap_entry中为可用RAM的标志 */
 #define MULTIBOOT_MEMORY_AVAILABLE 1
+
+/**
+ * 和内核一起被加载的模块
+ * mod_start是模块开始地址
+ * mod_end模块结束地址
+ * cmdline以0结尾的ASCII字符，保存与该模块相关的任何信息
+ * pad bootloader设为0，OS忽略
+ */
+struct multiboot_mod_list
+{
+    uint32_t mod_start;
+    uint32_t mod_end;
+    uint32_t cmdline;
+    uint32_t pad;
+};
 
 #endif

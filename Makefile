@@ -1,7 +1,7 @@
 TO_ROOT = .
 include $(TO_ROOT)/build-config/config.mk
 
-all: install-headers libc install-libc kernel strip-debug iso
+all: install-headers libc install-libc kernel tools strip-debug iso
 
 install-headers:
 	$(MAKE) -C libc install-headers
@@ -27,15 +27,22 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 	mkdir iso/boot
 	mkdir iso/boot/grub
 	cp $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf iso/boot/kernel.elf
+	cp $(BUILD_DIR)/tools/bar                 iso/
+	cp $(BUILD_DIR)/tools/foo                 iso/
 	echo 'set timeout=0'                   >  iso/boot/grub/grub.cfg
 	echo 'set default=0'                   >> iso/boot/grub/grub.cfg
 	echo ''                                >> iso/boot/grub/grub.cfg
 	echo 'menuentry "INWOX" {'             >> iso/boot/grub/grub.cfg
 	echo '    multiboot /boot/kernel.elf'  >> iso/boot/grub/grub.cfg
+	echo '    module /bar'                 >> iso/boot/grub/grub.cfg
+	echo '    module /foo'                 >> iso/boot/grub/grub.cfg
 	echo '    boot'                        >> iso/boot/grub/grub.cfg
 	echo '}'                               >> iso/boot/grub/grub.cfg
 	grub-mkrescue --output=$(ISO) iso
 	rm -rf iso
+
+tools:
+	$(MAKE) -C tools
 
 # How To Exit
 # Windows Terminal: Alt + 2 -> q
@@ -52,6 +59,6 @@ install-toolchain:
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf $(ISO)
-	rm -rf ./sysroot
+	rm -rf ./sysroot ./iso
 
-.PHONY: all kernel iso qemu clean libc install-headers install-libc strip-debug distclean
+.PHONY: all kernel iso qemu clean libc install-headers install-libc strip-debug tools

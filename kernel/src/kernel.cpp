@@ -38,27 +38,30 @@
 #include <stdlib.h>                     /* malloc() free() */
 #include <string.h>
 
-static void processA() {
-    /* 内连汇编中如下边的"a"表示*ax寄存器"b"是*bx寄存器 */
-    __asm__ __volatile__ ("int $73" :: "a"(1), "b"(0));
-}
+/**
+ * 从multiboot信息中解析ELF模块
+ * 
+ * 先从multiboot的mod信息中找到模块首地址并给它分配虚拟地址
+ * 然后通过mod_start和mod_end解析每一个模块，并将模块的首地址
+ * 传给ELF加载函数loadELF()。最终释放过程中使用的虚拟地址。
+ */
+static void startProcesses(multiboot_info* multiboot)
+{
+    inwox_phy_addr_t modulesAligned = multiboot->mods_addr & ~0xFFF;
+    ptrdiff_t offset = multiboot->mods_addr - modulesAligned;
+    inwox_vir_addr_t modulesPage = kernelSpace->map(modulesAligned, PAGE_PRESENT | PAGE_WRITABLE);
 
-static void processB() {
-    __asm__ __volatile__ ("int $73" :: "a"(1), "b"(1));
-}
-
-static void processC() {
-    __asm__ __volatile__ ("int $73" :: "a"(1), "b"(2));
-}
-
-static Process* startProcesses(void* function) {
-    AddressSpace* addressSpace = kernelSpace->fork();
-    inwox_phy_addr_t phys = PhysicalMemory::popPageFrame();
-    void* processCode = (void*) addressSpace->map(phys, PAGE_PRESENT | PAGE_USER);
-    inwox_vir_addr_t processMapped = kernelSpace->map(phys, PAGE_PRESENT | PAGE_WRITABLE);
-    memcpy((void*) processMapped, function, 0x1000);
-    kernelSpace->unMap(processMapped);
-    return Process::startProcess(processCode, addressSpace);
+    // *modules是真正要处理模块的首地址
+    const struct multiboot_mod_list* modules = (struct multiboot_mod_list*) (modulesPage + offset);
+    for (size_t i = 0; i < multiboot->mods_count; i++)
+    {
+        /* 按页对齐后再分配内存 */
+        size_t pages_number = ALIGN_UP(modules[i].mod_end - modules[i].mod_start, 0x1000) / 0x1000;
+        inwox_vir_addr_t elf = kernelSpace->mapRange(modules[i].mod_start, pages_number, PAGE_PRESENT);
+        Process::loadELF(elf);
+        kernelSpace->unMapRange(elf, pages_number);
+    }
+    kernelSpace->unMap((inwox_vir_addr_t) modulesPage);
 }
 
 extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
@@ -83,9 +86,8 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     Process::initialize();
     Print::printf("Processes Initialized\n");
 
-    startProcesses((void*) processA);
-    startProcesses((void*) processB);
-    startProcesses((void*) processC);
+    startProcesses(multiboot);
+    kernelSpace->unMap((inwox_vir_addr_t)multiboot);
 
     Interrupt::initPic();
     Interrupt::enable();

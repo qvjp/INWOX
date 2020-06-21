@@ -233,7 +233,7 @@ bool AddressSpace::isFree(size_t pdOffset, size_t ptOffset)
     else
     {
         if (this != kernelSpace)
-            pageTable = (uintptr_t*) kernelSpace->map(pageDirectory[pdOffset], PAGE_PRESENT);
+            pageTable = (uintptr_t*) kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, PAGE_PRESENT);
     
         result = !pageTable[ptOffset];
     }
@@ -338,7 +338,7 @@ inwox_vir_addr_t AddressSpace::mapAt(size_t pdOffset, size_t ptOffset, inwox_phy
     }
     else if (this != kernelSpace)
     {
-        pageTable = (uintptr_t*) kernelSpace->map(pageDirectory[pdOffset], 0x3);
+        pageTable = (uintptr_t*) kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, 0x3);
     }
     pageTable[ptOffset] = physicalAddress | flags;
 
@@ -413,6 +413,22 @@ inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t* physicalAddresses, uin
 }
 
 /**
+ * 将指定大小的物理空间映射到虚拟空间
+ */
+inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t firstPhysicalAddress, size_t pages_number, uint16_t flags)
+{
+    inwox_phy_addr_t physicalAddresses[pages_number + 1];
+    for (size_t i = 0; i < pages_number; i++)
+    {
+        physicalAddresses[i] = firstPhysicalAddress;
+        firstPhysicalAddress += 0x1000;
+    }
+    physicalAddresses[pages_number] = 0;
+
+    return mapRange(physicalAddresses, flags);
+}
+
+/**
  * 将传入的物理地址和虚拟地址映射起来
  * 判断物理地址结束标志是通过在物理地址最后设置一个结束标志0
  */
@@ -436,6 +452,18 @@ inwox_vir_addr_t AddressSpace::mapRangeAt(inwox_vir_addr_t virtualAddress, inwox
 void AddressSpace::unMap(inwox_vir_addr_t virtualAddress)
 {
     mapAt(virtualAddress, 0, 0);
+}
+
+/**
+ * 将指定大小的虚拟地址解除映射
+ */
+void AddressSpace::unMapRange(inwox_vir_addr_t firstVirtualAddress, size_t pages_number)
+{
+    while (pages_number--)
+    {
+        unMap(firstVirtualAddress);
+        firstVirtualAddress += 0x1000;
+    }
 }
 
 /**

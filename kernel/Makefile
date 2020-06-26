@@ -20,11 +20,13 @@ OBJ += arch/i686/interrupt.o \
 	arch/i686/loader.o \
 	arch/i686/syscall.o
 
-CRTBEGIN_0 := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtbegin.o)
-CRTEND_0 := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtend.o)
+CRTI_O := $(shell $(CXX) $(CXXFLAGS) -print-file-name=crti.o)
+CRTBEGIN_O := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtbegin.o)
+CRTEND_O := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtend.o)
+CRTN_O := $(shell $(CXX) $(CXXFLAGS) -print-file-name=crtn.o)
 
-START_OBJ := $(BUILD)/arch/i686/crti.o $(CRTBEGIN_0)
-END_OBJ := $(CRTEND_0) $(BUILD)/arch/i686/crtn.o
+START_OBJ := $(CRTI_O) $(CRTBEGIN_O)
+END_OBJ := $(CRTEND_O) $(CRTN_O)
 
 OBJ := $(START_OBJ) $(addprefix $(BUILD)/, $(OBJ)) $(END_OBJ)
 

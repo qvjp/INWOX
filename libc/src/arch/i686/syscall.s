@@ -20,29 +20,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/arch/i686/syscall.s
+ * 系统调用函数
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#include <stddef.h> /* size_t NULL */
+.section .text
+.global __syscall
+.type __syscall, @function
+__syscall:
+    push %ebp
+    mov %esp, %ebp
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+    # 保存调用者的现存
+    push %edi
+    push %esi
+    push %ebx
+    sub $12, %esp
 
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
+    # 将系统调用各参数放入合适寄存器
+    mov 8(%ebp), %ebx
+    mov 12(%ebp), %ecx
+    mov 16(%ebp), %edx
+    mov 20(%ebp), %esi
+    mov 24(%ebp), %edi
 
-void free(void*);
-void* malloc(size_t);
+    int $0x30
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H__ */
+    add $12, %esp
+    pop %ebx
+    pop %esi
+    pop %edi
+    pop %ebp
+    ret
+.size __syscall, . - __syscall

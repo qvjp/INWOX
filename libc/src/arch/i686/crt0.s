@@ -22,27 +22,35 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/arch/i686/crt0.s
+ * 程序初始化，调用main函数
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#include <stddef.h> /* size_t NULL */
+.section .text
+.global _start
+.type _start, @function
+_start:
+    # The kernel has put argc into eax, argv into ebx and envp into ecx.
+    # (At least it will as soon as we have these things.)
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+    # Create a stack frame
+    push $0
+    push $0
+    mov %esp, %ebp
 
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
+    sub $12, %esp
+    push %ecx # envp
+    push %ebx # argv
+    push %eax # argc
 
-void free(void*);
-void* malloc(size_t);
+    # Call global constructors
+    call _init
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+    call main
 
-#endif /* STDLIB_H__ */
+    add $4, %esp
+    push %eax
+    call exit
+
+
+.size _start, . - _start

@@ -22,27 +22,31 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * lib/include/sys/syscall.h
+ * 定义系统调用section
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#include <stddef.h> /* size_t NULL */
+#ifndef SYS_SYSCALL_H__
+#define SYS_SYSCALL_H__
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+#include <inwox/syscall.h>
 
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
+#define _SYSCALL_TOSTRING(x) #x
 
-void free(void*);
-void* malloc(size_t);
+#define _SYSCALL_BODY(number, name) \
+    asm("\n" \
+    ".pushsection .text\n" \
+    #name ":\n\t" \
+        "mov $" _SYSCALL_TOSTRING(number) ", %eax\n\t" \
+        "jmp __syscall\n" \
+    ".popsection\n")
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+#define DEFINE_SYSCALL(number, type, name, params) \
+    _SYSCALL_BODY(number, name); \
+    extern type name params
 
-#endif /* STDLIB_H__ */
+#define DEFINE_SYSCALL_GLOBAL(number, type, name, params) \
+    asm(".global " #name); \
+    DEFINE_SYSCALL(number, type, name, params)
+
+#endif /* SYS_SYSCALL_H__ */

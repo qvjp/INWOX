@@ -22,27 +22,11 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/unistd/_exit.c
+ * 在没有清理的情况下退出进程.
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#include <stddef.h> /* size_t NULL */
+#include <sys/syscall.h>
+#include <unistd.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void*);
-void* malloc(size_t);
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H__ */
+DEFINE_SYSCALL_GLOBAL(SYSCALL_EXIT, __attribute__((__noreturn__)) void, _exit, (int));

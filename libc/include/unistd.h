@@ -22,27 +22,21 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/include/unistd.h
+ * 定义POSIX函数
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#include <stddef.h> /* size_t NULL */
+#ifndef UNISTD_H__
+#define UNISTD_H__
 
 #ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+extern "C" {
+#endif
 
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void*);
-void* malloc(size_t);
+__attribute__((__noreturn__)) void _exit(int);
 
 #ifdef __cplusplus
 }
-#endif /* __cplusplus */
+#endif
 
-#endif /* STDLIB_H__ */
+#endif

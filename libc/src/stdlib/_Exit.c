@@ -22,27 +22,13 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * lib/src/stdlib/_Exit.c
+ * 在没有任何清理的情况下退出进程
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#include <stddef.h> /* size_t NULL */
+#include <stdlib.h>
+#include <unistd.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void*);
-void* malloc(size_t);
-
-#ifdef __cplusplus
+__attribute__((__noreturn__)) void _Exit(int status) {
+    _exit(status);
 }
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H__ */

@@ -1,5 +1,6 @@
 ARCH := i686
 BUILD_DIR = $(TO_ROOT)/build
+SYSROOT ?= $(TO_ROOT)/sysroot
 AR := $(ARCH)-inwox-ar
 CC := $(ARCH)-inwox-gcc
 CXX := $(ARCH)-inwox-g++

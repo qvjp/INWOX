@@ -53,8 +53,8 @@ qemu-curses: $(ISO)
 qemu-curses-dbg: $(ISO)
 	qemu-system-i386 -cdrom $^ -S -s -curses -m 8M
 
-install-toolchain:
-	$(TO_ROOT)/build-config/install-toolchains.sh
+install-toolchain: install-headers
+	SYSROOT=$(SYSROOT) $(TO_ROOT)/build-config/install-toolchains.sh
 
 clean:
 	rm -rf $(BUILD_DIR)

@@ -10,7 +10,10 @@ gcc_repo=https://github.com/qvjp/gcc-10.1.0-inwox.git
 [ -z "$SRCDIR" ] && SRCDIR="$HOME/src"
 [ -z "$BUILDDIR" ] && BUILDDIR="$SRCDIR"
 [ -z "$ARCH" ] && ARCH=i686
-[ -z "$TARGET" ] && TARGET=$ARCH-elf
+[ -z "$TARGET" ] && TARGET=$ARCH-inwox
+[ -z "$SYSROOT" ] && echo "Error: \$SYSROOT not set" && exit 1
+
+SYSROOT="$(cd "$SYSROOT" && pwd)"
 
 CPU_CORE=`cat /proc/cpuinfo | grep "processor" | wc -l`
 
@@ -43,7 +46,7 @@ git clone $gcc_repo inwox-gcc
 echo Building binutils...
 mkdir -p "$BUILDDIR/build-binutils"
 cd "$BUILDDIR/build-binutils"
-"$SRCDIR/inwox-binutils/configure" --target=$TARGET --prefix="$PREFIX" --with-sysroot \
+"$SRCDIR/inwox-binutils/configure" --target=$TARGET --prefix="$PREFIX" --with-sysroot="$SYSROOT" \
         --disable-nls --disable-werror
 make -j"$CPU_CORE"
 make install
@@ -52,7 +55,7 @@ echo Building gcc...
 mkdir -p "$BUILDDIR/build-gcc"
 cd "$BUILDDIR/build-gcc"
 "$SRCDIR/inwox-gcc/configure" --target=$TARGET --prefix="$PREFIX" --disable-nls \
-        --enable-languages=c,c++ --without-headers
+        --enable-languages=c,c++ --with-sysroot="$SYSROOT"
 make -j"$CPU_CORE" all-gcc all-target-libgcc
 make install-gcc install-target-libgcc
 

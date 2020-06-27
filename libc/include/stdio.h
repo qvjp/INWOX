@@ -22,12 +22,43 @@
  */
 
 /**
- * tools/foo.s
- * 测试模块，直接退出，状态码0
+ * lib/include/stdio.h
+ * 标准输入输出定义
  */
 
-.global _start
-_start:
-    mov $1, %eax
-    mov $0, %ebx
-    int $73
+#ifndef STDIO_H__
+#define STDIO_H__
+
+#define __need___va_list
+#include <stdarg.h>
+#define __need_FILE
+#define __need_size_t
+#include <sys/types.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern FILE* stderr;
+#define stderr stderr
+
+/* 编译GCC需要此函数 */
+int fflush(FILE*);
+int fprintf(FILE* __restrict, const char* __restrict, ...);
+
+/* 编译GCC需要此函数 */
+#define SEEK_SET 1
+int fclose(FILE*);
+FILE* fopen(const char* __restrict, const char* __restrict);
+size_t fread(void* __restrict, size_t, size_t, FILE* __restrict);
+int fseek(FILE*, long, int);
+long ftell(FILE*);
+size_t fwrite(const void* __restrict, size_t, size_t, FILE* __restrict);
+void setbuf(FILE* __restrict, char* __restrict);
+int vfprintf(FILE* __restrict, const char* __restrict, __gnuc_va_list);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -5,7 +5,8 @@ include $(TO_ROOT)/build-config/config.mk
 
 BUILD = $(BUILD_DIR)/tools
 
-LDFLAGS := --sysroot=$(SYSROOT) -nostdlib
+CFLAGS ?= -O2 -g
+CFLAGS += -Wall -Wextra
 
 PROGRAMS = \
 	bar \
@@ -13,12 +14,9 @@ PROGRAMS = \
 
 all: $(addprefix $(BUILD)/, $(PROGRAMS))
 
-$(BUILD)/%: $(BUILD)/%.o
-	$(CC) $(LDFLAGS) -o $@ $^
-
-$(BUILD)/%.o: %.s
+$(BUILD)/%: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) -c -o $@ $^
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^
 
 clean:
 	rm -rf $(BUILD)

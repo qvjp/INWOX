@@ -1,8 +1,8 @@
 ARCH := i686
 BUILD_DIR = $(TO_ROOT)/build
-AR := $(ARCH)-elf-ar
-CC := $(ARCH)-elf-gcc
-CXX := $(ARCH)-elf-g++
+AR := $(ARCH)-inwox-ar
+CC := $(ARCH)-inwox-gcc
+CXX := $(ARCH)-inwox-g++
 
 # 在某些平台‘/’会被视为注释字符，也就不能在表达式中使用，--divide使‘/’变为正常字符，但不会影响
 # 在行开头使用的‘/’进行注释的行为

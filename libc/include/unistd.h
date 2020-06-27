@@ -29,14 +29,22 @@
 #ifndef UNISTD_H__
 #define UNISTD_H__
 
+#define __need_pid_t
+#include <sys/types.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 __attribute__((__noreturn__)) void _exit(int);
 
+/* 编译GCC需要此函数，当前未实现 */
+pid_t fork(void);
+int execv(const char*, char* const[]);
+int execve(const char*, char* const[], char* const[]);
+int execvp(const char*, char* const[]);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /*UNISTD_H__*/

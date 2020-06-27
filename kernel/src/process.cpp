@@ -91,8 +91,10 @@ Process* Process::loadELF(inwox_vir_addr_t  elf)
         {
             continue;
         }
+        inwox_vir_addr_t loadAddressAligned = programHeader[i].p_paddr & ~0xFFF;
+        ptrdiff_t offset = programHeader[i].p_paddr - loadAddressAligned;
         const void* src = (void*) (elf + programHeader[i].p_offset);
-        size_t pages_number = ALIGN_UP(programHeader[i].p_memsz, 0x1000) / 0x1000;
+        size_t pages_number = ALIGN_UP(programHeader[i].p_memsz + offset, 0x1000) / 0x1000;
         inwox_phy_addr_t destPhys[pages_number + 1];
         /* 到物理内存申请pages_number个页的内存 */
         for (size_t j = 0; j < pages_number; j++)
@@ -101,15 +103,15 @@ Process* Process::loadELF(inwox_vir_addr_t  elf)
         }
         destPhys[pages_number] = 0;
         /* 将申请到的物理内存映射到连续虚拟内存 */
-        void* dest = (void*) kernelSpace->mapRange(destPhys, PAGE_PRESENT | PAGE_WRITABLE);
+        inwox_vir_addr_t dest = kernelSpace->mapRange(destPhys, PAGE_PRESENT | PAGE_WRITABLE);
         /* 将申请到的虚拟内存保存的内容全部设为0 */
-        memset(dest, 0, programHeader[i].p_memsz);
+        memset((void*) (dest + offset), 0, programHeader[i].p_memsz);
         /* 将p_offset开始，长度为p_filesz的内容复制到目标内存 */
-        memcpy(dest, src, programHeader[i].p_filesz);
+        memcpy((void*) (dest + offset), src, programHeader[i].p_filesz);
         /* 取消映射 */
-        kernelSpace->unMapRange((inwox_vir_addr_t) dest, pages_number);
+        kernelSpace->unMapRange(dest, pages_number);
         /* 将已经复制好内容的物理内存映射到虚拟内存 p_paddr*/
-        addressSpace->mapRangeAt(programHeader[i].p_paddr, destPhys, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
+        addressSpace->mapRangeAt(loadAddressAligned, destPhys, PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER);
     }
     return startProcess((void*) header->e_entry, addressSpace);
 }

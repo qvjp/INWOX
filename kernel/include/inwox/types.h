@@ -21,13 +21,13 @@
  * SOFTWARE.
  */
 
-/**
- * tools/bar.s
- * 测试模块，直接退出，状态码22
+/* kernel/include/inwox/types.h
+ * INWOX定义的数据类型.
  */
 
-.global _start
-_start:
-    mov $1, %eax
-    mov $22, %ebx
-    int $73
+#ifndef INWOX_TYPES_H__
+#define INWOX_TYPES_H__
+
+typedef int __pid_t;
+
+#endif /* INWOX_TYPES_H__ */

@@ -20,37 +20,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 /**
- * libc/src/arch/i686/syscall.s
- * 系统调用函数
+ * lib/include/sys/types.h
+ * 数据类型定义
  */
 
-.section .text
-.global __syscall
-.type __syscall, @function
-__syscall:
-    push %ebp
-    mov %esp, %ebp
+#include <inwox/types.h>
 
-    # 保存调用者的现存
-    push %edi
-    push %esi
-    push %ebx
-    sub $12, %esp
+#if defined(__need_FILE) && !defined(__FILE_defined)
+typedef struct __FILE FILE;
+#  define __FILE_defined
+#endif
 
-    # 将系统调用各参数放入合适寄存器
-    mov 8(%ebp), %ebx
-    mov 12(%ebp), %ecx
-    mov 16(%ebp), %edx
-    mov 20(%ebp), %esi
-    mov 24(%ebp), %edi
+#if defined(__need_pid_t) && !defined(__pid_t_defined)
+typedef __pid_t pid_t;
+#  define __pid_t_defined
+#endif
 
-    int $0x49
+#if defined(__need_size_t) || defined(__need_NULL)
+#  include <stddef.h>
+#endif
 
-    add $12, %esp
-    pop %ebx
-    pop %esi
-    pop %edi
-    pop %ebp
-    ret
-.size __syscall, . - __syscall
+#undef __need_FILE
+#undef __need_pid_t

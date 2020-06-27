@@ -28,7 +28,10 @@
 #ifndef STRING_H__
 #define STRING_H__
 
-#include <stddef.h> /* size_t NULL */
+#define __need_NULL
+#define __need_size_t
+#include <stddef.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -41,6 +44,8 @@ void* memmove(void* __restrict, const void* __restrict, size_t);
 void* memset(void*, int, size_t);
 
 size_t strlen(const char*);
+/* 编译GCC需要此函数，当前未实现 */
+char* strcpy(char* __restrict, const char* __restrict);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

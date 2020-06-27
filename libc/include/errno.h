@@ -1,3 +1,4 @@
+
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
@@ -20,37 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/**
- * libc/src/arch/i686/syscall.s
- * 系统调用函数
+
+/* libc/include/errno.h
+ * 错误码.
  */
+#ifndef ERRNO_H__
+#define ERRNO_H__
 
-.section .text
-.global __syscall
-.type __syscall, @function
-__syscall:
-    push %ebp
-    mov %esp, %ebp
+/* 编译GCC需要此头文件 */
 
-    # 保存调用者的现存
-    push %edi
-    push %esi
-    push %ebx
-    sub $12, %esp
-
-    # 将系统调用各参数放入合适寄存器
-    mov 8(%ebp), %ebx
-    mov 12(%ebp), %ecx
-    mov 16(%ebp), %edx
-    mov 20(%ebp), %esi
-    mov 24(%ebp), %edi
-
-    int $0x49
-
-    add $12, %esp
-    pop %ebx
-    pop %esi
-    pop %edi
-    pop %ebp
-    ret
-.size __syscall, . - __syscall
+#endif

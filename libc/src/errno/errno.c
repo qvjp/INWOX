@@ -1,4 +1,3 @@
-
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
@@ -22,23 +21,10 @@
  * SOFTWARE.
  */
 
-/* libc/include/errno.h
- * 错误码.
+/* libc/src/errno/errno.
+ * 错误码
  */
-#ifndef ERRNO_H__
-#define ERRNO_H__
 
-#include <inwox/errno.h>
+#include <errno.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern int errno;
-#define errno errno
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+int errno = 0;

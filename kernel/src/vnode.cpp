@@ -1,4 +1,3 @@
-
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
@@ -22,23 +21,22 @@
  * SOFTWARE.
  */
 
-/* libc/include/errno.h
- * 错误码.
+/* kernel/src/vnode.cpp
+ * Vnode class.
  */
-#ifndef ERRNO_H__
-#define ERRNO_H__
 
-#include <inwox/errno.h>
+#include <errno.h>
+#include <inwox/kernel/vnode.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern int errno;
-#define errno errno
-
-#ifdef __cplusplus
+// 默认实现，具体看继承函数如何实现
+ssize_t Vnode::read(void* /*buffer*/, size_t /*size*/)
+{
+    errno = ENOSYS;
+    return -1;
 }
-#endif
 
-#endif
+ssize_t Vnode::write(const void* /*buffer*/, size_t /*size*/)
+{
+    errno = ENOSYS;
+    return -1;
+}

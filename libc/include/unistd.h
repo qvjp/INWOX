@@ -30,6 +30,9 @@
 #define UNISTD_H__
 
 #define __need_pid_t
+#define __need_ssize_t
+#define __need_size_t
+#define __need_FILE
 #include <sys/types.h>
 #ifdef __cplusplus
 extern "C" {

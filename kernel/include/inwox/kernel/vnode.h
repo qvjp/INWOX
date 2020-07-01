@@ -1,4 +1,3 @@
-
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
@@ -22,23 +21,28 @@
  * SOFTWARE.
  */
 
-/* libc/include/errno.h
- * 错误码.
+/* kernel/include/inwox/kernel/vnode.h
+ * Vnode class.
+ * 
+ * Vnode 是个啥？
+ * Vnode是一个抽象，提供统一的操作接口，是UNIX世界的经典概念。而一切皆文件是UNIX的另一个支柱性理念，
+ * 这也正好可以统一起来，在Vnode中定义文件的多种通用操作方式，具体到每种设备/文件只要继承Vnode，实
+ * 现自己的具体功能就可以。另外要注意，Vnode和Inode是不同的两个概念，Inode是描述具体文件信息的结构。
+ * 
  */
-#ifndef ERRNO_H__
-#define ERRNO_H__
 
-#include <inwox/errno.h>
+#ifndef KERNEL_VNODE_H
+#define KERNEL_VNODE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define __need_size_t
+#define __need_ssize_t
+#include <sys/types.h>
 
-extern int errno;
-#define errno errno
-
-#ifdef __cplusplus
-}
-#endif
+class Vnode {
+public:
+    virtual ssize_t write(const void* buffer, size_t size);
+    virtual ssize_t read(void* buffer, size_t size);
+    virtual ~Vnode() {}
+};
 
 #endif

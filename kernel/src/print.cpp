@@ -30,12 +30,7 @@
 #include <stddef.h> /* size_t */
 #include <stdint.h> /* uint8_t uint32_t */
 #include <inwox/kernel/print.h>
-
-// 0xC0000000是视频内存首地址
-static uint8_t *video = (uint8_t*) 0xC0000000;
-static uint8_t cursorPostX = 0;
-static uint8_t cursorPostY = 0;
-static uint8_t FontColor = 0x83; /* 灰底青字 */
+#include <inwox/kernel/terminal.h>
 
 static void printChar(char c);
 static void printString(const char* s);
@@ -106,34 +101,15 @@ void Print::printf(const char* format, ...)
     va_end(ap);
 }
 
-/**
- * 将屏幕输出设为警告色
- */
 void Print::warnTerminal()
 {
-    FontColor = 0xCF; /* 红底白字 */
-    for (size_t i = 0; i < 25; i++)
-    for (size_t j = 0; j < 80; j++)
-    {
-        video[2 * (80 * i + j) + 1] = FontColor;
-    }
+    terminal.warnTerminal();
 }
 
-/**
- * 初始化终端
- * 将屏幕背景设置为灰色
- */
 void Print::initTerminal()
 {
-    FontColor = 0x83; /* 灰底青字 */
-    for (size_t i = 0; i < 25; i++)
-        for (size_t j = 0; j < 80; j++)
-        {
-            video[2 * (80 * i + j)] = ' ';
-            video[2 * (80 * i + j) + 1] = FontColor;
-        }
+    terminal.initTerminal();
 }
-
 /*
  * 每个VGA buffer都是BBBBFFFFCCCCCCCC的结构
  * 如下图：
@@ -165,33 +141,7 @@ void Print::initTerminal()
 /* 打印单个字符 */
 static void printChar(char c)
 {
-    /* 遇到换行符或超出最大列数(79)就换行 */
-    if (c == '\n' || cursorPostX > 79)
-    {
-        cursorPostX = 0;
-        cursorPostY++;
-
-        /* 如果当前行是最后一行，则整体向上移动一行 */
-        if(cursorPostY > 24)
-        {
-            for(size_t i = 0; i < 2 * 24 * 80; i++)
-            {
-                video[i] = video[i +2 * 80];
-            }
-            /* 最后一行全部置成灰色 */
-            for (size_t i = 2 * 24 * 80; i < 2 * 25 * 80; i++)
-            {
-                video[i] = (FontColor & 0xF0) | (FontColor >> 4);
-            }
-            cursorPostY = 24;
-        }
-        if (c == '\n')
-                return;
-    }
-    video[cursorPostY * 2 * 80 + 2 * cursorPostX] = c;
-    video[cursorPostY * 2 * 80 + 2 * cursorPostX + 1] = FontColor;
-
-    cursorPostX++;
+    terminal.write(&c, 1);
 }
 
 /* 打印字符串 */

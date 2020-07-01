@@ -1,4 +1,3 @@
-
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
@@ -22,23 +21,27 @@
  * SOFTWARE.
  */
 
-/* libc/include/errno.h
- * 错误码.
+/* kernel/include/inwox/kernel/terminal.h
+ * Terminal class.
  */
-#ifndef ERRNO_H__
-#define ERRNO_H__
 
-#include <inwox/errno.h>
+#ifndef KERNEL_TERMINAL_H__
+#define KERNEL_TERMINAL_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <inwox/kernel/vnode.h>
+#include <stdint.h>
 
-extern int errno;
-#define errno errno
+typedef uint8_t color_t;
 
-#ifdef __cplusplus
-}
-#endif
+class Terminal : public Vnode {
+public:
+    virtual ssize_t write(const void* buffer, size_t size);
+    virtual void initTerminal();
+    virtual void warnTerminal();
+    virtual void setFontColor(color_t color);
+    virtual color_t getFontColor();
+};
 
-#endif
+extern Terminal terminal;
+
+#endif /* KERNEL_TERMINAL_H__ */

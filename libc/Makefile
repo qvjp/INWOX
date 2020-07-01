@@ -18,6 +18,7 @@ LIBK_FLAGS += -D__is_inwox_libk
 
 COMMON_OBJ := \
 	cxx/new \
+	errno/errno \
 	string/memcmp \
 	string/memcpy \
 	string/memmove \

@@ -14,7 +14,9 @@ OBJ := \
 	physicalmemory.o \
 	print.o \
 	process.o \
-	syscall.o
+	syscall.o \
+	terminal.o \
+	vnode.o
 
 OBJ += arch/i686/interrupt.o \
 	arch/i686/loader.o \

@@ -29,6 +29,7 @@
 #define KERNEL_PROCESS_H__
 
 #include <inwox/kernel/addressspace.h> /* AddressSpace s*/
+#include <inwox/kernel/filedescription.h>
 #include <inwox/kernel/interrupt.h>    /* struct regs */
 
 class Process
@@ -43,6 +44,8 @@ private:
     Process* next;
     void* kstack;                     /* 内核栈 */
     void* stack;                      /* 用户栈 */
+public:
+    FileDescription* fd[20];          /* 文件描述符数组 */
 public:
     static void initialize();
     static struct regs* schedule(struct regs* context);

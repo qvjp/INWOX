@@ -30,8 +30,9 @@
 
 #define SYSCALL_PAD 0
 #define SYSCALL_EXIT 1
+#define SYSCALL_WRITE 2
 
-#define NUM_SYSCALLS 2
+#define NUM_SYSCALLS 3
 
 
 #endif /* INWOX_SYSCALL_H__ */

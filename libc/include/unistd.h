@@ -39,6 +39,7 @@ extern "C" {
 #endif
 
 __attribute__((__noreturn__)) void _exit(int);
+ssize_t write(int, const void*, size_t);
 
 /* 编译GCC需要此函数，当前未实现 */
 pid_t fork(void);

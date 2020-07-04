@@ -34,6 +34,7 @@ namespace Syscall
 {
     void pad(void);
     __attribute__((__noreturn__)) void exit(int status);
+    ssize_t write(int fd, const void* buffer, size_t size);
     void badSyscall();
 }
 

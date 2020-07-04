@@ -29,6 +29,7 @@
 #include <inwox/kernel/physicalmemory.h> /* popPageFrame*/
 #include <inwox/kernel/print.h>          /* printf */
 #include <inwox/kernel/process.h>
+#include <inwox/kernel/terminal.h>
 #include <stdlib.h>                      /* malloc */
 #include <string.h>                      /* memset memcpy*/
 
@@ -48,6 +49,7 @@ Process::Process()
     prev = nullptr;
     stack = nullptr;
     kstack = nullptr;
+    memset(fd, 0, sizeof(fd));
 }
 
 /**
@@ -183,7 +185,7 @@ Process* Process::startProcess(void* entry, AddressSpace* addressSpace)
     process->interruptContext->ss = 0x23;         /* 用户数据段 */
 
     process->addressSpace = addressSpace;
-
+    process->fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 终端（stdout） */
     process->next = firstProcess;
     if (process->next)
     {

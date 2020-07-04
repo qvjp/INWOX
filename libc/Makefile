@@ -34,7 +34,8 @@ LIBC_OBJ := \
 	$(COMMON_OBJ) \
 	stdlib/_Exit \
 	stdlib/exit \
-	unistd/_exit
+	unistd/_exit \
+	unistd/write
 
 LIBK_OBJ := \
 	$(COMMON_OBJ) \

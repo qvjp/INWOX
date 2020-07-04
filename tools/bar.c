@@ -26,7 +26,12 @@
  * 测试模块，直接退出，状态码22
  */
 
+#include <string.h>
+#include <unistd.h>
+
 int main(int argc, char* argv[]) {
     (void) argc; (void) argv;
+    const char* hello = "Hello World from userspace!\n";
+    write(1, hello, strlen(hello));
     return 22;
 }

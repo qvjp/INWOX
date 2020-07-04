@@ -6,6 +6,7 @@ BUILD = $(BUILD_DIR)/$(ARCH)/kernel
 OBJ := \
 	addressspace.o \
 	assert.o \
+	filedescription.o \
 	gdt.o \
 	idt.o \
 	interrupt.o \

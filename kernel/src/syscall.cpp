@@ -33,6 +33,7 @@ static const void* syscallList[NUM_SYSCALLS] =
     (void*) Syscall::pad,
 
     (void*) Syscall::exit,
+    (void*) Syscall::write,
 };
 
 /**
@@ -70,12 +71,17 @@ void Syscall::pad()
  * 不会执行到那里，否则声明了没有返回的函数GCC会发出警告，要注意的是函数
  * 返回值void不是不返回，是没有返回“值”，还是会返回给调用者。
  */
-void __attribute__((__noreturn__)) Syscall::exit(int status)
+__attribute__((__noreturn__)) void Syscall::exit(int status)
 {
     Process::current->exit(status);
     /*退出后，调用int $49进行进程调度*/
     __asm__ __volatile__ ("int $49");
     __builtin_unreachable();
+}
+
+ssize_t Syscall::write(int fd, const void* buffer, size_t size) {
+    FileDescription* descr = Process::current->fd[fd];
+    return descr->write(buffer, size);
 }
 
 /**

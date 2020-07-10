@@ -21,35 +21,17 @@
  * SOFTWARE.
  */
 
-/**
- * lib/include/stdlib.h
- * 标准库定义
+/* libc/src/stdio/fprintf.c.
+ * 格式化输出到文件
  */
-#ifndef STRING_H__
-#define STRING_H__
+#include <stdarg.h>
+#include <stdio.h>
 
-#define __need_NULL
-#define __need_size_t
-#include <stddef.h>
-#include <sys/types.h>
-
-#ifdef __cplusplus
-extern "C"
+int dprintf(int fd, const char *__restrict format, ...)
 {
-#endif /* __cplusplus */
-
-int memcmp(const void*, const void*, size_t);
-void* memcpy(void* __restrict, const void* __restrict, size_t);
-void* memmove(void* __restrict, const void* __restrict, size_t);
-void* memset(void*, int, size_t);
-
-size_t strlen(const char*);
-size_t strnlen(const char*, size_t);
-char* strcpy(char* __restrict, const char* __restrict);
-int strcmp(const char* str1, const char* str2);
-int strncmp(const char* str1, const char* str2, size_t length);
-#ifdef __cplusplus
+    va_list vl;
+    va_start(vl, format);
+    int result = vdprintf(fd, format, vl);
+    va_end(vl);
+    return result;
 }
-#endif /* __cplusplus */
-
-#endif /* STRING_H__ */

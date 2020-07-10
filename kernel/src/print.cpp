@@ -27,15 +27,15 @@
  */
 
 #include <stdarg.h> /* va_* */
-#include <stddef.h> /* size_t */
+#include <stdio.h>
 #include <stdint.h> /* uint8_t uint32_t */
 #include <inwox/kernel/print.h>
 #include <inwox/kernel/terminal.h>
 
-static void printChar(char c);
-static void printString(const char* s);
-static void printUNum(unsigned u, int base);
-static void printSNum(int u, int base);
+static size_t print_callback(void*, const char* string, size_t length)
+{
+    return (size_t) terminal.write(string, length);
+}
 
 void Print::printf(const char* format, ...)
 {
@@ -48,57 +48,10 @@ void Print::printf(const char* format, ...)
      * va_arg()返回参数指针当前指向的值
      * va_end()和va_start()对应，调用过va_start后就必须调用va_end
      */
-    va_list ap;
-    va_start(ap, format);
-
-    int32_t d;
-    uint32_t u;
-    uint8_t c;
-    const char* s;
-    while (*format)
-    {
-        if(*format != '%')
-        {
-            printChar(*format);
-        }
-        else
-        {
-            switch(*++format)
-            {
-                case 'd':
-                        d = va_arg(ap, int);
-                        printSNum(d, 10);
-                        break;
-                case 'u':
-                        u = va_arg(ap, unsigned);
-                        printUNum(u, 10);
-                        break;
-                case 'x':
-                        u = va_arg(ap, unsigned);
-                        printUNum(u, 16);
-                        break;
-                case 'c':
-                        c = (unsigned char) va_arg(ap, int);
-                        printChar(c);
-                        break;
-                case 's':
-                        s = va_arg(ap, char*);
-                        printString(s);
-                        break;
-                case '%':
-                        printChar('%');
-                        break;
-                case '\0':
-                        va_end(ap);
-                        return;
-                default:
-                        printChar('%');
-                        printChar(*format);
-            }
-        }
-        format++;
-    }
-    va_end(ap);
+    va_list vl;
+    va_start(vl, format);
+    vcbprintf(nullptr, print_callback, format, vl);
+    va_end(vl);
 }
 
 void Print::warnTerminal()
@@ -109,95 +62,4 @@ void Print::warnTerminal()
 void Print::initTerminal()
 {
     terminal.initTerminal();
-}
-/*
- * 每个VGA buffer都是BBBBFFFFCCCCCCCC的结构
- * 如下图：
- *
- * |----------------|----------------|--------------------------------|
- * |background color|Foreground color|          Character             |
- * |     4 bit      |     4 bit      |             8 bit              |
- * |----------------|----------------|--------------------------------|
- * |15---------------------------------------------------------------0|
- */
-
-/**
- * 文本模式颜色常量
- * |+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|
- * |    BLACK    |    BLUE     |    CREEN    |    CYAN     |     RED     |   MAGENTA   |
- * |-------------|-------------|-------------|-------------|-------------|-------------|
- * |     0       |      1      |      2      |      3      |      4      |      5      |
- * |+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|
- * |    BROWN    |  LIGHT_GREY |  DARK_GREY  |  LIGHT_BLUE | LIGHT_GREEN |  LIGHT_CYAN |
- * |-------------|-------------|-------------|-------------|-------------|-------------|
- * |     6       |      7      |      8      |      9      |      A      |      B      |
- * |+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|
- * |  LIGHT_RED  |LIGHT_MAGENTA| LIGHT_BROWN |    WHITE    |
- * |-------------|-------------|-------------|-------------|
- * |     C       |      D      |      E      |      F      |
- * |+++++++++++++|+++++++++++++|+++++++++++++|+++++++++++++|
- */
-
-/* 打印单个字符 */
-static void printChar(char c)
-{
-    terminal.write(&c, 1);
-}
-
-/* 打印字符串 */
-static void printString(const char *s)
-{
-    while (*s)
-    {
-        printChar(*s++);
-    }
-}
-
-/* 无符号正数 */
-static void printUNum(unsigned u, int base)
-{
-    static const char* digits = "0123456789abcdef";
-
-    /* 因为可能要输出32位的二进制数，所以这里要定义33位，最后一位存放\0 */
-    char buffer[33];
-    /* p指向buffer最后一个位置 */
-    char* p = buffer + 32;
-    *p = '\0';
-
-    do {
-        *--p = digits[u % base];
-        u /= base;
-    } while (u);
-
-    printString(p);
-}
-
-
-/* 有符号正数 */
-static void printSNum(int u, int base)
-{
-    int flag = 0; /* 正 */
-    if (u < 0)
-    {
-        u = -u;
-        flag = 1;
-    }
-    static const char* digits = "0123456789abcdef";
-
-    char buffer[12];
-    char* p = buffer + 11;
-    *p = '\0';
-
-    do {
-        *--p = digits[u % base];
-        u /= base;
-    } while (u);
-
-    if (!flag)
-        printString(p);
-    else
-    {
-        *--p = '-';
-        printString(p);        
-    }
 }

@@ -22,34 +22,24 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/stdlib/strcmp.c
+ * 比较两个字符串
  */
-#ifndef STRING_H__
-#define STRING_H__
 
-#define __need_NULL
-#define __need_size_t
-#include <stddef.h>
-#include <sys/types.h>
+#include <stdbool.h>
+#include <string.h>
 
-#ifdef __cplusplus
-extern "C"
+int strcmp(const char* a, const char* b)
 {
-#endif /* __cplusplus */
-
-int memcmp(const void*, const void*, size_t);
-void* memcpy(void* __restrict, const void* __restrict, size_t);
-void* memmove(void* __restrict, const void* __restrict, size_t);
-void* memset(void*, int, size_t);
-
-size_t strlen(const char*);
-size_t strnlen(const char*, size_t);
-char* strcpy(char* __restrict, const char* __restrict);
-int strcmp(const char* str1, const char* str2);
-int strncmp(const char* str1, const char* str2, size_t length);
-#ifdef __cplusplus
+    for ( size_t i = 0; true; i++ )
+    {
+        unsigned char ac = (unsigned char) a[i];
+        unsigned char bc = (unsigned char) b[i];
+        if ( ac == '\0' && bc == '\0' )
+            return 0;
+        if ( ac < bc )
+            return -1;
+        if ( ac > bc )
+            return 1;
+    }
 }
-#endif /* __cplusplus */
-
-#endif /* STRING_H__ */

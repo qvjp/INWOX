@@ -22,34 +22,22 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/stdlib/strncmp.c
+ * 比较两个字符串
  */
-#ifndef STRING_H__
-#define STRING_H__
+#include <string.h>
 
-#define __need_NULL
-#define __need_size_t
-#include <stddef.h>
-#include <sys/types.h>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
-
-int memcmp(const void*, const void*, size_t);
-void* memcpy(void* __restrict, const void* __restrict, size_t);
-void* memmove(void* __restrict, const void* __restrict, size_t);
-void* memset(void*, int, size_t);
-
-size_t strlen(const char*);
-size_t strnlen(const char*, size_t);
-char* strcpy(char* __restrict, const char* __restrict);
-int strcmp(const char* str1, const char* str2);
-int strncmp(const char* str1, const char* str2, size_t length);
-#ifdef __cplusplus
+int strncmp(const char* str1, const char* str2, size_t length) {
+    for ( size_t i = 0; i < length; i++ )
+    {
+        unsigned char str1char = (unsigned char) str1[i];
+        unsigned char str2char = (unsigned char) str2[i];
+        if ( str1char < str2char )
+            return -1;
+        if ( str1char > str2char )
+            return 1;
+        if ( str1char == '\0' && str2char == '\0' )
+            return 0;
+    }
+    return 0;
 }
-#endif /* __cplusplus */
-
-#endif /* STRING_H__ */

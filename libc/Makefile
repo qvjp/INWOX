@@ -9,6 +9,7 @@ BUILD = $(BUILD_DIR)/libc
 ARFLAGS := -rcs
 CFLAGS ?= -O0 -g
 CFLAGS += --sysroot=$(SYSROOT) -std=gnu11 -ffreestanding -Wall -Wextra
+CFLAGS += -D__USE_INWOX
 CXXFLAGS ?= -O2 -g
 CXXFLAGS += --sysroot=$(SYSROOT) -std=gnu++14 -ffreestanding -Wall -Wextra
 CPPFLAGS += -I include -I $(SYSROOT)/usr/include
@@ -19,11 +20,15 @@ LIBK_FLAGS += -D__is_inwox_libk
 COMMON_OBJ := \
 	cxx/new \
 	errno/errno \
+	stdio/vcbprintf \
 	string/memcmp \
 	string/memcpy \
 	string/memmove \
 	string/memset \
-	string/strlen
+	string/strcmp \
+	string/strlen \
+	string/strnlen \
+	string/strncmp
 
 CRT_OBJ := \
 	$(BUILD)/arch/i686/crt0.o \
@@ -32,6 +37,15 @@ CRT_OBJ := \
 
 LIBC_OBJ := \
 	$(COMMON_OBJ) \
+	stdio/dprintf \
+	stdio/fprintf \
+	stdio/printf \
+	stdio/sprintf \
+	stdio/stdout \
+	stdio/vdprintf \
+	stdio/vfprintf \
+	stdio/vprintf \
+	stdio/vsprintf \
 	stdlib/_Exit \
 	stdlib/exit \
 	unistd/_exit \

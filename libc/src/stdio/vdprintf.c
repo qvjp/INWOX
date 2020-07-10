@@ -21,35 +21,20 @@
  * SOFTWARE.
  */
 
-/**
- * lib/include/stdlib.h
- * 标准库定义
+/* libc/src/stdio/vfprintf.c.
+ * 使用可变参数格式化输出到文件
  */
-#ifndef STRING_H__
-#define STRING_H__
 
-#define __need_NULL
-#define __need_size_t
-#include <stddef.h>
-#include <sys/types.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <unistd.h>
 
-#ifdef __cplusplus
-extern "C"
+static size_t vdprintf_callback(void *fd, const char* string, size_t length)
 {
-#endif /* __cplusplus */
-
-int memcmp(const void*, const void*, size_t);
-void* memcpy(void* __restrict, const void* __restrict, size_t);
-void* memmove(void* __restrict, const void* __restrict, size_t);
-void* memset(void*, int, size_t);
-
-size_t strlen(const char*);
-size_t strnlen(const char*, size_t);
-char* strcpy(char* __restrict, const char* __restrict);
-int strcmp(const char* str1, const char* str2);
-int strncmp(const char* str1, const char* str2, size_t length);
-#ifdef __cplusplus
+    return write(*(int*)fd, string, length);
 }
-#endif /* __cplusplus */
 
-#endif /* STRING_H__ */
+int vdprintf(int fd, const char *__restrict format, __gnuc_va_list vl)
+{
+    return vcbprintf(&fd, vdprintf_callback, format, vl);
+}

@@ -155,6 +155,7 @@ namespace Interrupt
 {
     void initPic();
     void enable();
+    void isr_install_handler(int isr, void (*handler)(struct regs *r));
 }
 
 #endif /* KERNEL_INTERRUPTS_H */ 

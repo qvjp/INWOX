@@ -13,6 +13,8 @@ OBJ := \
 	kernel.o \
 	pic.o \
 	physicalmemory.o \
+	ps2.o \
+	ps2keyboard.o \
 	print.o \
 	process.o \
 	syscall.o \

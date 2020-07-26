@@ -19,6 +19,7 @@ LIBK_FLAGS += -D__is_inwox_libk
 
 COMMON_OBJ := \
 	cxx/new \
+	cxx/purevirtual \
 	errno/errno \
 	stdio/vcbprintf \
 	string/memcmp \

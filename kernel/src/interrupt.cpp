@@ -107,7 +107,7 @@ void (*isr_routines[256])(regs *) =
     0
 };
 
-void isr_install_handler(int isr, void (*handler)(struct regs *r))
+void Interrupt::isr_install_handler(int isr, void (*handler)(struct regs *r))
 {
     isr_routines[isr] = handler;
 }

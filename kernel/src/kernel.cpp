@@ -33,6 +33,7 @@
 #include <inwox/kernel/inwox.h>         /* MULTIBOOT_BOOTLOADER_MAGIC */
 #include <inwox/kernel/interrupt.h>     /* Interrupt::initPic() Interrupt::enable() */
 #include <inwox/kernel/physicalmemory.h>
+#include <inwox/kernel/ps2.h>
 #include <inwox/kernel/print.h>         /* printf() */
 #include <inwox/kernel/process.h>
 #include <stdlib.h>                     /* malloc() free() */
@@ -82,6 +83,9 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     multiboot_info* multiboot = (multiboot_info*)kernelSpace->map(multibootAddress, 0x3);
     PhysicalMemory::initialize(multiboot);
     Print::printf("Physical Memory Initialized\n");
+
+    PS2::initialize();
+    Print::printf("PS2 Initialized\n");
 
     Process::initialize();
     Print::printf("Processes Initialized\n");

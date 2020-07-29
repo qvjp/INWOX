@@ -30,6 +30,7 @@
 #include <inwox/kernel/port.h>
 #include <inwox/kernel/ps2.h>
 #include <inwox/kernel/ps2keyboard.h>
+#include <inwox/kernel/terminal.h>
 #include <assert.h>
 
 #define PS2_DATA_PORT    0x60
@@ -94,7 +95,6 @@ void PS2::initialize() {
     uint8_t config = sendPS2CommandWithResponse(COMMAND_READ_CONFIG);
     config &= ~PS2_CONFIG_FIRST_INTERRUPT;
     config &= ~PS2_CONFIG_SECOND_INTERRUPT;
-    config &= ~PS2_CONFIG_FIRST_TRANSLATION;
     sendPS2Command(COMMAND_WRITE_CONFIG, config);
 
     // 控制器自检
@@ -162,11 +162,12 @@ void PS2::initialize() {
             if (id == 0xAB) {
                 id = Hardwarecommunication::inportb(PS2_DATA_PORT);
                 if (id == 0x41 || id == 0xC1 || id == 0x83) {
-                    ps2Device1 = new PS2Keyboard();
+                    PS2Keyboard* keyboard = new PS2Keyboard();
+                    keyboard->listener = &terminal;
+                    ps2Device1 = keyboard;
                     Interrupt::isr_install_handler(33, irqHandler);
                 }
             }
-            Hardwarecommunication::outportb(PS2_DATA_PORT, DEVICE_CMD_ENABLE_SCANNING);
         } while(0);
     }
 }

@@ -92,6 +92,14 @@ static void printChar(char c) {
     cursorPostX++;
 }
 
+void Terminal::onKeyboardEvent(int key) {
+    char c = Keyboard::getCharFromKey(key);
+
+    if (c) {
+        write(&c, 1);
+    }
+}
+
 ssize_t Terminal::write(const void* buffer, size_t size) {
     const char* buf = (const char*) buffer;
 

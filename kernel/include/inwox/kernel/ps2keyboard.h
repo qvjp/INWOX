@@ -29,11 +29,16 @@
 #define KERNEL_PS2KEYBOARD_H
 
 #include <inwox/kernel/ps2.h>
+#include <inwox/kernel/keyboard.h>
 
 class PS2Keyboard : public PS2Device {
 public:
     PS2Keyboard();
     virtual void irqHandler();
+private:
+    void handleKey(int keyCode);
+public:
+    KeyboardListener* listener;
 };
 
 #endif

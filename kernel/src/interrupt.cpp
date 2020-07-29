@@ -146,12 +146,8 @@ extern "C" struct regs* interrupt_handler(struct regs *r)
          * 定义一个空函数指针用来放具体的IRQ处理程序
          */
         void (*handler)(struct regs *r);
-        if (r->int_no != 32)
-        {
-            Print::printf("IRQ %d occurred!\n", r->int_no - 32);
-        }
         /* 当时钟中断发生时，进行进程调度 */
-        else if(r->int_no == 32)
+        if(r->int_no == 32)
         {
             newContext = Process::schedule(r);
         }

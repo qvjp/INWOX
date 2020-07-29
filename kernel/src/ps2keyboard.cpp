@@ -30,11 +30,88 @@
 #include <inwox/kernel/port.h>
 #include <inwox/kernel/ps2keyboard.h>
 
-PS2Keyboard::PS2Keyboard() {
+#define KEYBOARD_ACK 0xFA
+#define KEYBOARD_RESEND 0xFE
 
+#define ESCAPED_FLAG 0xE0
+
+#define KEYBOARD_SET_LED 0xED
+#define KEYBOARD_SET_SCANCODE 0xF0
+#define KEYBOARD_SET_RATE_AND_DELAY 0xF3
+#define KEYBOARD_ENABLE_SCANNING 0xF4
+#define KEYBOARD_DISABLE_SCANNING 0xF5
+#define KEYBOARD_SET_DEFAULT_PARAMETERS 0xF6
+
+#define LED_SCROLLLOCK 1
+#define LED_NUMBERLOCK_MASK 2
+#define LED_CAPSLOCK 4
+
+static void sendKeyboardCommand(uint8_t command);
+static void sendKeyboardCommand(uint8_t command, uint8_t data);
+
+PS2Keyboard::PS2Keyboard() {
+    listener = nullptr;
+    sendKeyboardCommand(KEYBOARD_ENABLE_SCANNING);
+    Print::printf("Keyboard enable");
 }
+
+enum {
+    STATE_NORMAL,
+    STATE_ESCAPED,
+};
+
+static int state = STATE_NORMAL;
+static uint8_t ledState = 0;
 
 void PS2Keyboard::irqHandler() {
     uint8_t data = Hardwarecommunication::inportb(0x60);
-    Print::printf("Scancode 0x%x received\n", data);
+    int keycode;
+
+    if (data == KEYBOARD_ACK || data == KEYBOARD_RESEND) {
+        return;
+    } else if (data == ESCAPED_FLAG) {
+        state = STATE_ESCAPED;
+    } else {
+        if (state == STATE_NORMAL) {
+            keycode = data & 0x7F;
+        } else {
+            keycode = data | 0x80;
+            state = STATE_NORMAL;
+        }
+        bool released = data & 0x80;
+
+        handleKey(released ? -keycode : keycode);
+    }
+}
+
+void PS2Keyboard::handleKey(int keycode) {
+    uint8_t newLed = ledState;
+    if (keycode == 0x45) { // 
+        newLed ^= LED_NUMBERLOCK_MASK;
+    } else if (keycode == 0x3A) {
+        newLed ^= LED_CAPSLOCK;
+    } else if (keycode == 0x46) {
+        newLed ^= LED_SCROLLLOCK;
+    }
+    if (newLed != ledState) {
+        ledState = newLed;
+
+        sendKeyboardCommand(KEYBOARD_SET_LED, ledState);
+    }
+    if (listener)
+    {
+        listener->onKeyboardEvent(keycode);
+    }
+}
+
+static void sendKeyboardCommand(uint8_t command) {
+    while (Hardwarecommunication::inportb(0x64) & 2);
+    Hardwarecommunication::outportb(0x60, command);
+}
+
+static void sendKeyboardCommand(uint8_t command, uint8_t data) {
+    while (Hardwarecommunication::inportb(0x64) & 2);
+    Hardwarecommunication::outportb(0x60, command);
+    while (Hardwarecommunication::inportb(0x64) & 2);
+    Hardwarecommunication::outportb(0x60, data);
 }

@@ -21,30 +21,21 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/kernel/terminal.h
- * Terminal class.
+/* kernel/include/inwox/kernel/keyboard.h
+ * Keyboard.
  */
 
-#ifndef KERNEL_TERMINAL_H__
-#define KERNEL_TERMINAL_H__
+#ifndef KERNEL_KEYBOARD_H
+#define KERNEL_KEYBOARD_H
 
-#include <inwox/kernel/keyboard.h>
-#include <inwox/kernel/vnode.h>
-#include <stdint.h>
+namespace Keyboard {
+char getCharFromKey(int key);
+}
 
-typedef uint8_t color_t;
-
-class Terminal : public Vnode, public KeyboardListener {
+class KeyboardListener {
 public:
-    virtual ssize_t write(const void* buffer, size_t size);
-    virtual void initTerminal();
-    virtual void warnTerminal();
-    virtual void setFontColor(color_t color);
-    virtual color_t getFontColor();
-private:
-    virtual void onKeyboardEvent(int key);
+    virtual void onKeyboardEvent(int key) = 0;
+    virtual ~KeyboardListener() {}
 };
 
-extern Terminal terminal;
-
-#endif /* KERNEL_TERMINAL_H__ */
+#endif

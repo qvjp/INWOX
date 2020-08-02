@@ -34,6 +34,7 @@ static const void* syscallList[NUM_SYSCALLS] =
 
     (void*) Syscall::exit,
     (void*) Syscall::write,
+    (void*) Syscall::read,
 };
 
 /**
@@ -77,6 +78,11 @@ __attribute__((__noreturn__)) void Syscall::exit(int status)
     /*退出后，调用int $49进行进程调度*/
     __asm__ __volatile__ ("int $49");
     __builtin_unreachable();
+}
+
+ssize_t Syscall::read(int fd, void* buffer, size_t size) {
+    FileDescription* descr = Process::current->fd[fd];
+    return descr->read(buffer, size);
 }
 
 ssize_t Syscall::write(int fd, const void* buffer, size_t size) {

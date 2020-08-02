@@ -32,10 +32,14 @@
 #include <inwox/kernel/vnode.h>
 #include <stdint.h>
 
+#define CIRCULAR_BUFFER_SIZE 4096
+
 typedef uint8_t color_t;
 
 class Terminal : public Vnode, public KeyboardListener {
 public:
+    Terminal();
+    virtual ssize_t read(void *buffer, size_t size);
     virtual ssize_t write(const void* buffer, size_t size);
     virtual void initTerminal();
     virtual void warnTerminal();
@@ -43,6 +47,12 @@ public:
     virtual color_t getFontColor();
 private:
     virtual void onKeyboardEvent(int key);
+    void writeToCircularBuffer(char c);
+    char readFromCircularBuffer();
+private:
+    char circularBuffer[CIRCULAR_BUFFER_SIZE];
+    volatile size_t readIndex;
+    volatile size_t writeIndex;
 };
 
 extern Terminal terminal;

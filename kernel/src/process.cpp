@@ -185,7 +185,9 @@ Process* Process::startProcess(void* entry, AddressSpace* addressSpace)
     process->interruptContext->ss = 0x23;         /* 用户数据段 */
 
     process->addressSpace = addressSpace;
-    process->fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 终端（stdout） */
+    process->fd[0] = new FileDescription(&terminal); /* 文件描述符0指向 stdin */
+    process->fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 stdout */
+    process->fd[2] = new FileDescription(&terminal); /* 文件描述符2指向 stderr */
     process->next = firstProcess;
     if (process->next)
     {

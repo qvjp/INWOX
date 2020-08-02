@@ -26,7 +26,14 @@
  * 测试模块，直接退出，状态码0
  */
 
+#include <stdio.h>
+#include <unistd.h>
+
 int main(int argc, char* argv[]) {
     (void) argc; (void) argv;
+    char buffer[10];
+    buffer[9] = '\0';
+    read(0, buffer, 9);
+    printf("\nYou wrote: %s\n", buffer);
     return 0;
 }

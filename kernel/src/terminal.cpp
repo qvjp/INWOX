@@ -92,12 +92,39 @@ static void printChar(char c) {
     cursorPostX++;
 }
 
+Terminal::Terminal() {
+    readIndex = 0;
+    writeIndex = 0;
+}
+
+void Terminal::writeToCircularBuffer(char c) {
+    while ((writeIndex + 1) % CIRCULAR_BUFFER_SIZE == readIndex); // 写到读指针时停止写
+    circularBuffer[writeIndex] = c;
+    writeIndex = (writeIndex + 1) % CIRCULAR_BUFFER_SIZE;
+}
+
+char Terminal::readFromCircularBuffer() {
+    while (readIndex == writeIndex); // 读到写指针时停止读
+    char result = circularBuffer[readIndex];
+    readIndex = (readIndex + 1) % CIRCULAR_BUFFER_SIZE;
+    return result;
+}
+
 void Terminal::onKeyboardEvent(int key) {
     char c = Keyboard::getCharFromKey(key);
 
     if (c) {
-        write(&c, 1);
+        printChar(c); // 输出到Terminal
+        writeToCircularBuffer(c); // 写到环形缓冲区，等待read
     }
+}
+
+ssize_t Terminal::read(void *buffer, size_t size) {
+    char *buf = (char *) buffer;
+    for (size_t i = 0; i < size; i++) {
+        buf[i] = readFromCircularBuffer();
+    }
+    return (ssize_t) size;
 }
 
 ssize_t Terminal::write(const void* buffer, size_t size) {

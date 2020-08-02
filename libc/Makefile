@@ -50,6 +50,7 @@ LIBC_OBJ := \
 	stdlib/_Exit \
 	stdlib/exit \
 	unistd/_exit \
+	unistd/read \
 	unistd/write
 
 LIBK_OBJ := \

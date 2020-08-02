@@ -91,7 +91,7 @@ void irqs_install()
 
     idt_set_gate(48, (unsigned)isr_48, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
     idt_set_gate(49, (unsigned)isr_49, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(73, (unsigned)syscallHandler, 0x08, IDT_INTERRUPT_GATE | IDT_RING3 | IDT_PRESENT);
+    idt_set_gate(73, (unsigned)syscallHandler, 0x08, IDT_TRAP_GATE | IDT_RING3 | IDT_PRESENT);
 }
 
 /**

@@ -32,6 +32,7 @@
 #include <stdint.h> /* uint16_t uint8_t uint32_t */
 
 #define IDT_INTERRUPT_GATE 0xE
+#define IDT_TRAP_GATE 0xF
 #define IDT_RING0 (0 << 5)
 #define IDT_RING3 (3 << 5)
 #define IDT_PRESENT (1 << 7)
@@ -62,8 +63,8 @@
  *
  * TYPE共四位，在32位模式中，TYPE可能的设置有
  *     0101 表示IDT中此条是一个task gate
- *     1110 表示IDT中此条是一个interrupt gate
- *     1111 表示IDT中此条是一个trap gate
+ *     1110 表示IDT中此条是一个interrupt gate IF位置0
+ *     1111 表示IDT中此条是一个trap gate IF位不置0
  * S（Storage Segment）设置为0
  * DPL即Descriptor Privilege Level，指定调用此描述符所属最高特权级，不被用户空间直接使用，设置为0即可
  * PR设置为0表示未使用

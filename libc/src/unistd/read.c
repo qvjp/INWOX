@@ -21,23 +21,11 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/include/inwox/kernel/syscall.h
- * 系统调用函数声明
+/* libc/src/unistd/read.c
+ * 从文件读指定长度的数据
  */
-#ifndef KERNEL_SYSCALL_H__
-#define KERNEL_SYSCALL_H__
 
-#include <inwox/syscall.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
-namespace Syscall
-{
-    void pad(void);
-    __attribute__((__noreturn__)) void exit(int status);
-    ssize_t read(int fd, void* buffer, size_t size);
-    ssize_t write(int fd, const void* buffer, size_t size);
-    void badSyscall();
-}
-
-
-#endif /* KERNEL_SYSCALL_H__ */
+DEFINE_SYSCALL_GLOBAL(SYSCALL_READ, ssize_t, read, (int, void*, size_t));

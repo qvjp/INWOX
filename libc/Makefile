@@ -39,9 +39,20 @@ CRT_OBJ := \
 LIBC_OBJ := \
 	$(COMMON_OBJ) \
 	stdio/dprintf \
+	stdio/fgetc \
+	stdio/fgets \
 	stdio/fprintf \
+	stdio/fputc \
+	stdio/fputs \
+	stdio/getc \
+	stdio/getchar \
 	stdio/printf \
+	stdio/putchar \
+	stdio/putc \
+	stdio/puts \
 	stdio/sprintf \
+	stdio/stderr \
+	stdio/stdin \
 	stdio/stdout \
 	stdio/vdprintf \
 	stdio/vfprintf \

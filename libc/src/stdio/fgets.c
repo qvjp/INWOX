@@ -21,18 +21,23 @@
  * SOFTWARE.
  */
 
-/**
- * tools/foo.c
- * 测试模块，直接退出，状态码0
+/* libc/src/stdio/fgets.c
+ * 从流中读取小于size个字符，遇到EOF或换行结束，并在末尾自动添加'\0'
  */
-
 #include <stdio.h>
-#include <unistd.h>
 
-int main(int argc, char* argv[]) {
-    (void) argc; (void) argv;
-    char buffer[10];
-    fgets(buffer, sizeof(buffer), stdin);
-    printf("You wrote: %s\n", buffer);
-    return 0;
+char *fgets(char * restrict buffer, int size, FILE * restrict file)
+{
+    int i = 0;
+    for (; i < size - 1; i++)
+    {
+        int c = fgetc(file);
+        if (c == '\n')
+        {
+            break;
+        }
+        buffer[i] = c;
+    }
+    buffer[i] = '\0';
+    return buffer;
 }

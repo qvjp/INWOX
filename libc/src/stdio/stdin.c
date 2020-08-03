@@ -21,18 +21,13 @@
  * SOFTWARE.
  */
 
-/**
- * tools/foo.c
- * 测试模块，直接退出，状态码0
+/* libc/src/stdio/stdin.c.
+ * 标准输入
  */
-
 #include <stdio.h>
-#include <unistd.h>
 
-int main(int argc, char* argv[]) {
-    (void) argc; (void) argv;
-    char buffer[10];
-    fgets(buffer, sizeof(buffer), stdin);
-    printf("You wrote: %s\n", buffer);
-    return 0;
-}
+FILE __stdin = {
+    .fd = 0,
+};
+
+FILE* stdin = &__stdin;

@@ -21,18 +21,16 @@
  * SOFTWARE.
  */
 
-/**
- * tools/foo.c
- * 测试模块，直接退出，状态码0
+/* libc/src/stdio/fputs.c
+ * 向流写入字符串，不包括结束字符('\0')
  */
-
 #include <stdio.h>
 #include <unistd.h>
 
-int main(int argc, char* argv[]) {
-    (void) argc; (void) argv;
-    char buffer[10];
-    fgets(buffer, sizeof(buffer), stdin);
-    printf("You wrote: %s\n", buffer);
-    return 0;
+int fputs(const char* restrict s, FILE* restrict file)
+{
+    while (*s) {
+        write(file->fd, s++, 1);
+    }
+    return 1;
 }

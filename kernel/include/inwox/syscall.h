@@ -32,8 +32,10 @@
 #define SYSCALL_EXIT 1
 #define SYSCALL_WRITE 2
 #define SYSCALL_READ 3
+#define SYSCALL_MMAP 4
+#define SYSCALL_MUNMAP 5
 
-#define NUM_SYSCALLS 4
+#define NUM_SYSCALLS 6
 
 
 #endif /* INWOX_SYSCALL_H__ */

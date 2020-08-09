@@ -26,6 +26,8 @@
  * 实现libc中malloc函数
  */
 #include <assert.h>
+#include <stdalign.h>
+#include <stddef.h>
 #include "malloc.h"
 
 /**
@@ -136,10 +138,10 @@ void __splitBlock(Mem_Ctrl_Blk* block, size_t size)
 void* malloc(size_t size)
 {
     if (size == 0)
-        size = 16;
+        size = 1;
     size_t blockSize = sizeof(Mem_Ctrl_Blk);
     /* 16字节对齐 */
-    size = ALIGN_UP(size, 16);
+    size = ALIGN_UP(size, alignof(max_align_t));
     size_t totalSize = blockSize + size;
 
 

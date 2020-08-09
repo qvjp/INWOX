@@ -22,43 +22,36 @@
  */
 
 /**
- * lib/include/sys/types.h
- * 数据类型定义
+ * lib/include/sys/mman.h
+ * mmap munmap声明
  */
 
-#include <inwox/types.h>
+#ifndef SYS_MMAN_H__
+#define SYS_MMAN_H__
 
-#if defined(__need_FILE) && !defined(__FILE_defined)
-typedef struct __FILE FILE;
-#  define __FILE_defined
+#define __need_mode_t
+#define __need_off_t
+#define __need_size_t
+#include <sys/types.h>
+#include <inwox/mman.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if defined(__need_fpos_t) && !defined(__fpos_t_defined)
-typedef __off_t fpos_t;
-#  define __fpos_t_defined
+/**
+ * 要求内核创建一个新的虚拟内存区域，从addr开始，将文件描述符fd指定的对象的一个连续片映射到这个新区域，
+ * 连续对象片大小为size字节，从距文件开始处偏移量为offset字节的位置开始
+ */
+void* mmap(void *addr, size_t size, int protection, int flags, int fd, off_t offset);
+
+/**
+ * 删除从虚拟地址addr开始，由接下俩size个字节组成的区域，接下来再对这块区域使用将产生段错误
+ */
+int munmap(void *addr, size_t size);
+
+#ifdef __cplusplus
+}
 #endif
 
-#if defined(__need_off_t) && !defined(__off_t_defined)
-typedef __off_t off_t;
-#  define __off_t_defined
 #endif
-
-#if defined(__need_pid_t) && !defined(__pid_t_defined)
-typedef __pid_t pid_t;
-#  define __pid_t_defined
-#endif
-
-#if defined(__need_size_t) || defined(__need_NULL)
-#  include <stddef.h>
-#endif
-
-#if defined(__need_ssize_t) && !defined(__ssize_t_defined)
-typedef __SSIZE_TYPE__ ssize_t;
-#  define __ssize_t_defined
-#endif
-
-#undef __need_FILE
-#undef __need_fpos_t
-#undef __need_off_t
-#undef __need_pid_t
-#undef __need_ssize_t

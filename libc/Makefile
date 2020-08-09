@@ -22,6 +22,8 @@ COMMON_OBJ := \
 	cxx/purevirtual \
 	errno/errno \
 	stdio/vcbprintf \
+	stdlib/free \
+	stdlib/malloc \
 	string/memcmp \
 	string/memcpy \
 	string/memmove \
@@ -38,6 +40,7 @@ CRT_OBJ := \
 
 LIBC_OBJ := \
 	$(COMMON_OBJ) \
+	assert/assert \
 	stdio/dprintf \
 	stdio/fgetc \
 	stdio/fgets \
@@ -60,14 +63,14 @@ LIBC_OBJ := \
 	stdio/vsprintf \
 	stdlib/_Exit \
 	stdlib/exit \
+	sys/mman/mmap \
+	sys/mman/munmap \
 	unistd/_exit \
 	unistd/read \
 	unistd/write
 
 LIBK_OBJ := \
-	$(COMMON_OBJ) \
-	stdlib/free \
-	stdlib/malloc
+	$(COMMON_OBJ)
 
 LIBC_OBJ += \
 	arch/i686/syscall

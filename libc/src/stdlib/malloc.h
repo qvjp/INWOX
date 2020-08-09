@@ -30,12 +30,17 @@
 
 #include <stddef.h> /* size_t */
 
+#if __is_inwox_libc
+#  include <sys/mman.h>
+#  define mapPages(nPages) mmap(NULL, nPages * PAGESIZE, \
+     PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+#  define unmapPages(addr, nPages) munmap(addr, nPages * PAGESIZE)
+#else /* if __is_inwox_libk */
 extern void* __mapPages(size_t);
 extern void __unmapPages(void*, size_t);
-
 #define mapPages(pages_number) __mapPages(pages_number)
 #define unmapPages(addr, pages_number) __unmapPages(addr, pages_number)
-
+#endif
 typedef struct Mem_Ctrl_Blk
 {
     size_t magic;

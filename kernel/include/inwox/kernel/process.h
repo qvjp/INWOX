@@ -38,7 +38,6 @@ public:
     Process();
     void exit(int status);
 private:
-    AddressSpace* addressSpace;       /* 每个进程都有自己独立的地址空间 */
     struct regs* interruptContext;
     Process* prev;
     Process* next;
@@ -47,6 +46,7 @@ private:
 public:
     FileDescription* fd[20];          /* 文件描述符数组 */
 public:
+    AddressSpace* addressSpace;       /* 每个进程都有自己独立的地址空间 */
     static void initialize();
     static struct regs* schedule(struct regs* context);
     static Process* loadELF(inwox_vir_addr_t elf);

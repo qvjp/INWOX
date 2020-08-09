@@ -27,12 +27,18 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include<sys/mman.h>
 
 int main(int argc, char* argv[]) {
     (void) argc; (void) argv;
-    char buffer[10];
-    fgets(buffer, sizeof(buffer), stdin);
-    printf("You wrote: %s\n", buffer);
+    char *buffer = malloc(8);
+    fgets(buffer, 8, stdin);
+    printf("\nYou wrote: %s\n", buffer);
+    free(buffer);
+    char *buffer2 = mmap(NULL, 8, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    fgets(buffer2, 8, stdin);
+    printf("\nYou wrote: %s\n", buffer2);
+    munmap(buffer2, 8);
     return 0;
 }

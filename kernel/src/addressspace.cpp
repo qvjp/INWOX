@@ -26,10 +26,14 @@
  * 实现地址空间的基本操作
  */
 
+#include <inwox/mman.h>
 #include <inwox/kernel/addressspace.h>
 #include <inwox/kernel/physicalmemory.h> /* pushPageFrame popPageFrame */           
 #include <inwox/kernel/print.h>          /* Print::printf() */
+#include <inwox/kernel/process.h>
+#include <inwox/kernel/syscall.h>
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>                      /* malloc() */
 #include <string.h>                      /* memset() */
 
@@ -464,6 +468,42 @@ void AddressSpace::unMapRange(inwox_vir_addr_t firstVirtualAddress, size_t pages
         unMap(firstVirtualAddress);
         firstVirtualAddress += 0x1000;
     }
+}
+
+static void *mmapImplementation(void *, size_t size, int, int flags, int , __off_t)
+{
+    /** 
+     * 忽略掉addr，即起始地址、protection访问权限，fd指定磁盘文件的文件描述符和偏移量offset
+     */
+    if (size == 0 || !(flags & MAP_PRIVATE))
+    {
+        errno = EINVAL;
+        return MAP_FAILED;
+    }
+    if (flags & MAP_ANONYMOUS) {
+        AddressSpace* addressSpace = Process::current->addressSpace;
+        return (void*) addressSpace->allocate(size / 0x1000);
+    }
+
+    errno = ENOTSUP;
+    return MAP_FAILED;
+}
+
+void* Syscall::mmap(__mmapRequest* request) {
+    return mmapImplementation(request->_addr, request->_size, request->_protection,
+            request->_flags, request->_fd, request->_offset);
+}
+
+int Syscall::munmap(void* addr, size_t size) {
+    if (size == 0 || (inwox_vir_addr_t) addr & 0xFFF) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    AddressSpace* addressSpace = Process::current->addressSpace;
+    //TODO: The userspace process could unmap kernel pages!
+    addressSpace->free((inwox_vir_addr_t) addr, size / 0x1000);
+    return 0;
 }
 
 /**

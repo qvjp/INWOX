@@ -1,5 +1,6 @@
 TO_ROOT = ..
 include $(TO_ROOT)/build-config/config.mk
+CPPFLAGS += -D__is_inwox_kernel
 
 BUILD = $(BUILD_DIR)/$(ARCH)/kernel
 

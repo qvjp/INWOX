@@ -20,16 +20,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/* kernel/include/inwox/file.h
+ * 文件vnode
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#ifndef INWOX_FILE_H__
+#define INWOX_FILE_H__
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+#include <inwox/kernel/vnode.h>
 
-#endif /* INWOX_TYPES_H__ */
+class FileVnode : public Vnode {
+public:
+    FileVnode();
+    virtual bool isSeekable();
+    virtual ssize_t pread(void *buffer, size_t size, off_t offset);
+
+private:
+    const char *data;
+    size_t fileSize;
+};
+
+#endif /* INWOX_FILE_H__ */

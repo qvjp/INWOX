@@ -21,15 +21,30 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/**
+ * lib/include/fcntl.h
+ * 文件操作的基本定义
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#ifndef _FCNTL_H
+#define _FCNTL_H
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+#define __need_mode_t
+#define __need_off_t
+#define __need_pid_t
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <inwox/fcntl.h>
 
-#endif /* INWOX_TYPES_H__ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int open(const char *path, int flags, ... /* mode_t mode */);
+int openat(int fd, const char *path, int flags, ... /* mode_t mode */);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -29,6 +29,7 @@ COMMON_OBJ := \
 	string/memmove \
 	string/memset \
 	string/strcmp \
+	string/strcspn \
 	string/strlen \
 	string/strnlen \
 	string/strncmp
@@ -41,12 +42,16 @@ CRT_OBJ := \
 LIBC_OBJ := \
 	$(COMMON_OBJ) \
 	assert/assert \
+	fcntl/open \
+	fcntl/openat \
 	stdio/dprintf \
+	stdio/fdopen \
 	stdio/fgetc \
 	stdio/fgets \
 	stdio/fprintf \
 	stdio/fputc \
 	stdio/fputs \
+	stdio/fopen \
 	stdio/getc \
 	stdio/getchar \
 	stdio/printf \

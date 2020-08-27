@@ -26,7 +26,7 @@
  */
 #include <stdio.h>
 
-int puchar(int c)
+int putchar(int c)
 {
     return putc(c, stdout);
 }

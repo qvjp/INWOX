@@ -21,15 +21,17 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/* libc/src/stdio/fdopen.c
+ * 为文件描述符分配具体文件
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#include <stdio.h>
+#include <stdlib.h>
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+FILE* fdopen(int fd, const char* mode) {
+    (void) mode;
 
-#endif /* INWOX_TYPES_H__ */
+    FILE* file = malloc(sizeof(FILE));
+    file->fd = fd;
+    return file;
+}

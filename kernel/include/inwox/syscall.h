@@ -34,8 +34,9 @@
 #define SYSCALL_READ 3
 #define SYSCALL_MMAP 4
 #define SYSCALL_MUNMAP 5
+#define SYSCALL_OPENAT 6
 
-#define NUM_SYSCALLS 6
+#define NUM_SYSCALLS 7
 
 
 #endif /* INWOX_SYSCALL_H__ */

@@ -21,15 +21,31 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/* kernel/src/file.cpp
+ * FileVnode class.
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#include <string.h>
+#include <inwox/kernel/file.h>
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+FileVnode::FileVnode() {
+    data = "Hello World!";
+    fileSize = strlen(data);
+}
 
-#endif /* INWOX_TYPES_H__ */
+bool FileVnode::isSeekable() {
+    return true;
+}
+
+ssize_t FileVnode::pread(void* buffer, size_t size, off_t offset) {
+    char* buf = (char*) buffer;
+
+    for (size_t i = 0; i < size; i++) {
+        if (offset + i >= fileSize) {
+            return i;
+        }
+        buf[i] = data[offset + i];
+    }
+
+    return size;
+}

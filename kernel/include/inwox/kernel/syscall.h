@@ -28,6 +28,7 @@
 #ifndef KERNEL_SYSCALL_H__
 #define KERNEL_SYSCALL_H__
 
+#include <sys/types.h>
 #include <inwox/syscall.h>
 
 struct __mmapRequest;
@@ -39,6 +40,7 @@ namespace Syscall
     ssize_t write(int fd, const void* buffer, size_t size);
     void *mmap(__mmapRequest *request);
     int munmap(void *addr, size_t size);
+    int openat(int fd, const char *path, int flags, mode_t mode);
     void badSyscall();
 }
 

@@ -21,15 +21,26 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/* libc/src/stdio/openat.c
+ * 以特定方式打开指定相对路径文件
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#include <stdarg.h>
+#include <fcntl.h>
+#include <sys/syscall.h>
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+DEFINE_SYSCALL(SYSCALL_OPENAT, int, sys_openat,
+        (int, const char*, int, mode_t));
 
-#endif /* INWOX_TYPES_H__ */
+int openat(int fd, const char* path, int flags, ...) {
+    mode_t mode = 0;
+
+    if (flags & O_CREAT) {
+        va_list ap;
+        va_start(ap, flags);
+        mode = va_arg(ap, mode_t);
+        va_end(ap);
+    }
+
+    return sys_openat(fd, path, flags, mode);
+}

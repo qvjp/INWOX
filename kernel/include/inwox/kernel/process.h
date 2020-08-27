@@ -37,6 +37,7 @@ class Process
 public:
     Process();
     void exit(int status);
+    int registerFileDescriptor(FileDescription *descriptor);
 private:
     struct regs* interruptContext;
     Process* prev;
@@ -45,9 +46,11 @@ private:
     void* stack;                      /* 用户栈 */
 public:
     FileDescription* fd[20];          /* 文件描述符数组 */
+    FileDescription* rootFd;
+    FileDescription* cwdFd;
 public:
     AddressSpace* addressSpace;       /* 每个进程都有自己独立的地址空间 */
-    static void initialize();
+    static void initialize(FileDescription* rootFd); /* 初始化进场的时候要把进程根目录传进来 */
     static struct regs* schedule(struct regs* context);
     static Process* loadELF(inwox_vir_addr_t elf);
     static Process* startProcess(void* entry, AddressSpace* addressspace);

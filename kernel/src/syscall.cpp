@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <inwox/fcntl.h>
 #include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
 #include <inwox/kernel/syscall.h>
@@ -37,6 +38,7 @@ static const void* syscallList[NUM_SYSCALLS] =
     (void*) Syscall::read,
     (void*) Syscall::mmap,
     (void*) Syscall::munmap,
+    (void*) Syscall::openat,
 };
 
 /**
@@ -90,6 +92,24 @@ ssize_t Syscall::read(int fd, void* buffer, size_t size) {
 ssize_t Syscall::write(int fd, const void* buffer, size_t size) {
     FileDescription* descr = Process::current->fd[fd];
     return descr->write(buffer, size);
+}
+
+int Syscall::openat(int fd, const char* path, int flags, mode_t mode) {
+    FileDescription* descr;
+
+    if (path[0] == '/') {
+        descr = Process::current->rootFd;
+    } else if (fd == AT_FDCWD) {
+        descr = Process::current->cwdFd;
+    } else {
+        descr = Process::current->fd[fd];
+    }
+
+    FileDescription* result = descr->openat(path, flags, mode);
+    if (!result) {
+        return -1;
+    }
+    return Process::current->registerFileDescriptor(result);
 }
 
 /**

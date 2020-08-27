@@ -21,15 +21,23 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/* libc/src/string/strcspn.c
+ * 返回在找到任何指定的字符之前，在字符串查找的字符数（包括空格）
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#include <string.h>
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+size_t strcspn(const char* string, const char* characters) {
+    size_t result = 0;
 
-#endif /* INWOX_TYPES_H__ */
+    while (string[result]) {
+        for (size_t i = 0; characters[i]; i++) {
+            if (string[result] == characters[i]) {
+                return result;
+            }
+        }
+        result++;
+    }
+
+    return result;
+}

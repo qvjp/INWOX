@@ -30,6 +30,7 @@
 #include <inwox/kernel/print.h>          /* printf */
 #include <inwox/kernel/process.h>
 #include <inwox/kernel/terminal.h>
+#include <errno.h>
 #include <stdlib.h>                      /* malloc */
 #include <string.h>                      /* memset memcpy*/
 
@@ -50,13 +51,15 @@ Process::Process()
     stack = nullptr;
     kstack = nullptr;
     memset(fd, 0, sizeof(fd));
+    rootFd = nullptr;
+    cwdFd = nullptr;
 }
 
 /**
  * 进程初始化
  * 创建空闲进程（没有其他任务执行时执行的进程）
  */
-void Process::initialize()
+void Process::initialize(FileDescription *rootFd)
 {
     idleProcess = (Process*)malloc(sizeof(Process));
     idleProcess->addressSpace = kernelSpace;
@@ -64,6 +67,7 @@ void Process::initialize()
     idleProcess->prev = 0;
     idleProcess->kstack = 0;
     idleProcess->stack = 0;
+    idleProcess->rootFd = rootFd;
     idleProcess->interruptContext = (struct regs*)malloc(sizeof(struct regs));
     current = idleProcess;
     firstProcess = nullptr;
@@ -188,6 +192,8 @@ Process* Process::startProcess(void* entry, AddressSpace* addressSpace)
     process->fd[0] = new FileDescription(&terminal); /* 文件描述符0指向 stdin */
     process->fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 stdout */
     process->fd[2] = new FileDescription(&terminal); /* 文件描述符2指向 stderr */
+    process->rootFd = idleProcess->rootFd;
+    process->cwdFd = process->rootFd;
     process->next = firstProcess;
     if (process->next)
     {
@@ -211,4 +217,20 @@ void Process::exit(int status)
         firstProcess = next;
 
     Print::printf("Process exited with status: %d\n", status);
+}
+
+/**
+ * 将文件注册给进程
+ * 交给最小的可用文件描述符表示
+ */
+int Process::registerFileDescriptor(FileDescription* descr) {
+    for (int i = 0; i < 20; i++) {
+        if (fd[i] == nullptr) {
+            fd[i] = descr;
+            return i;
+        }
+    }
+
+    errno = EMFILE;
+    return -1;
 }

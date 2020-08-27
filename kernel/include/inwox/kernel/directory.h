@@ -20,16 +20,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/* kernel/include/inwox/directory.h
+ * 目录vnode
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#ifndef INWOX_DIRECTORY_H__
+#define INWOX_DIRECTORY_H__
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+#include <inwox/kernel/vnode.h>
 
-#endif /* INWOX_TYPES_H__ */
+class DirectoryVnode  : public Vnode {
+public:
+    DirectoryVnode ();
+    void addChildNode(const char *path, Vnode *vnode);
+    virtual Vnode *openat(const char *path, int flags, mode_t mode);
+
+private:
+    size_t childCount;
+    Vnode **childNodes;
+    const char **fileNames;
+};
+
+#endif /* INWOX_DIRECTORY_H__ */

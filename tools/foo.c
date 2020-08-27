@@ -32,13 +32,13 @@
 
 int main(int argc, char* argv[]) {
     (void) argc; (void) argv;
-    char *buffer = malloc(8);
+    FILE* file = fopen("inwox", "r");
+    char* buffer = malloc(8);
+    while (fgets(buffer, 7, file)) {
+        printf("Read from file: %s\n", buffer);
+    }
+
     fgets(buffer, 8, stdin);
-    printf("\nYou wrote: %s\n", buffer);
-    free(buffer);
-    char *buffer2 = mmap(NULL, 8, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    fgets(buffer2, 8, stdin);
-    printf("\nYou wrote: %s\n", buffer2);
-    munmap(buffer2, 8);
+    printf("You wrote: %s\n", buffer);
     return 0;
 }

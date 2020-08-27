@@ -165,6 +165,7 @@ int ferror(FILE *stream);
 /* end - 错误处理 */
 
 #if __USE_INWOX || __USE_POSIX
+FILE *fdopen(int ,const char *);
 int vcbprintf(void*, size_t (*)(void*, const char*, size_t), const char*, __gnuc_va_list);
 #endif /* __USE_INWOX || __USE_POSIX */
 

@@ -38,6 +38,11 @@ typedef __off_t fpos_t;
 #  define __fpos_t_defined
 #endif
 
+#if defined(__need_mode_t) && !defined(__mode_t_defined)
+typedef __mode_t mode_t;
+#  define __mode_t_defined
+#endif
+
 #if defined(__need_off_t) && !defined(__off_t_defined)
 typedef __off_t off_t;
 #  define __off_t_defined
@@ -59,6 +64,7 @@ typedef __SSIZE_TYPE__ ssize_t;
 
 #undef __need_FILE
 #undef __need_fpos_t
+#undef __need_mode_t
 #undef __need_off_t
 #undef __need_pid_t
 #undef __need_ssize_t

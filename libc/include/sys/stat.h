@@ -21,15 +21,45 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/types.h
- * INWOX定义的数据类型.
+/**
+ * lib/include/stat.h
+ * 文件操作基本定义
  */
 
-#ifndef INWOX_TYPES_H__
-#define INWOX_TYPES_H__
+#ifndef SYS_STAT_H__
+#define SYS_STAT_H__
 
-typedef int __mode_t;
-typedef int __pid_t;
-typedef __INTMAX_TYPE__ __off_t;
+#define __need_dev_t
+#define __need_ino_t
+#define __need_mode_t
+#define __need_nlink_t
+#define __need_uid_t
+#define __need_gid_t
+#define __need_off_t
+#define __need_time_t
+#include <sys/types.h>
 
-#endif /* INWOX_TYPES_H__ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define S_IRWXU 0700
+#define S_IRUSR 0400
+#define S_IWUSR 0200
+#define S_IXUSR 0100
+#define S_IRWXG 070
+#define S_IRGRP 040
+#define S_IWGRP 020
+#define S_IXGRP 010
+#define S_IRWXO 07
+#define S_IROTH 04
+#define S_IWOTH 02
+#define S_IXOTH 01
+#define S_ISUID 04000
+#define S_ISGID 02000
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SYS_STAT_H__ */

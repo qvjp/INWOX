@@ -20,5 +20,6 @@ LIBS ?= -lk -lgcc
 MKRESCUE ?= grub-mkrescue
 
 ISO ?= INWOX.iso
+INITRD ?= $(BUILD_DIR)/$(ARCH)/initrd/initrd.tar
 
 SYSROOT ?= $(TO_ROOT)/sysroot

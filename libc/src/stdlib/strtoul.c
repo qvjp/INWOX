@@ -22,36 +22,14 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/stdlib/strtol.c
+ * 将string转换成unsigned long
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#define __need_size_t
-#include <sys/types.h>
+#define STRTOL_NAME strtoul
+#define STRTOL_RESULT unsigned long
+#define STRTOL_RESULT_MAX ULONG_MAX
+#define STRTOL_RESULT_MIN 0
+#define STRTOL_UNSIGNED true
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void*);
-void* malloc(size_t);
-long strtol(const char* __restrict, char** __restrict, int);
-unsigned long strtoul(const char* __restrict, char** __restrict, int);
-
-/* 编译GCC需要此函数，当前未实现 */
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char*);
-char* getenv(const char*);
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H__ */
+#include "strtol.c"

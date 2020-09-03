@@ -21,37 +21,16 @@
  * SOFTWARE.
  */
 
-/**
- * lib/include/stdlib.h
- * 标准库定义
+/* libc/src/string/strdup.c
+ * 拷贝一份buf
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#define __need_size_t
-#include <sys/types.h>
+#include <stdlib.h>
+#include <string.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void*);
-void* malloc(size_t);
-long strtol(const char* __restrict, char** __restrict, int);
-unsigned long strtoul(const char* __restrict, char** __restrict, int);
-
-/* 编译GCC需要此函数，当前未实现 */
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char*);
-char* getenv(const char*);
-
-#ifdef __cplusplus
+char* strdup(const char* str) {
+    size_t length = strlen(str);
+    char* result = malloc(length);
+    memcpy(result, str, length + 1);
+    return result;
 }
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H__ */

@@ -32,6 +32,7 @@
 #include <inwox/kernel/addressspace.h>  /**/
 #include <inwox/kernel/directory.h>
 #include <inwox/kernel/file.h>
+#include <inwox/kernel/initrd.h>
 #include <inwox/kernel/inwox.h>         /* MULTIBOOT_BOOTLOADER_MAGIC */
 #include <inwox/kernel/interrupt.h>     /* Interrupt::initPic() Interrupt::enable() */
 #include <inwox/kernel/physicalmemory.h>
@@ -42,14 +43,15 @@
 #include <string.h>
 
 /**
- * 从multiboot信息中解析ELF模块
+ * 从multiboot信息中解析initrd
  * 
  * 先从multiboot的mod信息中找到模块首地址并给它分配虚拟地址
  * 然后通过mod_start和mod_end解析每一个模块，并将模块的首地址
- * 传给ELF加载函数loadELF()。最终释放过程中使用的虚拟地址。
+ * 传给Initrd::loadInitrd。最终释放过程中使用的虚拟地址。
  */
-static void startProcesses(multiboot_info* multiboot)
+static DirectoryVnode *loadInitrd(multiboot_info* multiboot)
 {
+    DirectoryVnode* root = nullptr;
     inwox_phy_addr_t modulesAligned = multiboot->mods_addr & ~0xFFF;
     ptrdiff_t offset = multiboot->mods_addr - modulesAligned;
     inwox_vir_addr_t modulesPage = kernelSpace->map(modulesAligned, PAGE_PRESENT | PAGE_WRITABLE);
@@ -60,11 +62,16 @@ static void startProcesses(multiboot_info* multiboot)
     {
         /* 按页对齐后再分配内存 */
         size_t pages_number = ALIGN_UP(modules[i].mod_end - modules[i].mod_start, 0x1000) / 0x1000;
-        inwox_vir_addr_t elf = kernelSpace->mapRange(modules[i].mod_start, pages_number, PAGE_PRESENT);
-        Process::loadELF(elf);
-        kernelSpace->unMapRange(elf, pages_number);
+        inwox_vir_addr_t initrd = kernelSpace->mapRange(modules[i].mod_start, pages_number, PAGE_PRESENT);
+        root = Initrd::loadInitrd(initrd);
+        kernelSpace->unMapRange(initrd, pages_number);
+
+        if (root->childCount) {
+            break;
+        }
     }
     kernelSpace->unMap((inwox_vir_addr_t) modulesPage);
+    return root;
 }
 
 extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
@@ -89,15 +96,23 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     PS2::initialize();
     Print::printf("PS2 Initialized\n");
 
-    // Create a root directory with a file.
-    DirectoryVnode* rootDir = new DirectoryVnode();
-    rootDir->addChildNode("inwox", new FileVnode());
+    DirectoryVnode* rootDir = loadInitrd(multiboot);
     FileDescription* rootFd = new FileDescription(rootDir);
+    Print::printf("Initrd loaded\n");
 
     Process::initialize(rootFd);
     Print::printf("Processes Initialized\n");
 
-    startProcesses(multiboot);
+    FileVnode *program = (FileVnode *) rootDir->openat("foo", 0, 0);
+    if (program) {
+        Print::printf("foo opened\n");
+        Process::loadELF((inwox_vir_addr_t)program->data);
+    }
+    program = (FileVnode *) rootDir->openat("bar", 0, 0);
+    if (program) {
+        Print::printf("bar opened\n");
+        Process::loadELF((inwox_vir_addr_t)program->data);
+    }
     kernelSpace->unMap((inwox_vir_addr_t)multiboot);
 
     Interrupt::initPic();

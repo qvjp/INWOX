@@ -74,12 +74,12 @@ static void printChar(char c) {
         {
             for(size_t i = 0; i < 2 * 24 * 80; i++)
             {
-                video[i] = video[i +2 * 80];
+                video[i] = video[i + 2 * 80];
             }
             /* 最后一行全部置成灰色 */
             for (size_t i = 2 * 24 * 80; i < 2 * 25 * 80; i++)
             {
-                video[i] = (FontColor & 0xF0) | (FontColor >> 4);
+                video[i] = 0;
             }
             cursorPostY = 24;
         }

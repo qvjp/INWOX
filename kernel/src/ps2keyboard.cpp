@@ -52,7 +52,7 @@ static void sendKeyboardCommand(uint8_t command, uint8_t data);
 PS2Keyboard::PS2Keyboard() {
     listener = nullptr;
     sendKeyboardCommand(KEYBOARD_ENABLE_SCANNING);
-    Print::printf("Keyboard enable");
+    Print::printf("Keyboard enable\n");
 }
 
 enum {

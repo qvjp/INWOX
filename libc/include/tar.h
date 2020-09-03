@@ -22,36 +22,38 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * lib/include/tar.h
+ * tar文件常量定义
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#define __need_size_t
-#include <sys/types.h>
+#ifndef TAR_H__
+#define TAR_H__
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+#define TMAGIC "ustar"
+#define TMAGLEN 6
+#define TVERSION "00"
+#define TVERSLEN 2
 
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
+#define REGTYPE '0'
+#define AREGTYPE '\0'
+#define LNKTYPE '1'
+#define SYMTYPE '2'
+#define CHRTYPE '3'
+#define BLKTYPE '4'
+#define DIRTYPE '5'
+#define FIFOTYPE '6'
+#define CONTTYPE '7'
 
-void free(void*);
-void* malloc(size_t);
-long strtol(const char* __restrict, char** __restrict, int);
-unsigned long strtoul(const char* __restrict, char** __restrict, int);
+#define TSUID 04000
+#define TSGID 02000
+#define TUREAD 0400
+#define TUWRITE 0200
+#define TUEXEC 0100
+#define TGREAD 040
+#define TGWRITE 020
+#define TGEXEC 010
+#define TOREAD 04
+#define TOWRITE 02
+#define TOEXEC 01
 
-/* 编译GCC需要此函数，当前未实现 */
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char*);
-char* getenv(const char*);
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H__ */
+#endif /* TAR_H__ */

@@ -35,8 +35,10 @@ public:
     void addChildNode(const char *path, Vnode *vnode);
     virtual Vnode *openat(const char *path, int flags, mode_t mode);
 
-private:
+public:
     size_t childCount;
+
+private:
     Vnode **childNodes;
     const char **fileNames;
 };

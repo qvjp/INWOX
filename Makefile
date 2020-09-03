@@ -22,26 +22,31 @@ strip-debug:
 	i686-inwox-objcopy --only-keep-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(BUILD_DIR)/kernel.sym
 	i686-inwox-objcopy --strip-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 
-$(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
+$(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(INITRD)
 	mkdir iso
 	mkdir iso/boot
 	mkdir iso/boot/grub
 	cp $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf iso/boot/kernel.elf
-	cp $(BUILD_DIR)/tools/bar                 iso/
-	cp $(BUILD_DIR)/tools/foo                 iso/
+	cp $(INITRD)                              iso/
 	cp $(BUILD_DIR)/tests/printf              iso/
 	echo 'set timeout=0'                   >  iso/boot/grub/grub.cfg
 	echo 'set default=0'                   >> iso/boot/grub/grub.cfg
 	echo ''                                >> iso/boot/grub/grub.cfg
 	echo 'menuentry "INWOX" {'             >> iso/boot/grub/grub.cfg
 	echo '    multiboot /boot/kernel.elf'  >> iso/boot/grub/grub.cfg
-	echo '    module /bar'                 >> iso/boot/grub/grub.cfg
-	echo '    module /foo'                 >> iso/boot/grub/grub.cfg
+	echo '    module /initrd.tar'          >> iso/boot/grub/grub.cfg
 	echo '    module /printf'              >> iso/boot/grub/grub.cfg
 	echo '    boot'                        >> iso/boot/grub/grub.cfg
 	echo '}'                               >> iso/boot/grub/grub.cfg
 	grub-mkrescue --output=$(ISO) iso
 	rm -rf iso
+
+$(INITRD): $(BUILD_DIR)/tools/foo $(BUILD_DIR)/tools/bar
+	@mkdir -p $(BUILD_DIR)/$(ARCH)/initrd
+	echo Hello World! > $(BUILD_DIR)/$(ARCH)/initrd/inwox
+	cp $(BUILD_DIR)/tools/foo $(BUILD_DIR)/$(ARCH)/initrd
+	cp $(BUILD_DIR)/tools/bar $(BUILD_DIR)/$(ARCH)/initrd
+	cd $(BUILD_DIR)/$(ARCH)/initrd && tar cvf initrd.tar --format=ustar foo bar inwox
 
 tools:
 	$(MAKE) -C tools

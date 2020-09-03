@@ -21,37 +21,33 @@
  * SOFTWARE.
  */
 
-/**
- * lib/include/stdlib.h
- * 标准库定义
+/* libc/include/ctype.h
+ * 可用于测试和映射字符
  */
-#ifndef STDLIB_H__
-#define STDLIB_H__
 
-#define __need_size_t
-#include <sys/types.h>
+#ifndef CTYPE_H__
+#define CTYPE_H__
 
 #ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+extern "C" {
+#endif
 
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
+int isalnum(int c);
+int isalpha(int c);
+int iscntrl(int c);
+int isdigit(int c);
+int isgraph(int c);
+int islower(int c);
+int isprint(int c);
+int ispunct(int c);
+int isspace(int c);
+int isupper(int c);
+int isxdigit(int c);
 
-void free(void*);
-void* malloc(size_t);
-long strtol(const char* __restrict, char** __restrict, int);
-unsigned long strtoul(const char* __restrict, char** __restrict, int);
-
-/* 编译GCC需要此函数，当前未实现 */
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char*);
-char* getenv(const char*);
+int tolower(int c);
+int toupper(int c);
 
 #ifdef __cplusplus
 }
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H__ */
+#endif
+#endif /* CTYPE_H__ */

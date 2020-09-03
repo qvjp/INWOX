@@ -12,6 +12,7 @@ OBJ := \
 	filedescription.o \
 	gdt.o \
 	idt.o \
+	initrd.o \
 	interrupt.o \
 	kernel.o \
 	keyboard.o \

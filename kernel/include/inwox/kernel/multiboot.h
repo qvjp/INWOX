@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,8 +25,9 @@
  * kernel/include/inwox/kernel/multiboot.h
  * 定义multiboot各信息
  */
-#ifndef KERNEL_MULTIBOOT_H__
-#define KERNEL_MULTIBOOT_H__
+
+#ifndef KERNEL_MULTIBOOT_H_
+#define KERNEL_MULTIBOOT_H_
 
 #include <stdint.h> /* uint32_t uint64_t */
 
@@ -34,7 +35,7 @@
  * 检查MULTIBOOT信息中flags域中某位是否存在，
  * 存在为1，不存在为0
  */
-#define CHECK_MULTIBOOT_FLAG(flags,bit)   ((flags) & (1 << (bit)))
+#define CHECK_MULTIBOOT_FLAG(flags, bit) ((flags) & (1 << (bit)))
 
 struct multiboot_elf_section_header_table {
     uint32_t num;
@@ -94,7 +95,7 @@ struct multiboot_info {
     uint32_t mem_upper;
     uint32_t boot_device;
     uint32_t cmdline;
-    uint32_t mods_count;  /* 和内核一起被加载的模块数量*/
+    uint32_t mods_count;  /* 和内核一起被加载的模块数量 */
     uint32_t mods_addr;   /* 第一个模块的地址 模块的结构在下边的multiboot_mod_list中定义 */
     multiboot_elf_section_header_table elf_sec;
     uint32_t mmap_length; /* 内存映射缓存 */
@@ -115,7 +116,7 @@ struct multiboot_info {
 /**
  * multiboot_mmap_entry是multiboot_info中mmap_addr和
  * mmap_length所指内存的组成单位
- * 
+ *
  * size是这个结构的大小，单位字节
  * base_addr开始地址
  * length是这块内存区域的大小，单位字节
@@ -141,12 +142,11 @@ struct multiboot_mmap_entry {
  * cmdline以0结尾的ASCII字符，保存与该模块相关的任何信息
  * pad bootloader设为0，OS忽略
  */
-struct multiboot_mod_list
-{
+struct multiboot_mod_list {
     uint32_t mod_start;
     uint32_t mod_end;
     uint32_t cmdline;
     uint32_t pad;
 };
 
-#endif
+#endif /* KERNEL_MULTIBOOT_H_ */

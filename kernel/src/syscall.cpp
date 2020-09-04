@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,6 +19,11 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ */
+
+/**
+ * kernel/src/process.cpp
+ * 系统调用
  */
 
 #include <inwox/fcntl.h>
@@ -29,9 +34,8 @@
 /**
  * 系统调用表
  */
-static const void* syscallList[NUM_SYSCALLS] =
-{
-    (void*) Syscall::pad,
+static const void *syscallList[NUM_SYSCALLS] = {
+    (void *)Syscall::pad,
 
     (void*) Syscall::exit,
     (void*) Syscall::write,
@@ -44,10 +48,10 @@ static const void* syscallList[NUM_SYSCALLS] =
 /**
  * 通过系统调用号获取系统调用具体入口地址
  */
-extern "C" const void* getSyscallHandler(unsigned interruptNum)
+extern "C" const void *getSyscallHandler(unsigned interruptNum)
 {
     if (interruptNum >= NUM_SYSCALLS)
-        return (void*) Syscall::badSyscall;
+        return (void *)Syscall::badSyscall;
     else
         return syscallList[interruptNum];
 }
@@ -58,11 +62,10 @@ extern "C" const void* getSyscallHandler(unsigned interruptNum)
  */
 void Syscall::pad()
 {
-    const char* INWOX = "INWOX";
+    const char *INWOX = "INWOX";
     int num = 0;
-    for (int i = 0; i < 5; i++)
-    {
-        num +=  INWOX[i] - 'A' + 1;
+    for (int i = 0; i < 5; i++) {
+        num += INWOX[i] - 'A' + 1;
     }
     Print::printf("Pad: %d\n", num);
 }
@@ -70,7 +73,7 @@ void Syscall::pad()
 /**
  * 系统调用：exit()
  * 退出当前进程，通过调用当前进程的exit方法，并发起49号中断（调度中断）
- * 
+ *
  * 设置为__attribute__((__noreturn__))说明此函数不会返回，控制权
  * 不会再返回调用者，而最后的__builtin_unreachable()则告诉GCC程序
  * 不会执行到那里，否则声明了没有返回的函数GCC会发出警告，要注意的是函数
@@ -79,23 +82,26 @@ void Syscall::pad()
 __attribute__((__noreturn__)) void Syscall::exit(int status)
 {
     Process::current->exit(status);
-    /*退出后，调用int $49进行进程调度*/
-    __asm__ __volatile__ ("int $49");
+    /* 退出后，调用int $49进行进程调度 */
+    __asm__ __volatile__("int $49");
     __builtin_unreachable();
 }
 
-ssize_t Syscall::read(int fd, void* buffer, size_t size) {
-    FileDescription* descr = Process::current->fd[fd];
+ssize_t Syscall::read(int fd, void *buffer, size_t size)
+{
+    FileDescription *descr = Process::current->fd[fd];
     return descr->read(buffer, size);
 }
 
-ssize_t Syscall::write(int fd, const void* buffer, size_t size) {
-    FileDescription* descr = Process::current->fd[fd];
+ssize_t Syscall::write(int fd, const void *buffer, size_t size)
+{
+    FileDescription *descr = Process::current->fd[fd];
     return descr->write(buffer, size);
 }
 
-int Syscall::openat(int fd, const char* path, int flags, mode_t mode) {
-    FileDescription* descr;
+int Syscall::openat(int fd, const char *path, int flags, mode_t mode)
+{
+    FileDescription *descr;
 
     if (path[0] == '/') {
         descr = Process::current->rootFd;
@@ -105,7 +111,7 @@ int Syscall::openat(int fd, const char* path, int flags, mode_t mode) {
         descr = Process::current->fd[fd];
     }
 
-    FileDescription* result = descr->openat(path, flags, mode);
+    FileDescription *result = descr->openat(path, flags, mode);
     if (!result) {
         return -1;
     }

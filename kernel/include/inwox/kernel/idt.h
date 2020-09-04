@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,16 +26,16 @@
  * 定义IDT
  */
 
-#ifndef KERNEL_IDT_H__
-#define KERNEL_IDT_H__
+#ifndef KERNEL_IDT_H_
+#define KERNEL_IDT_H_
 
 #include <stdint.h> /* uint16_t uint8_t uint32_t */
 
 #define IDT_INTERRUPT_GATE 0xE
-#define IDT_TRAP_GATE 0xF
-#define IDT_RING0 (0 << 5)
-#define IDT_RING3 (3 << 5)
-#define IDT_PRESENT (1 << 7)
+#define IDT_TRAP_GATE      0xF
+#define IDT_RING0          (0 << 5)
+#define IDT_RING3          (3 << 5)
+#define IDT_PRESENT        (1 << 7)
 
 /**
  *                               * IDT ENTRT *
@@ -46,7 +46,7 @@
  * |                     |        |        |                |                |
  * |-------------------------------------------------------------------------|
  * |63                 48|47    40|39    32|31            16|15             0|
- * 
+ *
  * 如图，IDT每个条目都是64位，其中：
  * 0-15和48-63共32位，用来存放ISR的入口地址
  * 16-31共16位，用来存放指向GDT某个段的段选择子
@@ -73,8 +73,7 @@
 /**
  * 定义IDT入口，指定packed是为了阻止编译器“优化”
  */
-struct idt_entry
-{
+struct idt_entry {
     uint16_t offset_low;
     uint16_t selector;
     uint8_t unused;
@@ -100,10 +99,9 @@ struct idt_entry
  * 定义指向IDT的结构，包括IDT的大小和IDT的首地址，和设置GDT时一样
  * 同样这里设置为packed
  */
-struct idt_desc
-{
+struct idt_desc {
     uint16_t size;
-    void* offset;
+    void *offset;
 } __attribute__((__packed__));
 
 /**
@@ -115,5 +113,4 @@ struct idt_desc
  */
 void idt_set_gate(uint8_t num, uint32_t offset, uint16_t selector, uint8_t attr);
 
-
-#endif /* KERNEL_IDT_H__ */ 
+#endif /* KERNEL_IDT_H_ */

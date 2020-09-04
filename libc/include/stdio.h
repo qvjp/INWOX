@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,8 +26,8 @@
  * 标准输入输出定义
  */
 
-#ifndef STDIO_H__
-#define STDIO_H__
+#ifndef STDIO_H
+#define STDIO_H
 
 #define __need___va_list
 #include <stdarg.h>
@@ -49,10 +49,10 @@ struct __FILE {
 #endif
 
 /* 标准流 */
-extern FILE* stdin;
-extern FILE* stdout;
-extern FILE* stderr;
-#define stdin stdin
+extern FILE *stdin;
+extern FILE *stdout;
+extern FILE *stderr;
+#define stdin  stdin
 #define stdout stdout
 #define stderr stderr
 
@@ -79,7 +79,6 @@ extern FILE* stderr;
 #define L_tmpnam 20
 /* 能生成的临时文件名个数 */
 #define TMP_MAX 238328
-
 
 /* begin - 直接输入输出 */
 size_t fread(void *__restrict ptr, size_t size, size_t nmemb, FILE *__restrict stream);
@@ -129,7 +128,7 @@ void perror(const char *s);
 /* 从文件读取字节流 */
 int fgetc(FILE *stream);
 int getc(FILE *stream);
-/*从文件中读取一行字节流 */
+/* 从文件中读取一行字节流 */
 char *fgets(char *__restrict s, int n, FILE *__restrict stream);
 /* 写一个字节到流 */
 int fputc(int c, FILE *stream);
@@ -165,13 +164,12 @@ int ferror(FILE *stream);
 /* end - 错误处理 */
 
 #if __USE_INWOX || __USE_POSIX
-FILE *fdopen(int ,const char *);
-int vcbprintf(void*, size_t (*)(void*, const char*, size_t), const char*, __gnuc_va_list);
+FILE *fdopen(int, const char *);
+int vcbprintf(void *, size_t (*)(void *, const char *, size_t), const char *, __gnuc_va_list);
 #endif /* __USE_INWOX || __USE_POSIX */
-
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* STDIO_H__ */
+#endif /* STDIO_H */

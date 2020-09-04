@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,8 +26,8 @@
  * 定义POSIX函数
  */
 
-#ifndef UNISTD_H__
-#define UNISTD_H__
+#ifndef UNISTD_H
+#define UNISTD_H
 
 #define __need_pid_t
 #define __need_ssize_t
@@ -39,17 +39,17 @@ extern "C" {
 #endif
 
 __attribute__((__noreturn__)) void _exit(int);
-ssize_t read(int, void*, size_t);
-ssize_t write(int, const void*, size_t);
+ssize_t read(int, void *, size_t);
+ssize_t write(int, const void *, size_t);
 
 /* 编译GCC需要此函数，当前未实现 */
 pid_t fork(void);
-int execv(const char*, char* const[]);
-int execve(const char*, char* const[], char* const[]);
-int execvp(const char*, char* const[]);
+int execv(const char *, char *const[]);
+int execve(const char *, char *const[], char *const[]);
+int execvp(const char *, char *const[]);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /*UNISTD_H__*/
+#endif /* UNISTD_H */

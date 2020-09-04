@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,27 +26,27 @@
  * 定义系统调用section
  */
 
-#ifndef SYS_SYSCALL_H__
-#define SYS_SYSCALL_H__
+#ifndef SYS_SYSCALL_H
+#define SYS_SYSCALL_H
 
 #include <inwox/syscall.h>
 
 #define _SYSCALL_TOSTRING(x) #x
 
-#define _SYSCALL_BODY(number, name) \
-    asm("\n" \
-    ".pushsection .text\n" \
-    #name ":\n\t" \
+#define _SYSCALL_BODY(number, name)                    \
+    asm("\n"                                           \
+    ".pushsection .text\n"                             \
+    #name ":\n\t"                                      \
         "mov $" _SYSCALL_TOSTRING(number) ", %eax\n\t" \
-        "jmp __syscall\n" \
+        "jmp __syscall\n"                              \
     ".popsection\n")
 
 #define DEFINE_SYSCALL(number, type, name, params) \
-    _SYSCALL_BODY(number, name); \
+    _SYSCALL_BODY(number, name);                   \
     extern type name params
 
 #define DEFINE_SYSCALL_GLOBAL(number, type, name, params) \
-    asm(".global " #name); \
+    asm(".global " #name);                                \
     DEFINE_SYSCALL(number, type, name, params)
 
-#endif /* SYS_SYSCALL_H__ */
+#endif /* SYS_SYSCALL_H */

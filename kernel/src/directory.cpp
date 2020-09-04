@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,18 +29,20 @@
 #include <string.h>
 #include <inwox/kernel/directory.h>
 
-DirectoryVnode::DirectoryVnode() {
+DirectoryVnode::DirectoryVnode()
+{
     childCount = 0;
     childNodes = nullptr;
     fileNames = nullptr;
 }
 
-void DirectoryVnode::addChildNode(const char *path, Vnode *vnode) {
-    Vnode **newChildNodes = new Vnode*[childCount + 1];
-    const char** newFileNames = new const char*[childCount + 1];
+void DirectoryVnode::addChildNode(const char *path, Vnode *vnode)
+{
+    Vnode **newChildNodes = new Vnode *[childCount + 1];
+    const char **newFileNames = new const char *[childCount + 1];
 
-    memcpy(newChildNodes, childNodes, sizeof(Vnode*) * childCount);
-    memcpy(newFileNames, fileNames, sizeof(const char*) * childCount);
+    memcpy(newChildNodes, childNodes, sizeof(Vnode *) * childCount);
+    memcpy(newFileNames, fileNames, sizeof(const char *) * childCount);
 
     childNodes = newChildNodes;
     fileNames = newFileNames;
@@ -50,7 +52,8 @@ void DirectoryVnode::addChildNode(const char *path, Vnode *vnode) {
     childCount++;
 }
 
-Vnode* DirectoryVnode::openat(const char* path, int flags, mode_t mode) {
+Vnode *DirectoryVnode::openat(const char *path, int flags, mode_t mode)
+{
     while (*path == '/') {
         path++;
     }

@@ -63,7 +63,7 @@ SECTIONS {
     kernelVirtualBegin = ALIGN(4K);
     kernelPhysicalBegin = kernelVirtualBegin - KERNEL_VIRTUAL;
 
-    /* 4K（页大小）对齐，加载到1M处。*/
+    /* 4K（页大小）对齐，加载到1M处。 */
     .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_VIRTUAL)
     {
         *(.text)    /* 所有文件的所有text section */
@@ -75,13 +75,13 @@ SECTIONS {
         *(.rodata)  /* 所有文件的所有只读section */
     }
 
-    /* 可读可写数据（已被初始化）4K对齐，加载到1M + .处。*/
+    /* 可读可写数据（已被初始化）4K对齐，加载到1M + .处。 */
     .data ALIGN(4K) : AT(ADDR(.data) - KERNEL_VIRTUAL)
     {
         *(.data)    /* 所有文件的所有data section */
     }
 
-    /* 可读可写数据（未被初始化）和栈 4K对齐，加载到1M + .处。*/
+    /* 可读可写数据（未被初始化）和栈 4K对齐，加载到1M + .处。 */
     .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_VIRTUAL)
     {
         *(COMMON)   /* 所有文件的所有COMMON section */

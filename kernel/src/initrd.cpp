@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -53,16 +53,17 @@ struct TarHeader {
     char padding[12];
 };
 
-DirectoryVnode* Initrd::loadInitrd(inwox_vir_addr_t initrd) {
-    DirectoryVnode* root = new DirectoryVnode();
-    TarHeader* header = (TarHeader*) initrd;
+DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
+{
+    DirectoryVnode *root = new DirectoryVnode();
+    TarHeader *header = (TarHeader *)initrd;
 
     while (strcmp(header->magic, TMAGIC) == 0) {
         Print::printf("start header poiner %p\n", header);
-        size_t size = (size_t) strtoul(header->size, NULL, 8);
+        size_t size = (size_t)strtoul(header->size, NULL, 8);
 
         if (header->typeflag == REGTYPE || header->typeflag == AREGTYPE) {
-            FileVnode* file = new FileVnode(header + 1, size);
+            FileVnode *file = new FileVnode(header + 1, size);
             root->addChildNode(strdup(header->name), file);
 
             Print::printf("File: /%s, size = %zu\n", header->name, size);

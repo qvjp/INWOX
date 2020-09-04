@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,8 +28,8 @@
 #include <inwox/kernel/terminal.h>
 
 Terminal terminal;
-// 0xC0000000是视频内存首地址
-static uint8_t *video = (uint8_t*) 0xC0000000;
+/* 0xC0000000是视频内存首地址 */
+static uint8_t *video = (uint8_t *)0xC0000000;
 static uint8_t cursorPostX = 0;
 static uint8_t cursorPostY = 0;
 /*
@@ -62,29 +62,26 @@ static uint8_t cursorPostY = 0;
 
 static color_t FontColor = 0x83; /* 灰底青字 */
 
-static void printChar(char c) {
+static void printChar(char c)
+{
     /* 遇到换行符或超出最大列数(79)就换行 */
-    if (c == '\n' || cursorPostX > 79)
-    {
+    if (c == '\n' || cursorPostX > 79) {
         cursorPostX = 0;
         cursorPostY++;
 
         /* 如果当前行是最后一行，则整体向上移动一行 */
-        if(cursorPostY > 24)
-        {
-            for(size_t i = 0; i < 2 * 24 * 80; i++)
-            {
+        if (cursorPostY > 24) {
+            for (size_t i = 0; i < 2 * 24 * 80; i++) {
                 video[i] = video[i + 2 * 80];
             }
             /* 最后一行全部置成灰色 */
-            for (size_t i = 2 * 24 * 80; i < 2 * 25 * 80; i++)
-            {
+            for (size_t i = 2 * 24 * 80; i < 2 * 25 * 80; i++) {
                 video[i] = 0;
             }
             cursorPostY = 24;
         }
         if (c == '\n')
-                return;
+            return;
     }
     video[cursorPostY * 2 * 80 + 2 * cursorPostX] = c;
     video[cursorPostY * 2 * 80 + 2 * cursorPostX + 1] = FontColor;
@@ -92,48 +89,56 @@ static void printChar(char c) {
     cursorPostX++;
 }
 
-Terminal::Terminal() {
+Terminal::Terminal()
+{
     readIndex = 0;
     writeIndex = 0;
 }
 
-void Terminal::writeToCircularBuffer(char c) {
-    while ((writeIndex + 1) % CIRCULAR_BUFFER_SIZE == readIndex); // 写到读指针时停止写
+void Terminal::writeToCircularBuffer(char c)
+{
+    while ((writeIndex + 1) % CIRCULAR_BUFFER_SIZE == readIndex) {
+    } /* 写到读指针时停止写 */
     circularBuffer[writeIndex] = c;
     writeIndex = (writeIndex + 1) % CIRCULAR_BUFFER_SIZE;
 }
 
-char Terminal::readFromCircularBuffer() {
-    while (readIndex == writeIndex); // 读到写指针时停止读
+char Terminal::readFromCircularBuffer()
+{
+    while (readIndex == writeIndex) {
+    } /* 读到写指针时停止读 */
     char result = circularBuffer[readIndex];
     readIndex = (readIndex + 1) % CIRCULAR_BUFFER_SIZE;
     return result;
 }
 
-void Terminal::onKeyboardEvent(int key) {
+void Terminal::onKeyboardEvent(int key)
+{
     char c = Keyboard::getCharFromKey(key);
 
     if (c) {
-        printChar(c); // 输出到Terminal
-        writeToCircularBuffer(c); // 写到环形缓冲区，等待read
+        printChar(c);             /* 输出到Terminal */
+        writeToCircularBuffer(c); /* 写到环形缓冲区，等待read */
     }
 }
 
-ssize_t Terminal::read(void *buffer, size_t size) {
-    char *buf = (char *) buffer;
+ssize_t Terminal::read(void *buffer, size_t size)
+{
+    char *buf = (char *)buffer;
     for (size_t i = 0; i < size; i++) {
         buf[i] = readFromCircularBuffer();
     }
-    return (ssize_t) size;
+    return (ssize_t)size;
 }
 
-ssize_t Terminal::write(const void* buffer, size_t size) {
-    const char* buf = (const char*) buffer;
+ssize_t Terminal::write(const void *buffer, size_t size)
+{
+    const char *buf = (const char *)buffer;
 
     for (size_t i = 0; i < size; i++) {
         printChar(buf[i]);
     }
-    return (ssize_t) size;
+    return (ssize_t)size;
 }
 
 /**
@@ -142,11 +147,9 @@ ssize_t Terminal::write(const void* buffer, size_t size) {
  */
 void Terminal::initTerminal()
 {
-    terminal.setFontColor(0x83);/* 灰底青字 */
-    for (size_t i = 0; i < 25; i++)
-    {
-        for (size_t j = 0; j < 80; j++)
-        {
+    terminal.setFontColor(0x83); /* 灰底青字 */
+    for (size_t i = 0; i < 25; i++) {
+        for (size_t j = 0; j < 80; j++) {
             printChar(' ');
         }
     }
@@ -160,10 +163,8 @@ void Terminal::initTerminal()
 void Terminal::warnTerminal()
 {
     terminal.setFontColor(0xCF);
-    for (size_t i = 0; i < 25; i++)
-    {
-        for (size_t j = 0; j < 80; j++)
-        {
+    for (size_t i = 0; i < 25; i++) {
+        for (size_t j = 0; j < 80; j++) {
             video[i * 2 * 80 + 2 * j + 1] = FontColor;
         }
     }

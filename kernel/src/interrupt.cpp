@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,13 +25,13 @@
  * kernel/src/interrrupt.cpp
  * 处理中断
  */
-#include <inwox/kernel/idt.h>       /* idt_set_gate() IDT_INTERRUPT_GATE IDT_RING0 IDT_PRESENT*/
-#include <inwox/kernel/interrupt.h>
-#include <inwox/kernel/pic.h>       /* pic_remap() PIC1_COMMAND ... */
-#include <inwox/kernel/port.h>      /* outportb() */
-#include <inwox/kernel/print.h>     /* printf() warnTerminal() */
-#include <inwox/kernel/process.h>   /* Process::schedule(r) */
 
+#include <inwox/kernel/idt.h> /* idt_set_gate() IDT_INTERRUPT_GATE IDT_RING0 IDT_PRESENT */
+#include <inwox/kernel/interrupt.h>
+#include <inwox/kernel/pic.h>     /* pic_remap() PIC1_COMMAND ... */
+#include <inwox/kernel/port.h>    /* outportb() */
+#include <inwox/kernel/print.h>   /* printf() warnTerminal() */
+#include <inwox/kernel/process.h> /* Process::schedule(r) */
 
 /**
  * 挨个设置IDT中的ISR
@@ -99,13 +99,10 @@ void irqs_install()
  */
 void Interrupt::enable()
 {
-    __asm__ __volatile__ ("sti");
+    __asm__ __volatile__("sti");
 }
 
-void (*isr_routines[256])(regs *) =
-{
-    0
-};
+void (*isr_routines[256])(regs *) = {0};
 
 void Interrupt::isr_install_handler(int isr, void (*handler)(struct regs *r))
 {
@@ -120,60 +117,54 @@ void isr_uninstall_handler(int isr)
 void Interrupt::initPic()
 {
     /**
-    * 先重新映射了IRQ在IDT中的位置，再在IDT正确的位置放适当的IRQ处理程序
-    */
+     * 先重新映射了IRQ在IDT中的位置，再在IDT正确的位置放适当的IRQ处理程序
+     */
     pic_remap();
     irqs_install();
 }
 
-extern "C" struct regs* interrupt_handler(struct regs *r)
+extern "C" struct regs *interrupt_handler(struct regs *r)
 {
-    struct regs* newContext = r;
-    if (r->int_no < 32)
-    {
+    struct regs *newContext = r;
+    if (r->int_no < 32) {
         Print::warnTerminal();
         Print::printf("eax: 0x%x, ebx: 0x%x, ecx: 0x%x, edx: 0x%x\n", r->eax, r->ebx, r->ecx, r->edx);
         Print::printf("edi: 0x%x, esi: 0x%x, ebp: 0x%x, esp: 0x%x\n", r->edi, r->esi, r->ebp, r->esp);
         Print::printf("cs: 0x%x, eip: 0x%x, eflags: 0x%x, ss: 0x%x\n", r->cs, r->eip, r->eflags, r->ss);
         Print::printf("%s", exception_messages[r->int_no]);
         Print::printf(" Exception. System Halted!\n");
-        while(1);
+        while (1)
+        {
+        }
     }
     /* 设备IRQ */
-    if (r->int_no <= 47 && r->int_no >= 32)
-    {
+    if (r->int_no <= 47 && r->int_no >= 32) {
         /**
          * 定义一个空函数指针用来放具体的IRQ处理程序
          */
-        void (*handler)(struct regs *r);
+        void (*handler)(struct regs * r);
         /* 当时钟中断发生时，进行进程调度 */
-        if(r->int_no == 32)
-        {
+        if (r->int_no == 32) {
             newContext = Process::schedule(r);
         }
         handler = isr_routines[r->int_no];
-        if (handler)
-        {
+        if (handler) {
             handler(r);
         }
         /**
          * 中断处理结束后，要发送EOI(End Of Interrupt)给PIC的命令端口
-         * 如果IDT入口号大于40(IRQ8-15)，也就是说这个IRQ来自从PIC，我们需要给从PIC的命令端口发送一个EOI 
+         * 如果IDT入口号大于40(IRQ8-15)，也就是说这个IRQ来自从PIC，我们需要给从PIC的命令端口发送一个EOI
          * 而如果IRQ来自主PIC，我们只需要向主PIC发送EOI即可
          */
-        if (r->int_no >= 40)
-        {
+        if (r->int_no >= 40) {
             Hardwarecommunication::outportb(PIC2_COMMAND, PIC_EOI);
         }
         Hardwarecommunication::outportb(PIC1_COMMAND, PIC_EOI);
     }
     /* 0x31 任务调度 */
-    else if (r->int_no == 0x31)
-    {
+    else if (r->int_no == 0x31) {
         newContext = Process::schedule(r);
-    }
-    else
-    {
+    } else {
         Print::printf("Unknow interrupt %u!\n", r->int_no);
     }
     return newContext;

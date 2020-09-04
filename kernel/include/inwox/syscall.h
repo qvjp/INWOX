@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,18 +25,18 @@
  * kernel/include/inwox/syscall.h
  * 系统调用号
  */
-#ifndef INWOX_SYSCALL_H__
-#define INWOX_SYSCALL_H__
 
-#define SYSCALL_PAD 0
-#define SYSCALL_EXIT 1
-#define SYSCALL_WRITE 2
-#define SYSCALL_READ 3
-#define SYSCALL_MMAP 4
+#ifndef INWOX_SYSCALL_H_
+#define INWOX_SYSCALL_H_
+
+#define SYSCALL_PAD    0
+#define SYSCALL_EXIT   1
+#define SYSCALL_WRITE  2
+#define SYSCALL_READ   3
+#define SYSCALL_MMAP   4
 #define SYSCALL_MUNMAP 5
 #define SYSCALL_OPENAT 6
 
 #define NUM_SYSCALLS 7
 
-
-#endif /* INWOX_SYSCALL_H__ */
+#endif /* INWOX_SYSCALL_H_ */

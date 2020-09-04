@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,22 +26,21 @@
  * 实现地址空间的基本操作
  */
 
-#include <inwox/mman.h>
+#include <assert.h>
+#include <errno.h>
+#include <stdlib.h> /* malloc() */
+#include <string.h> /* memset() */
 #include <inwox/kernel/addressspace.h>
-#include <inwox/kernel/physicalmemory.h> /* pushPageFrame popPageFrame */           
+#include <inwox/kernel/physicalmemory.h> /* pushPageFrame popPageFrame */
 #include <inwox/kernel/print.h>          /* Print::printf() */
 #include <inwox/kernel/process.h>
 #include <inwox/kernel/syscall.h>
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>                      /* malloc() */
-#include <string.h>                      /* memset() */
-
+#include <inwox/mman.h>
 
 AddressSpace AddressSpace::_kernelSpace;
-AddressSpace* kernelSpace;
+AddressSpace *kernelSpace;
 
-static AddressSpace* firstAddressSpace = nullptr;
+static AddressSpace *firstAddressSpace = nullptr;
 
 /**
  * 每个进程对应一个地址空间，地址空间包含两部分
@@ -66,7 +65,7 @@ static inline inwox_vir_addr_t offset2address(size_t pdOffset, size_t ptOffset)
 /**
  * 虚拟地址转换到对应的页目录号和页表号
  */
-static inline void address2offset(inwox_vir_addr_t virtualAddress, size_t& pdOffset, size_t& ptOffset)
+static inline void address2offset(inwox_vir_addr_t virtualAddress, size_t &pdOffset, size_t &ptOffset)
 {
     assert(!(virtualAddress & 0xFFF));
     /* 高10位是页目录偏移 */
@@ -79,16 +78,14 @@ static inline void address2offset(inwox_vir_addr_t virtualAddress, size_t& pdOff
  * 初始化地址空间
  * 在开启分页时曾经将内核虚拟地址映射到其物理地址（identity mapping）
  * 分页开启后这个映射不再需要，取消这个映射。
- * 
  */
 void AddressSpace::initialize()
 {
     kernelSpace = &_kernelSpace;
-    kernelSpace->pageDir = (inwox_phy_addr_t) &kernelPageDirectory;
-    inwox_vir_addr_t p = (inwox_vir_addr_t) &bootstrapBegin;
+    kernelSpace->pageDir = (inwox_phy_addr_t)&kernelPageDirectory;
+    inwox_vir_addr_t p = (inwox_vir_addr_t)&bootstrapBegin;
 
-    while (p < (inwox_vir_addr_t) &bootstrapEnd)
-    {
+    while (p < (inwox_vir_addr_t)&bootstrapEnd) {
         kernelSpace->unMap(p);
         p += 0x1000;
     }
@@ -104,7 +101,7 @@ void AddressSpace::initialize()
  */
 void AddressSpace::activate()
 {
-    __asm__ __volatile__ ("mov %0, %%cr3" :: "r"(pageDir));
+    __asm__ __volatile__("mov %0, %%cr3" ::"r"(pageDir));
 }
 
 /**
@@ -113,31 +110,32 @@ void AddressSpace::activate()
 inwox_vir_addr_t AddressSpace::allocate(size_t pages_number)
 {
     inwox_phy_addr_t physicalAddresses[pages_number + 1];
-    for (size_t i = 0; i < pages_number; i++)
-    {
+    for (size_t i = 0; i < pages_number; i++) {
         physicalAddresses[i] = PhysicalMemory::popPageFrame();
-        if (!physicalAddresses[i])
+        if (!physicalAddresses[i]) {
             return 0;
+        }
     }
     physicalAddresses[pages_number] = 0;
     int flags = PAGE_PRESENT | PAGE_WRITABLE;
-    if (this != kernelSpace)
+    if (this != kernelSpace) {
         flags |= PAGE_USER;
+    }
     return mapRange(physicalAddresses, flags);
 }
 
 /**
  * 启动新进程时，fork前一个进程的地址空间
  */
-AddressSpace* AddressSpace::fork()
+AddressSpace *AddressSpace::fork()
 {
-    AddressSpace* result = (AddressSpace*)malloc(sizeof(AddressSpace));
+    AddressSpace *result = (AddressSpace *)malloc(sizeof(AddressSpace));
     result->pageDir = PhysicalMemory::popPageFrame();
 
     inwox_vir_addr_t currentPageDir = kernelSpace->map(pageDir, 0x1);
     inwox_vir_addr_t newPageDir = kernelSpace->map(result->pageDir, 0x3);
 
-    memcpy((void*) newPageDir, (const void*) currentPageDir, 0x1000);
+    memcpy((void *)newPageDir, (const void *)currentPageDir, 0x1000);
 
     kernelSpace->unMap(currentPageDir);
     kernelSpace->unMap(newPageDir);
@@ -152,8 +150,7 @@ AddressSpace* AddressSpace::fork()
  */
 void AddressSpace::free(inwox_vir_addr_t virtualAddress, size_t pages_number)
 {
-    for (size_t i = 0; i < pages_number; i++)
-    {
+    for (size_t i = 0; i < pages_number; i++) {
         inwox_phy_addr_t physicalAddress = getPhysicalAddress(virtualAddress);
         unMap(virtualAddress);
         PhysicalMemory::pushPageFrame(physicalAddress);
@@ -170,35 +167,30 @@ inwox_phy_addr_t AddressSpace::getPhysicalAddress(inwox_vir_addr_t virtualAddres
     size_t ptOffset;
     address2offset(virtualAddress, pdOffset, ptOffset);
 
-    uintptr_t* pageDirectory;
-    uintptr_t* pageTable = nullptr;
+    uintptr_t *pageDirectory;
+    uintptr_t *pageTable = nullptr;
     inwox_phy_addr_t result = 0;
-    if (this == kernelSpace)
-    {
+    if (this == kernelSpace) {
         /* 内核态页目录从RECURSIVE_MAPPING + 0x3FF000开始 */
-        pageDirectory = (uintptr_t*)(RECURSIVE_MAPPING + 0x3FF000);
-        pageTable = (uintptr_t*) (RECURSIVE_MAPPING + 0x1000 * pdOffset);
+        pageDirectory = (uintptr_t *)(RECURSIVE_MAPPING + 0x3FF000);
+        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + 0x1000 * pdOffset);
+    } else {
+        pageDirectory = (uintptr_t *)kernelSpace->map(pageDir, 0x1);
     }
-    else
-    {
-        pageDirectory = (uintptr_t*) kernelSpace->map(pageDir,0x1);
-    }
-    if (pageDirectory[pdOffset])
-    {
-        if (this != kernelSpace)
-        {
-            pageTable = (uintptr_t*) kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, 0x1);
+    if (pageDirectory[pdOffset]) {
+        if (this != kernelSpace) {
+            pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, 0x1);
         }
         result = pageTable[ptOffset] & ~0xFFF;
     }
-    if (this != kernelSpace)
-    {
-        if (pageTable) kernelSpace->unMap((inwox_vir_addr_t) pageTable);
-        kernelSpace->unMap((inwox_vir_addr_t) pageDirectory);
+    if (this != kernelSpace) {
+        if (pageTable) {
+            kernelSpace->unMap((inwox_vir_addr_t)pageTable);
+        }
+        kernelSpace->unMap((inwox_vir_addr_t)pageDirectory);
     }
     return result;
 }
-
 
 /**
  * 判断所给虚拟地址是否是空闲
@@ -216,37 +208,34 @@ bool AddressSpace::isFree(inwox_vir_addr_t virtualAddress)
  */
 bool AddressSpace::isFree(size_t pdOffset, size_t ptOffset)
 {
-    if (pdOffset == 0 && ptOffset == 0)
+    if (pdOffset == 0 && ptOffset == 0) {
         return false;
-    uintptr_t* pageDirectory;
-    uintptr_t* pageTable = nullptr;
+    }
+    uintptr_t *pageDirectory;
+    uintptr_t *pageTable = nullptr;
     bool result;
 
-    if (this == kernelSpace)
-    {
-        pageDirectory = (uintptr_t*) (RECURSIVE_MAPPING + 0x3FF000);
-        pageTable = (uintptr_t*) (RECURSIVE_MAPPING + 0x1000 * pdOffset);
-    }
-    else
-    {
-        pageDirectory = (uintptr_t*) kernelSpace->map(pageDir, PAGE_PRESENT);
+    if (this == kernelSpace) {
+        pageDirectory = (uintptr_t *)(RECURSIVE_MAPPING + 0x3FF000);
+        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + 0x1000 * pdOffset);
+    } else {
+        pageDirectory = (uintptr_t *)kernelSpace->map(pageDir, PAGE_PRESENT);
     }
 
-    if (!pageDirectory[pdOffset])
+    if (!pageDirectory[pdOffset]) {
         result = true;
-    else
-    {
-        if (this != kernelSpace)
-            pageTable = (uintptr_t*) kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, PAGE_PRESENT);
-    
+    } else {
+        if (this != kernelSpace) {
+            pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, PAGE_PRESENT);
+        }
         result = !pageTable[ptOffset];
     }
 
-    if (this != kernelSpace)
-    {
-        if (pageTable)
-            kernelSpace->unMap((inwox_vir_addr_t) pageTable);
-        kernelSpace->unMap((inwox_vir_addr_t) pageDirectory);
+    if (this != kernelSpace) {
+        if (pageTable) {
+            kernelSpace->unMap((inwox_vir_addr_t)pageTable);
+        }
+        kernelSpace->unMap((inwox_vir_addr_t)pageDirectory);
     }
     return result;
 }
@@ -259,24 +248,18 @@ inwox_vir_addr_t AddressSpace::map(inwox_phy_addr_t physicalAddress, uint16_t fl
 {
     size_t begin;
     size_t end;
-    if (this == kernelSpace)
-    {
+    if (this == kernelSpace) {
         begin = 0x300;
         end = 0x400;
-    }
-    else
-    {
+    } else {
         begin = 0;
         end = 0x300;
     }
-    
+
     /* 找到没有映射的页，并映射 */
-    for (size_t pdOffset = begin; pdOffset < end; pdOffset++)
-    {
-        for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++)
-        {
-            if (isFree(pdOffset, ptOffset))
-            {
+    for (size_t pdOffset = begin; pdOffset < end; pdOffset++) {
+        for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++) {
+            if (isFree(pdOffset, ptOffset)) {
                 return mapAt(pdOffset, ptOffset, physicalAddress, flags);
             }
         }
@@ -300,61 +283,51 @@ inwox_vir_addr_t AddressSpace::mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_
 inwox_vir_addr_t AddressSpace::mapAt(size_t pdOffset, size_t ptOffset, inwox_phy_addr_t physicalAddress, uint16_t flags)
 {
     assert(!(flags & ~0xFFF));
-    uintptr_t* pageDirectory;
-    uintptr_t* pageTable = nullptr;
+    uintptr_t *pageDirectory;
+    uintptr_t *pageTable = nullptr;
 
     if (this == kernelSpace) {
         /* 页目录从0xFFFFF000（RECURSIVE_MAPPING+0x3FF000）开始 */
-        pageDirectory = (uintptr_t*) (RECURSIVE_MAPPING + 0x3FF000);
-        pageTable = (uintptr_t*) (RECURSIVE_MAPPING + 0x1000 * pdOffset);
-    }
-    else
-    {
-        pageDirectory = (uintptr_t*) kernelSpace->map(pageDir, 0x3);
+        pageDirectory = (uintptr_t *)(RECURSIVE_MAPPING + 0x3FF000);
+        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + 0x1000 * pdOffset);
+    } else {
+        pageDirectory = (uintptr_t *)kernelSpace->map(pageDir, 0x3);
     }
 
-    if (!pageDirectory[pdOffset])
-    {
+    if (!pageDirectory[pdOffset]) {
         inwox_phy_addr_t pageTablePhys = PhysicalMemory::popPageFrame();
         int pdFlags = PAGE_PRESENT | PAGE_WRITABLE;
-        if (this != kernelSpace)
-        {
+        if (this != kernelSpace) {
             pdFlags |= PAGE_USER;
         }
         pageDirectory[pdOffset] = pageTablePhys | pdFlags;
-        if (this != kernelSpace)
-        {
-            pageTable = (uintptr_t*) kernelSpace->map(pageTablePhys, 0x3);
+        if (this != kernelSpace) {
+            pageTable = (uintptr_t *)kernelSpace->map(pageTablePhys, 0x3);
         }
         memset(pageTable, 0, 0x1000);
 
-        if (this == kernelSpace)
-        {
-            AddressSpace* addressSpace = firstAddressSpace;
-            while (addressSpace)
-            {
-                uintptr_t* pageDir = (uintptr_t*) map(addressSpace->pageDir, 0x3);
+        if (this == kernelSpace) {
+            AddressSpace *addressSpace = firstAddressSpace;
+            while (addressSpace) {
+                uintptr_t *pageDir = (uintptr_t *)map(addressSpace->pageDir, 0x3);
                 pageDir[pdOffset] = pageTablePhys | 0x3;
-                unMap((inwox_vir_addr_t) pageDir);
+                unMap((inwox_vir_addr_t)pageDir);
                 addressSpace = addressSpace->next;
             }
         }
-    }
-    else if (this != kernelSpace)
-    {
-        pageTable = (uintptr_t*) kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, 0x3);
+    } else if (this != kernelSpace) {
+        pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, 0x3);
     }
     pageTable[ptOffset] = physicalAddress | flags;
 
-    if (this != kernelSpace)
-    {
-        kernelSpace->unMap((inwox_vir_addr_t) pageTable);
-        kernelSpace->unMap((inwox_vir_addr_t) pageDirectory);
+    if (this != kernelSpace) {
+        kernelSpace->unMap((inwox_vir_addr_t)pageTable);
+        kernelSpace->unMap((inwox_vir_addr_t)pageDirectory);
     }
     inwox_vir_addr_t virtualAddress = offset2address(pdOffset, ptOffset);
 
     /* 由于虚拟地址指向的物理地址改变了，所以要更新TLB */
-    __asm__ __volatile__ ("invlpg (%0)" :: "r"(virtualAddress));
+    __asm__ __volatile__("invlpg (%0)" ::"r"(virtualAddress));
 
     return virtualAddress;
 }
@@ -363,48 +336,43 @@ inwox_vir_addr_t AddressSpace::mapAt(size_t pdOffset, size_t ptOffset, inwox_phy
  * 将一串物理地址（不一定连续）映射到 连续 的虚拟地址
  * 然后将这个虚拟地址首地址返回
  */
-inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t* physicalAddresses, uint16_t flags)
+inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t *physicalAddresses, uint16_t flags)
 {
-    inwox_phy_addr_t* phys = physicalAddresses;
+    inwox_phy_addr_t *phys = physicalAddresses;
     size_t pages_number = 0;
     /* 找到一共有多少个物理页要处理 */
-    while (*phys++)
+    while (*phys++) {
         pages_number++;
+    }
 
     size_t begin;
     size_t end;
 
-    if (this == kernelSpace)
-    {
+    if (this == kernelSpace) {
         begin = 0x300;
         end = 0x400;
-    }
-    else
-    {
+    } else {
         begin = 0;
         end = 0x300;
     }
-    
 
     /* 在高地址空间找到足够的连续页 */
-    for (size_t pdOffset = begin; pdOffset < end; pdOffset++)
-    {
-        for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++)
-        {
-            if (pdOffset == 0 && ptOffset == 0)
+    for (size_t pdOffset = begin; pdOffset < end; pdOffset++) {
+        for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++) {
+            if (pdOffset == 0 && ptOffset == 0) {
                 continue;
+            }
             size_t pd = pdOffset;
             size_t pt = ptOffset;
             size_t foundPages = 0;
 
-            while (foundPages <= pages_number)
-            {
-                if (!isFree(pd, pt))
+            while (foundPages <= pages_number) {
+                if (!isFree(pd, pt)) {
                     break;
+                }
                 pt++;
                 foundPages++;
-                if (pt >= 1024)
-                {
+                if (pt >= 1024) {
                     pd++;
                     pt = 0;
                 }
@@ -422,8 +390,7 @@ inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t* physicalAddresses, uin
 inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t firstPhysicalAddress, size_t pages_number, uint16_t flags)
 {
     inwox_phy_addr_t physicalAddresses[pages_number + 1];
-    for (size_t i = 0; i < pages_number; i++)
-    {
+    for (size_t i = 0; i < pages_number; i++) {
         physicalAddresses[i] = firstPhysicalAddress;
         firstPhysicalAddress += 0x1000;
     }
@@ -436,13 +403,11 @@ inwox_vir_addr_t AddressSpace::mapRange(inwox_phy_addr_t firstPhysicalAddress, s
  * 将传入的物理地址和虚拟地址映射起来
  * 判断物理地址结束标志是通过在物理地址最后设置一个结束标志0
  */
-inwox_vir_addr_t AddressSpace::mapRangeAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t* physicalAddresses, uint16_t flags)
+inwox_vir_addr_t AddressSpace::mapRangeAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t *physicalAddresses, uint16_t flags)
 {
     inwox_vir_addr_t addr = virtualAddress;
-    while (*physicalAddresses)
-    {
-        if (!mapAt(addr, *physicalAddresses, flags))
-        {
+    while (*physicalAddresses) {
+        if (!mapAt(addr, *physicalAddresses, flags)) {
             return 0;
         }
         addr += 0x1000;
@@ -463,46 +428,45 @@ void AddressSpace::unMap(inwox_vir_addr_t virtualAddress)
  */
 void AddressSpace::unMapRange(inwox_vir_addr_t firstVirtualAddress, size_t pages_number)
 {
-    while (pages_number--)
-    {
+    while (pages_number--) {
         unMap(firstVirtualAddress);
         firstVirtualAddress += 0x1000;
     }
 }
 
-static void *mmapImplementation(void *, size_t size, int, int flags, int , __off_t)
+static void *mmapImplementation(void *, size_t size, int, int flags, int, __off_t)
 {
-    /** 
+    /**
      * 忽略掉addr，即起始地址、protection访问权限，fd指定磁盘文件的文件描述符和偏移量offset
      */
-    if (size == 0 || !(flags & MAP_PRIVATE))
-    {
+    if (size == 0 || !(flags & MAP_PRIVATE)) {
         errno = EINVAL;
         return MAP_FAILED;
     }
     if (flags & MAP_ANONYMOUS) {
-        AddressSpace* addressSpace = Process::current->addressSpace;
-        return (void*) addressSpace->allocate(size / 0x1000);
+        AddressSpace *addressSpace = Process::current->addressSpace;
+        return (void *)addressSpace->allocate(size / 0x1000);
     }
 
     errno = ENOTSUP;
     return MAP_FAILED;
 }
 
-void* Syscall::mmap(__mmapRequest* request) {
-    return mmapImplementation(request->_addr, request->_size, request->_protection,
-            request->_flags, request->_fd, request->_offset);
+void *Syscall::mmap(__mmapRequest *request)
+{
+    return mmapImplementation(request->_addr, request->_size, request->_protection, request->_flags, request->_fd, request->_offset);
 }
 
-int Syscall::munmap(void* addr, size_t size) {
-    if (size == 0 || (inwox_vir_addr_t) addr & 0xFFF) {
+int Syscall::munmap(void *addr, size_t size)
+{
+    if (size == 0 || (inwox_vir_addr_t)addr & 0xFFF) {
         errno = EINVAL;
         return -1;
     }
 
-    AddressSpace* addressSpace = Process::current->addressSpace;
-    //TODO: The userspace process could unmap kernel pages!
-    addressSpace->free((inwox_vir_addr_t) addr, size / 0x1000);
+    AddressSpace *addressSpace = Process::current->addressSpace;
+    /* TODO: The userspace process could unmap kernel pages! */
+    addressSpace->free((inwox_vir_addr_t)addr, size / 0x1000);
     return 0;
 }
 
@@ -510,11 +474,11 @@ int Syscall::munmap(void* addr, size_t size) {
  * 下边两个函数供libk调用
  * 分配/释放大小为pages_number个页的连续内存
  */
-extern "C" void* __mapPages(size_t pages_number)
+extern "C" void *__mapPages(size_t pages_number)
 {
-    return (void*) kernelSpace->allocate(pages_number);
+    return (void *)kernelSpace->allocate(pages_number);
 }
-extern "C" void __unmapPages(void* addr, size_t pages_number)
+extern "C" void __unmapPages(void *addr, size_t pages_number)
 {
-    kernelSpace->free((inwox_vir_addr_t) addr, pages_number);
+    kernelSpace->free((inwox_vir_addr_t)addr, pages_number);
 }

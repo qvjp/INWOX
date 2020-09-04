@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -33,14 +33,15 @@
 #include <stdlib.h>
 
 #ifndef STRTOL_NAME
-#  define STRTOL_NAME strtol
-#  define STRTOL_RESULT long
-#  define STRTOL_RESULT_MAX LONG_MAX
-#  define STRTOL_RESULT_MIN LONG_MIN
-#  define STRTOL_UNSIGNED false
+#define STRTOL_NAME       strtol
+#define STRTOL_RESULT     long
+#define STRTOL_RESULT_MAX LONG_MAX
+#define STRTOL_RESULT_MIN LONG_MIN
+#define STRTOL_UNSIGNED   false
 #endif
 
-static STRTOL_RESULT getDigitValue(unsigned char c) {
+static STRTOL_RESULT getDigitValue(unsigned char c)
+{
     if (c >= '0' && c <= '9') {
         return c - '0';
     } else if (c >= 'a' && c <= 'z') {
@@ -52,16 +53,16 @@ static STRTOL_RESULT getDigitValue(unsigned char c) {
     }
 }
 
-STRTOL_RESULT STRTOL_NAME(const char* restrict string, char** restrict end,
-        int base) {
+STRTOL_RESULT STRTOL_NAME(const char *restrict string, char **restrict end, int base)
+{
     if (base < 0 || base == 1 || base > 36) {
         errno = EINVAL;
         return 0;
     }
 
-    const char* str = string;
+    const char *str = string;
 
-    // Ignore any leading white space
+    /* Ignore any leading white space */
     while (isspace(*str)) {
         str++;
     }
@@ -77,7 +78,7 @@ STRTOL_RESULT STRTOL_NAME(const char* restrict string, char** restrict end,
 
     bool negative = minus && !STRTOL_UNSIGNED;
 
-    // Autodetect the base if necessary
+    /* Autodetect the base if necessary */
     if (base == 0) {
         if (*str == '0') {
             if (str[1] == 'x' || str[1] == 'X') {
@@ -101,7 +102,7 @@ STRTOL_RESULT STRTOL_NAME(const char* restrict string, char** restrict end,
     while (true) {
         STRTOL_RESULT digit = getDigitValue(*str);
 
-        if (digit >= (STRTOL_RESULT) base) {
+        if (digit >= (STRTOL_RESULT)base) {
             break;
         }
 
@@ -135,7 +136,7 @@ STRTOL_RESULT STRTOL_NAME(const char* restrict string, char** restrict end,
     }
 
     if (end) {
-        *end = (char*) (numberFound ? str : string);
+        *end = (char *)(numberFound ? str : string);
     }
 
     return result;

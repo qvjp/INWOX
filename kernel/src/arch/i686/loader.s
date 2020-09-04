@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,6 +25,7 @@
  * kernel/src/arch/i686/loader.s
  * multiboot header和程序入口
  */
+ 
 .extern kernel_main
 
 /* 使这几个地址在C中可用 */
@@ -46,7 +47,7 @@
  */
 .set MB_ALIGN,      1 << 0                  /* 在页面边界上对齐加载的模块 */
 .set MB_MEMINFO,    1 << 1                  /* 提供内存map */
-.set MB_MAGIC,      0x1BADB002              /* 这个魔法常量（magic number）让grub可以找到*/ 
+.set MB_MAGIC,      0x1BADB002              /* 这个魔法常量（magic number）让grub可以找到 */ 
 .set MB_FLAGS,      MB_ALIGN | MB_MEMINFO   /* 这是Multiboot的“flag” */
 .set MB_CHECKSUM,   - (MB_MAGIC + MB_FLAGS) /* 校验上边的常量，提供的Multiboot */
 
@@ -86,7 +87,7 @@
          * kernelPageTable是跳到高地址空间执行后，所使用的页表。
          */
         movl $(bootstrapPageTable + 0x3), kernelPageDirectory
-        /* 将内核映射到0xC00即3GB地址*/
+        /* 将内核映射到0xC00即3GB地址 */
         movl $(kernelPageTable + 0x3), kernelPageDirectory + 0xC00
 
         /* 倒数第二个PDT指向虚拟内存的 4G-8M->4G-4M，这里用来存放物理内存管理的栈 */
@@ -110,7 +111,7 @@
         loop 1b     /** loop指令执行分两步：
                      *  1. %ecx = %ecx - $1
                      *  2. 如果%ecx == 0，向下执行，!= 0 跳转到标号执行
-                     **/
+                     */
 
         /* 映射高地址内核 */
         mov $numKernelPages, %ecx
@@ -133,7 +134,7 @@
         mov %ecx, %cr3                  /* 告诉CPU页目录地址 */
         mov %cr0, %ecx                  /* 保存cr0原来的值到%ecx */
         or $0x80000001, %ecx            /* 开启分页和保护 */
-        mov %ecx, %cr0                  /* 更新cr0 ，分页开启*/
+        mov %ecx, %cr0                  /* 更新cr0 ，分页开启 */
 
         /* 跳到高地址空间执行 */
         jmp _start_high

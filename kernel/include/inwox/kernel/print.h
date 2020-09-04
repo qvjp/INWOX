@@ -1,17 +1,17 @@
 /** MIT License
  *
  * Copyright (c) 2020 Qv Junping
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,16 +26,15 @@
  * 声明函数-格式化输出至屏幕
  */
 
-#ifndef KERNEL_PRINT_H
-#define KERNEL_PRINT_H
+#ifndef KERNEL_PRINT_H_
+#define KERNEL_PRINT_H_
 
-namespace Print
-{
-    /* 格式化输出 */
-    void printf(const char *format, ...);
-    /* 调用此函数将改变屏幕显示颜色，用来提醒或警告，若要恢复之前颜色，需要再次调用initTerminal() */
-    void warnTerminal();
-    /* 初始化终端 */
-    void initTerminal();
-}
-#endif
+namespace Print {
+/* 格式化输出 */
+void printf(const char *format, ...);
+/* 调用此函数将改变屏幕显示颜色，用来提醒或警告，若要恢复之前颜色，需要再次调用initTerminal() */
+void warnTerminal();
+/* 初始化终端 */
+void initTerminal();
+} /* namespace Print */
+#endif /* KERNEL_PRINT_H_ */

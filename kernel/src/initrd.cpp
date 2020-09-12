@@ -26,8 +26,9 @@
  * Init ram disk
  */
 
-#include <string.h>
+#include <libgen.h>
 #include <stdlib.h>
+#include <string.h>
 #include <tar.h>
 #include <inwox/kernel/file.h>
 #include <inwox/kernel/initrd.h>
@@ -55,22 +56,54 @@ struct TarHeader {
 
 DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
 {
-    DirectoryVnode *root = new DirectoryVnode();
+    DirectoryVnode *root = new DirectoryVnode(nullptr);
     TarHeader *header = (TarHeader *)initrd;
 
     while (strcmp(header->magic, TMAGIC) == 0) {
-        Print::printf("start header poiner %p\n", header);
-        size_t size = (size_t)strtoul(header->size, NULL, 8);
+        size_t size = (size_t)strtoul(header->size, NULL, 8);  // 获取当前文件的大小，注意按8进制读取
+        char *path;
 
-        if (header->typeflag == REGTYPE || header->typeflag == AREGTYPE) {
-            FileVnode *file = new FileVnode(header + 1, size);
-            root->addChildNode(strdup(header->name), file);
+        // 获取文件路径（包含文件名）
+        if (header->prefix[0]) {
+            path = (char *)malloc(strlen(header->name) + strlen(header->prefix) + 2);
 
-            Print::printf("File: /%s, size = %zu\n", header->name, size);
+            stpcpy(stpcpy(stpcpy(path, header->prefix), "/"), header->name);
+        } else {
+            path = strdup(header->name);
         }
 
-        header += 1 + ALIGN_UP(size, 512) / 512;
-        Print::printf("end header poiner %p\n", header);
+        // 获取文件名、所在目录（绝对路径）
+        char *path2 = strdup(path);
+        char *dirName = dirname(path);
+        char *fileName = basename(path2);
+
+        // 打开该文件所在目录
+        DirectoryVnode *directory = (DirectoryVnode *)root->openat(dirName, 0, 0);
+
+        if (!directory) {
+            Print::printf("Could not add '%s' to nonexistent directory '%s'.\n", fileName, dirName);
+            return root;
+        }
+
+        // 读取文件（标准文件或目录）到newFile并给header加上偏移量
+        Vnode *newFile;
+        if (header->typeflag == REGTYPE || header->typeflag == AREGTYPE) {
+            newFile = new FileVnode(header + 1, size);
+            header += 1 + ALIGN_UP(size, 512) / 512;
+        } else if (header->typeflag == DIRTYPE) {
+            newFile = new DirectoryVnode(directory);
+            header++;
+        } else {
+            Print::printf("Unknown typeflag '%c'\n", header->typeflag);
+            return root;
+        }
+
+        // 将文件添加到目录
+        directory->addChildNode(fileName, newFile);
+        Print::printf("File: /%s/%s, size = %zu\n", dirName, fileName, size);
+
+        free(path);
+        free(path2);
     }
 
     return root;

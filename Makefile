@@ -41,12 +41,9 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(INITRD)
 	grub-mkrescue --output=$(ISO) iso
 	rm -rf iso
 
-$(INITRD): $(BUILD_DIR)/tools/foo $(BUILD_DIR)/tools/bar
-	@mkdir -p $(BUILD_DIR)/$(ARCH)/initrd
-	echo Hello World! > $(BUILD_DIR)/$(ARCH)/initrd/inwox
-	cp $(BUILD_DIR)/tools/foo $(BUILD_DIR)/$(ARCH)/initrd
-	cp $(BUILD_DIR)/tools/bar $(BUILD_DIR)/$(ARCH)/initrd
-	cd $(BUILD_DIR)/$(ARCH)/initrd && tar cvf initrd.tar --format=ustar foo bar inwox
+$(INITRD): $(SYSROOT)
+	echo Hello World! > $(BIN_DIR)/inwox
+	cd $(SYSROOT) && tar cvf ../$(INITRD) --format=ustar *
 
 tools:
 	$(MAKE) -C tools

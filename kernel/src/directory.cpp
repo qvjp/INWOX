@@ -29,11 +29,12 @@
 #include <string.h>
 #include <inwox/kernel/directory.h>
 
-DirectoryVnode::DirectoryVnode()
+DirectoryVnode::DirectoryVnode(DirectoryVnode *parentVnode)
 {
     childCount = 0;
     childNodes = nullptr;
     fileNames = nullptr;
+    parent = parentVnode;
 }
 
 void DirectoryVnode::addChildNode(const char *path, Vnode *vnode)
@@ -48,7 +49,7 @@ void DirectoryVnode::addChildNode(const char *path, Vnode *vnode)
     fileNames = newFileNames;
 
     childNodes[childCount] = vnode;
-    fileNames[childCount] = path;
+    fileNames[childCount] = strdup(path);
     childCount++;
 }
 
@@ -64,8 +65,14 @@ Vnode *DirectoryVnode::openat(const char *path, int flags, mode_t mode)
         return this;
     }
 
+    if (strncmp(path, ".", length) == 0) {
+        return this;
+    } else if (length == 2 && strncmp(path, "..", length) == 0) {
+        return parent;
+    }
+
     for (size_t i = 0; i < childCount; i++) {
-        if (strncmp(path, fileNames[i], length) == 0) {
+        if (strlen(fileNames[i]) == length && strncmp(path, fileNames[i], length) == 0) {
             if (path[length] == '\0') {
                 return childNodes[i];
             } else {

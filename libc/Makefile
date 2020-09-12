@@ -22,11 +22,14 @@ COMMON_OBJ := \
 	cxx/new \
 	cxx/purevirtual \
 	errno/errno \
+	libgen/basename \
+	libgen/dirname \
 	stdio/vcbprintf \
 	stdlib/free \
 	stdlib/malloc \
 	stdlib/strtol \
 	stdlib/strtoul \
+	string/stpcpy \
 	string/memcmp \
 	string/memcpy \
 	string/memmove \
@@ -36,7 +39,8 @@ COMMON_OBJ := \
 	string/strdup \
 	string/strlen \
 	string/strnlen \
-	string/strncmp
+	string/strncmp \
+	string/strrchr
 
 CRT_OBJ := \
 	$(BUILD)/arch/i686/crt0.o \
@@ -94,8 +98,8 @@ install: install-headers install-libs
 install-headers: $(SYSROOT)/usr/include
 
 install-libs: $(BUILD)/libc.a $(BUILD)/libk.a $(CRT_OBJ)
-	@mkdir -p $(SYSROOT)/usr/lib
-	cp -f $^ $(SYSROOT)/usr/lib
+	@mkdir -p $(LIB_DIR)
+	cp -f $^ $(LIB_DIR)
 
 $(SYSROOT)/usr/include: include $(TO_ROOT)/kernel/include
 	@mkdir -p $@

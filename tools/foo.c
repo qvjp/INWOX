@@ -34,13 +34,14 @@ int main(int argc, char *argv[])
 {
     (void)argc;
     (void)argv;
-    FILE *file = fopen("inwox", "r");
+    FILE *file = fopen("/bin/inwox", "r");
     char *buffer = malloc(8);
     while (fgets(buffer, 7, file)) {
         printf("Read from file: %s\n", buffer);
     }
-
-    fgets(buffer, 8, stdin);
-    printf("You wrote: %s\n", buffer);
+    free(buffer);
+    char *buffer2 = malloc(8);
+    fgets(buffer2, 8, stdin);
+    printf("You wrote: %s\n", buffer2);
     return 0;
 }

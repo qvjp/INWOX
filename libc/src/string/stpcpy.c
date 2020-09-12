@@ -21,28 +21,18 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/directory.h
- * 目录vnode
+/* libc/src/string/stpcpy.c
+ * 复制一个char*，返回指向末尾的指针
  */
 
-#ifndef KERNEL_DIRECTORY_H_
-#define KERNEL_DIRECTORY_H_
+#include <string.h>
 
-#include <inwox/kernel/vnode.h>
+char* stpcpy(char* restrict s1, const char* restrict s2) {
+    while (*s2) {
+        *s1++ = *s2++;
+    }
 
-class DirectoryVnode : public Vnode {
-public:
-    DirectoryVnode(DirectoryVnode *parent);
-    void addChildNode(const char *path, Vnode *vnode);
-    virtual Vnode *openat(const char *path, int flags, mode_t mode);
+    *s1 = '\0';
 
-public:
-    size_t childCount;
-
-private:
-    Vnode **childNodes;
-    const char **fileNames;
-    DirectoryVnode *parent;
-};
-
-#endif /* KERNEL_DIRECTORY_H_ */
+    return s1;
+}

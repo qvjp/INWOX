@@ -101,12 +101,13 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     Process::initialize(rootFd);
     Print::printf("Processes Initialized\n");
 
-    FileVnode *program = (FileVnode *)rootDir->openat("foo", 0, 0);
+    FileVnode *program = (FileVnode *)rootDir->openat("/bin/foo", 0, 0);
     if (program) {
         Print::printf("foo opened\n");
         Process::loadELF((inwox_vir_addr_t)program->data);
     }
-    program = (FileVnode *)rootDir->openat("bar", 0, 0);
+
+    program = (FileVnode *)rootDir->openat("/bin/bar", 0, 0);
     if (program) {
         Print::printf("bar opened\n");
         Process::loadELF((inwox_vir_addr_t)program->data);

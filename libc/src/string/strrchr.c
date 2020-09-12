@@ -21,28 +21,21 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/directory.h
- * 目录vnode
+/* libc/src/string/strrchr.c
+ * 返回s中最后一个和c相同的位置
  */
 
-#ifndef KERNEL_DIRECTORY_H_
-#define KERNEL_DIRECTORY_H_
+#include <string.h>
 
-#include <inwox/kernel/vnode.h>
+char *strrchr(const char *s, int c)
+{
+    const char *result = NULL;
 
-class DirectoryVnode : public Vnode {
-public:
-    DirectoryVnode(DirectoryVnode *parent);
-    void addChildNode(const char *path, Vnode *vnode);
-    virtual Vnode *openat(const char *path, int flags, mode_t mode);
+    do {
+        if (*s == (char)c) {
+            result = s;
+        }
+    } while (*s++);
 
-public:
-    size_t childCount;
-
-private:
-    Vnode **childNodes;
-    const char **fileNames;
-    DirectoryVnode *parent;
-};
-
-#endif /* KERNEL_DIRECTORY_H_ */
+    return (char *)result;
+}

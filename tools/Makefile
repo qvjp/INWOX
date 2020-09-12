@@ -5,12 +5,16 @@ include $(TO_ROOT)/build-config/config.mk
 
 BUILD = $(BUILD_DIR)/tools
 
-CFLAGS ?= -O2 -g
+CFLAGS ?= -O0 -g
 CFLAGS += -Wall -Wextra
 
 PROGRAMS = \
 	bar \
 	foo
+
+install-tools: $(addprefix $(BUILD)/, $(PROGRAMS))
+	@mkdir -p $(BIN_DIR)
+	cp -f $^ $(BIN_DIR)
 
 all: $(addprefix $(BUILD)/, $(PROGRAMS))
 
@@ -21,4 +25,4 @@ $(BUILD)/%: %.c
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all clean
+.PHONY: all install-tools clean

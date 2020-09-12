@@ -21,28 +21,35 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/directory.h
- * 目录vnode
+/* libc/src/libgen/dirname.c
+ * dirname
  */
 
-#ifndef KERNEL_DIRECTORY_H_
-#define KERNEL_DIRECTORY_H_
+#include <string.h>
+#include <libgen.h>
 
-#include <inwox/kernel/vnode.h>
-
-class DirectoryVnode : public Vnode {
-public:
-    DirectoryVnode(DirectoryVnode *parent);
-    void addChildNode(const char *path, Vnode *vnode);
-    virtual Vnode *openat(const char *path, int flags, mode_t mode);
-
-public:
-    size_t childCount;
-
-private:
-    Vnode **childNodes;
-    const char **fileNames;
-    DirectoryVnode *parent;
-};
-
-#endif /* KERNEL_DIRECTORY_H_ */
+char *dirname(char *path)
+{
+    size_t i;
+    if (!path || !*path) {
+        return ".";
+    }
+    i = strlen(path) - 1;
+    for (; path[i] == '/'; i--) {
+        if (!i) {
+            return "/";
+        }
+    }
+    for (; path[i] != '/'; i--) {
+        if (!i) {
+            return ".";
+        }
+    }
+    for (; path[i] == '/'; i--) {
+        if (!i) {
+            return "/";
+        }
+    }
+    path[i + 1] = 0;
+    return path;
+}

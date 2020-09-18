@@ -116,7 +116,7 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
 
     Interrupt::initPic();
     Interrupt::enable();
-    Print::printf("Interrrupt Initialized\n");
+    Print::printf("Interrupt Initialized\n");
 
     while (1) {
         /* 暂停CPU，当中断到来再开始执行 */

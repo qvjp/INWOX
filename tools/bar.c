@@ -23,17 +23,46 @@
 
 /**
  * tools/bar.c
- * 测试模块，直接退出，状态码22
+ * 测试模块，打开文件，关闭文件，读文件
  */
 
+#include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
-int main(int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-    const char *hello = "Hello World from userspace!\n";
-    write(1, hello, strlen(hello));
-    return 22;
+int main(int argc, char *argv[]) {
+    (void) argc;
+    (void) argv;
+    printf("Hello %s from userspace!\n", "World");
+    FILE *inwox = fopen("/bin/inwox", "r");
+    if (!inwox) {
+        printf("Failed to open /bin/inwox\n");
+        return -1;
+    }
+    char buffer[96];
+    while (fgets(buffer, sizeof(buffer), inwox)) {
+        fputs(buffer, stdout);
+    }
+    fclose(inwox);
+    while (1) {
+        printf("open some file: ");
+        fgets(buffer, sizeof(buffer), stdin);
+
+        size_t length = strlen(buffer);
+        if (buffer[length - 1] == '\n') {
+            buffer[length - 1] = '\0';
+        }
+        if (strcmp(buffer, "exit") == 0) {
+            puts("Exiting.");
+            return 22;
+        }
+        FILE* file = fopen(buffer, "r");
+        if (!file) {
+            printf("Failed to open file '%s'\n", buffer);
+            continue;
+        }
+        while (fgets(buffer, sizeof(buffer), file)) {
+            fputs(buffer, stdout);
+        }
+        fclose(file);
+    }
 }

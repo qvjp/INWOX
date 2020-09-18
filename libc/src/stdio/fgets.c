@@ -30,12 +30,15 @@
 char *fgets(char *restrict buffer, int size, FILE *restrict file)
 {
     int i = 0;
-    for (; i < size - 1; i++) {
+    while (i < size - 1) {
         int c = fgetc(file);
-        if (c == '\n' || c == EOF) {
+        if (c == EOF) {
             break;
         }
-        buffer[i] = c;
+        buffer[i++] = c;
+        if (c == '\n') {
+            break;
+        }
     }
     if (i == 0) {
         return NULL;

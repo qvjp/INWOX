@@ -42,7 +42,7 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(INITRD)
 	rm -rf iso
 
 $(INITRD): $(SYSROOT)
-	echo Hello World! > $(BIN_DIR)/inwox
+	echo "INWOX 0.0.1-dev" > $(BIN_DIR)/inwox
 	cd $(SYSROOT) && tar cvf ../$(INITRD) --format=ustar *
 
 tools:

@@ -41,6 +41,7 @@ extern "C" {
 __attribute__((__noreturn__)) void _exit(int);
 ssize_t read(int, void *, size_t);
 ssize_t write(int, const void *, size_t);
+int close(int);
 
 /* 编译GCC需要此函数，当前未实现 */
 pid_t fork(void);

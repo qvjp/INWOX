@@ -21,28 +21,22 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/include/inwox/kernel/syscall.h
- * 系统调用函数声明
+/* libc/src/stdio/fclose.c
+ * 关闭文件
  */
 
-#ifndef KERNEL_SYSCALL_H_
-#define KERNEL_SYSCALL_H_
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include <sys/types.h>
-#include <inwox/syscall.h>
-
-struct __mmapRequest;
-namespace Syscall {
-void pad(void);
-__attribute__((__noreturn__)) void exit(int status);
-ssize_t read(int fd, void *buffer, size_t size);
-ssize_t write(int fd, const void *buffer, size_t size);
-void *mmap(__mmapRequest *request);
-int munmap(void *addr, size_t size);
-int openat(int fd, const char *path, int flags, mode_t mode);
-int close(int fd);
-void badSyscall();
-} /* namespace Syscall */
-
-#endif /* KERNEL_SYSCALL_H_ */
+int fclose(FILE* file)
+{
+    if (fflush(file) == EOF) {
+        return EOF;
+    }
+    if (close(file->fd) == -1) {
+        return EOF;
+    }
+    free(file);
+    return 0;
+}

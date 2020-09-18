@@ -53,7 +53,9 @@ LIBC_OBJ := \
 	fcntl/open \
 	fcntl/openat \
 	stdio/dprintf \
+	stdio/fclose \
 	stdio/fdopen \
+	stdio/fflush \
 	stdio/fgetc \
 	stdio/fgets \
 	stdio/fprintf \
@@ -78,6 +80,7 @@ LIBC_OBJ := \
 	stdlib/exit \
 	sys/mman/mmap \
 	sys/mman/munmap \
+	unistd/close \
 	unistd/_exit \
 	unistd/read \
 	unistd/write

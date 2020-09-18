@@ -26,6 +26,7 @@
  * 系统调用
  */
 
+#include <errno.h>
 #include <inwox/fcntl.h>
 #include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
@@ -43,6 +44,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::mmap,
     (void*) Syscall::munmap,
     (void*) Syscall::openat,
+    (void*) Syscall::close,
 };
 
 /**
@@ -116,6 +118,18 @@ int Syscall::openat(int fd, const char *path, int flags, mode_t mode)
         return -1;
     }
     return Process::current->registerFileDescriptor(result);
+}
+
+int Syscall::close(int fd)
+{
+    FileDescription *fDescr = Process::current->fd[fd];
+    if (!fDescr) {
+        errno = EBADF;
+        return -1;
+    }
+    delete fDescr;
+    Process::current->fd[fd] = nullptr;
+    return 0;
 }
 
 /**

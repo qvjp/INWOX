@@ -40,5 +40,6 @@ typedef uintptr_t inwox_vir_addr_t;
 #define unlikely(x) __builtin_expect((x), 0)
 
 #define ALIGN_UP(value, alignment) ((((value)-1) & ~((alignment)-1)) + (alignment))
+#define ALIGNED(alignment) __attribute__((__aligned__(alignment)))
 
 #endif /* KERNEL_INWOX_H_ */

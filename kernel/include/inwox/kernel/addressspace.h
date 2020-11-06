@@ -30,7 +30,9 @@
 #define KERNEL_ADDRESSSPACE_H_
 
 #include <stddef.h>             /* size_t */
+#include <inwox/mman.h>
 #include <inwox/kernel/inwox.h> /* inwox_phy_addr_t inwox_vir_addr_t */
+#include <inwox/kernel/memorysegment.h>
 
 #define RECURSIVE_MAPPING 0xFFC00000
 
@@ -52,6 +54,8 @@ extern "C" {
     void kernelPhysicalBegin();
     void kernelPhysicalEnd();
     void kernelPageDirectory();
+    void kernelVirtualBegin();
+    void kernelVirtualEnd();
 }
 
 /**
@@ -59,24 +63,26 @@ extern "C" {
  */
 class AddressSpace {
 public:
-    void activate();
-    inwox_vir_addr_t allocate(size_t pages);
-    AddressSpace *fork();
-    void free(inwox_vir_addr_t virtualAddress, size_t pages);
-    inwox_phy_addr_t getPhysicalAddress(inwox_vir_addr_t virtualAddress);
-    bool isFree(inwox_vir_addr_t virtualAddress);
-    bool isFree(size_t pdOffset, size_t ptOffset);
-
-    inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, uint16_t flags);
-    inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, uint16_t flags);
-    inwox_vir_addr_t mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, uint16_t flags);
-    inwox_vir_addr_t mapRange(inwox_phy_addr_t *physicalAddress, uint16_t flags);
-    inwox_vir_addr_t mapRange(inwox_phy_addr_t firstPhysicalAddress, size_t page_number, uint16_t flags);
-    inwox_vir_addr_t mapRangeAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t *physicalAddress, uint16_t flags);
-
-    void unMap(inwox_vir_addr_t virtualAddress);
-    void unMapRange(inwox_vir_addr_t firstVirtualAddress, size_t page_number);
     static void initialize();
+    void activate();
+    AddressSpace *fork();
+    inwox_phy_addr_t getPhysicalAddress(inwox_vir_addr_t virtualAddress);
+    inwox_vir_addr_t mapFromOtherAddressSpace(AddressSpace* sourceSpace,
+    inwox_vir_addr_t sourceVirtualAddress, size_t size, int protection);
+    inwox_vir_addr_t mapMemory(size_t size, int protection);
+    inwox_vir_addr_t mapMemory(inwox_vir_addr_t virtualAddress, size_t size, int protection);
+    inwox_vir_addr_t mapPhysical(inwox_phy_addr_t physicalAddress, size_t size, int protection);
+    inwox_vir_addr_t mapPhysical(inwox_phy_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, size_t size, int protection);
+    void unmapMemory(inwox_vir_addr_t virtualAddress, size_t size);
+    void unmapPhysical(inwox_vir_addr_t firstVirtualAddress, size_t size);
+private:
+    AddressSpace();
+    bool isFree(size_t pdOffset, size_t ptOffset);
+    inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, int protection);
+    inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, int protection);
+    inwox_vir_addr_t mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, int flags);
+    inwox_vir_addr_t mapAtWithFlags(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, int flags);
+    void unMap(inwox_vir_addr_t virtualAddress);
 
 private:
     /**
@@ -85,10 +91,10 @@ private:
      * 都会将fork父进程的页表，然后更新%cr3寄存器
      */
     inwox_phy_addr_t pageDir;
+    MemorySegment* firstSegment;
     AddressSpace *next;
 
 private:
-    AddressSpace();
     static AddressSpace _kernelSpace;
 };
 /* 将内核地址空间设置为全局变量 */

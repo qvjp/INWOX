@@ -65,7 +65,7 @@ Mem_Ctrl_Blk *__allocateBigBlock(Mem_Ctrl_Blk *lastBigBlock, size_t size)
         size = 4 * PAGESIZE;
     } */
 
-    Mem_Ctrl_Blk *bigBlock = mapPages(size / PAGESIZE);
+    Mem_Ctrl_Blk *bigBlock = mapMemory(size);
     Mem_Ctrl_Blk *block = bigBlock + 1;
     Mem_Ctrl_Blk *endBlock = (void *)bigBlock + size - sizeof(Mem_Ctrl_Blk);
 

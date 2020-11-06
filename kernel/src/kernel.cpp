@@ -54,22 +54,22 @@ static DirectoryVnode *loadInitrd(multiboot_info *multiboot)
     DirectoryVnode *root = nullptr;
     inwox_phy_addr_t modulesAligned = multiboot->mods_addr & ~0xFFF;
     ptrdiff_t offset = multiboot->mods_addr - modulesAligned;
-    inwox_vir_addr_t modulesPage = kernelSpace->map(modulesAligned, PAGE_PRESENT | PAGE_WRITABLE);
+    inwox_vir_addr_t modulesPage = kernelSpace->mapPhysical(modulesAligned, 0x1000, PROT_READ);
 
     /* *modules是真正要处理模块的首地址 */
     const struct multiboot_mod_list *modules = (struct multiboot_mod_list *)(modulesPage + offset);
     for (size_t i = 0; i < multiboot->mods_count; i++) {
         /* 按页对齐后再分配内存 */
-        size_t pages_number = ALIGN_UP(modules[i].mod_end - modules[i].mod_start, 0x1000) / 0x1000;
-        inwox_vir_addr_t initrd = kernelSpace->mapRange(modules[i].mod_start, pages_number, PAGE_PRESENT);
+        size_t size = ALIGN_UP(modules[i].mod_end - modules[i].mod_start, 0x1000);
+        inwox_vir_addr_t initrd = kernelSpace->mapPhysical(modules[i].mod_start, size, PROT_READ);
         root = Initrd::loadInitrd(initrd);
-        kernelSpace->unMapRange(initrd, pages_number);
+        kernelSpace->unmapPhysical(initrd, size);
 
         if (root->childCount) {
             break;
         }
     }
-    kernelSpace->unMap((inwox_vir_addr_t)modulesPage);
+    kernelSpace->unmapPhysical((inwox_vir_addr_t)modulesPage, 0x1000);
     return root;
 }
 
@@ -87,7 +87,7 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     AddressSpace::initialize();
     Print::printf("AddressSpace Initialized\n");
 
-    multiboot_info *multiboot = (multiboot_info *)kernelSpace->map(multibootAddress, 0x3);
+    multiboot_info *multiboot = (multiboot_info *)kernelSpace->mapPhysical(multibootAddress, 0x1000, PROT_READ);
     PhysicalMemory::initialize(multiboot);
     Print::printf("Physical Memory Initialized\n");
 
@@ -112,7 +112,7 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
         Print::printf("bar opened\n");
         Process::loadELF((inwox_vir_addr_t)program->data);
     }
-    kernelSpace->unMap((inwox_vir_addr_t)multiboot);
+    kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);
 
     Interrupt::initPic();
     Interrupt::enable();

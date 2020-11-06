@@ -53,6 +53,6 @@ void free(void *addr)
         if (bigBlock->next) {
             bigBlock->next->prev = bigBlock->prev;
         }
-        unmapPages(bigBlock, bigBlock->size / PAGESIZE);
+        unmapMemory(bigBlock, bigBlock->size);
     }
 }

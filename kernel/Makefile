@@ -16,6 +16,7 @@ OBJ := \
 	interrupt.o \
 	kernel.o \
 	keyboard.o \
+	memorysegment.o \
 	pic.o \
 	physicalmemory.o \
 	ps2.o \

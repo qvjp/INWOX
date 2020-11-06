@@ -21,37 +21,37 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/mman.h
- * mmap相关定义
+/* kernel/include/inwox/kernel/memorysegment.h
+ * Memory segment
  */
 
-#ifndef INWOX_MMAN_H_
-#define INWOX_MMAN_H_
+#ifndef KERNEL_MEMORYSEGMENT_H_
+#define KERNEL_MEMORYSEGMENT_H_
 
-#define PROT_READ  (1 << 0)
-#define PROT_WRITE (1 << 1)
-#define PROT_EXEC  (1 << 2)
-#define PROT_NONE  0
-
-#define _PROT_FLAGS (PROT_READ | PROT_WRITE | PROT_EXEC | PROT_NONE)
-
-#define MAP_PRIVATE   (1 << 0) /* 私有的、写时复制的 */
-#define MAP_ANONYMOUS (1 << 1) /* 匿名对象，相应的虚拟页面是请求二进制0的 */
-#define MAP_SHARED    (1 << 2) /* 共享对象 */
-
-#define MAP_FAILED ((void *)0)
-
-#if defined(__is_inwox_kernel) || defined(__is_inwox_libc)
 #include <stddef.h>
-#include <inwox/types.h>
-struct __mmapRequest {
-    void *_addr;
-    size_t _size;
-    int _protection;
-    int _flags;
-    int _fd;
-    __off_t _offset;
-};
-#endif
+#include <inwox/kernel/inwox.h>
 
-#endif /* INWOX_MMAN_H_ */
+class MemorySegment {
+public:
+    MemorySegment(inwox_vir_addr_t address, size_t size, int flags, MemorySegment *prev, MemorySegment *next);
+
+public:
+    inwox_vir_addr_t address;
+    size_t size;
+    int flags;
+    MemorySegment *prev;
+    MemorySegment *next;
+
+public:
+    static void addSegment(MemorySegment *segment, inwox_vir_addr_t address, size_t size, int protection);
+    static void removeSegment(MemorySegment *segment, inwox_vir_addr_t address, size_t size);
+    static inwox_vir_addr_t findFreeSegment(MemorySegment *segment, size_t size);
+
+private:
+    static void addSegment(MemorySegment *firstSegment, MemorySegment *newSegment);
+    static MemorySegment* allocateSegment(inwox_vir_addr_t address, size_t size, int flags);
+    static void deallocateSegment(MemorySegment *segment);
+    static void verifySegmentList();
+};
+
+#endif /* KERNEL_MEMORYSEGMENT_H_ */

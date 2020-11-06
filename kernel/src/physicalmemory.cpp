@@ -68,7 +68,7 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
     inwox_phy_addr_t mmapAligned = mmapPhys & ~0xFFF;
     ptrdiff_t offset = mmapPhys - mmapAligned;
 
-    inwox_vir_addr_t virtualAddress = kernelSpace->map(mmapAligned, 0x3);
+    inwox_vir_addr_t virtualAddress = kernelSpace->mapPhysical(mmapAligned, 0x1000, PROT_READ);
 
     inwox_vir_addr_t mmap = virtualAddress + offset;
     inwox_vir_addr_t mmapEnd = mmap + multiboot->mmap_length;
@@ -89,7 +89,7 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
         }
         mmap += mmapEntry->size + 4;
     }
-    kernelSpace->unMap(virtualAddress);
+    kernelSpace->unmapPhysical(virtualAddress, 0x1000);
     Print::printf("We have %d free page frames\n", stackUsed);
 }
 
@@ -100,7 +100,7 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
 void PhysicalMemory::pushPageFrame(inwox_phy_addr_t physicalAddress)
 {
     if (unlikely(stackLeft == 0)) {
-        kernelSpace->mapAt((inwox_vir_addr_t)stack - stackUsed * 4 - 0x1000, physicalAddress, 0x3);
+        kernelSpace->mapPhysical((inwox_vir_addr_t)stack - stackUsed * 4 - 0x1000, physicalAddress, 0x1000, PROT_READ | PROT_WRITE);
         stackLeft += 1024;
     } else {
         stack[-++stackUsed] = physicalAddress;
@@ -117,7 +117,7 @@ inwox_phy_addr_t PhysicalMemory::popPageFrame()
         if (likely(stackLeft > 0)) {
             inwox_vir_addr_t virtualAddress = (inwox_vir_addr_t)stack - stackLeft * 4;
             inwox_phy_addr_t result = kernelSpace->getPhysicalAddress(virtualAddress);
-            kernelSpace->unMap(virtualAddress);
+            kernelSpace->unmapPhysical(virtualAddress, 0x1000);
             stackLeft -= 1024;
             return result;
         } else {

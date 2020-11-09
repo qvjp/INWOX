@@ -60,6 +60,18 @@ AddressSpace::AddressSpace()
     next = nullptr;
 }
 
+AddressSpace::~AddressSpace()
+{
+    MemorySegment *currentSegment = firstSegment;
+    while (currentSegment) {
+        MemorySegment *next = currentSegment->next;
+        if (!(currentSegment->flags & SEG_NOUNMAP)) {
+            unmapMemory(currentSegment->address, currentSegment->size);
+        }
+        currentSegment = next;
+    }
+}
+
 static MemorySegment segment1(0, 0xC0000000, PROT_NONE, nullptr, nullptr);
 static MemorySegment segment2(0xC0000000, 0x1000, PROT_READ | PROT_WRITE, &segment1, nullptr);
 static MemorySegment segment3((inwox_vir_addr_t) &kernelVirtualBegin, (inwox_vir_addr_t) &kernelVirtualEnd - (inwox_vir_addr_t) &kernelVirtualEnd,
@@ -137,8 +149,8 @@ AddressSpace *AddressSpace::fork()
 
     kernelSpace->unMap(currentPageDir);
     kernelSpace->unMap(newPageDir);
-    result->firstSegment = new MemorySegment(0, 0x1000, PROT_NONE, nullptr, nullptr);
-    MemorySegment::addSegment(result->firstSegment, 0xC0000000, -0xC0000000, PROT_NONE);
+    result->firstSegment = new MemorySegment(0, 0x1000, PROT_NONE | SEG_NOUNMAP, nullptr, nullptr);
+    MemorySegment::addSegment(result->firstSegment, 0xC0000000, -0xC0000000, PROT_NONE | SEG_NOUNMAP);
     result->next = firstAddressSpace;
     firstAddressSpace = result;
 

@@ -33,6 +33,8 @@
 #include <inwox/kernel/filedescription.h>
 #include <inwox/kernel/interrupt.h> /* struct regs */
 
+#define OPEN_MAX 20
+
 class Process {
 public:
     Process();
@@ -44,9 +46,8 @@ private:
     Process *prev;
     Process *next;
     void *kstack; /* 内核栈 */
-    void *stack;  /* 用户栈 */
 public:
-    FileDescription *fd[20]; /* 文件描述符数组 */
+    FileDescription *fd[OPEN_MAX]; /* 文件描述符数组 */
     FileDescription *rootFd;
     FileDescription *cwdFd;
 

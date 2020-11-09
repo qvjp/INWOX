@@ -31,6 +31,8 @@
 #include <stddef.h>
 #include <inwox/kernel/inwox.h>
 
+#define SEG_NOUNMAP (1 << 16)
+
 class MemorySegment {
 public:
     MemorySegment(inwox_vir_addr_t address, size_t size, int flags, MemorySegment *prev, MemorySegment *next);

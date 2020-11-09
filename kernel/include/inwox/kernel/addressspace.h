@@ -63,6 +63,7 @@ extern "C" {
  */
 class AddressSpace {
 public:
+    ~AddressSpace();
     static void initialize();
     void activate();
     AddressSpace *fork();

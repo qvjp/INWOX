@@ -49,7 +49,6 @@ Process::Process()
     interruptContext = nullptr;
     next = nullptr;
     prev = nullptr;
-    stack = nullptr;
     kstack = nullptr;
     memset(fd, 0, sizeof(fd));
     rootFd = nullptr;
@@ -143,7 +142,7 @@ Process *Process::startProcess(void *entry, AddressSpace *addressSpace)
      * 用户栈处理其他
      */
     process->kstack = (void*)kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
-    process->stack = (void*)addressSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
+    inwox_vir_addr_t stack = addressSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
 
     process->interruptContext = (struct regs *)((uintptr_t)process->kstack + 0x1000 - sizeof(struct regs));
     process->interruptContext->eax = 0;
@@ -162,15 +161,15 @@ Process *Process::startProcess(void *entry, AddressSpace *addressSpace)
                                                 * 一样道理。
                                                 */
     process->interruptContext->eflags = 0x200; /* 开启中断 */
-    process->interruptContext->useresp = (uint32_t)process->stack + 0x1000;
+    process->interruptContext->useresp = stack + 0x1000;
     process->interruptContext->ss = 0x23; /* 用户数据段 */
 
     process->addressSpace = addressSpace;
     process->fd[0] = new FileDescription(&terminal); /* 文件描述符0指向 stdin */
     process->fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 stdout */
     process->fd[2] = new FileDescription(&terminal); /* 文件描述符2指向 stderr */
-    process->rootFd = idleProcess->rootFd;
-    process->cwdFd = process->rootFd;
+    process->rootFd = new FileDescription(*idleProcess->rootFd);
+    process->cwdFd = new FileDescription(*process->rootFd);
     process->next = firstProcess;
     if (process->next) {
         process->next->prev = process;
@@ -194,6 +193,15 @@ void Process::exit(int status)
     if (this == firstProcess) {
         firstProcess = next;
     }
+
+    delete addressSpace;
+    for (size_t i = 0; i < OPEN_MAX; i++) {
+        if (fd[i]) {
+            delete fd[i];
+        }
+    }
+    delete rootFd;
+    delete cwdFd;
 
     Print::printf("Process exited with status: %d\n", status);
 }

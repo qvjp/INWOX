@@ -81,6 +81,7 @@ LIBC_OBJ := \
 	sys/mman/mmap \
 	sys/mman/munmap \
 	unistd/close \
+	unistd/fork \
 	unistd/_exit \
 	unistd/read \
 	unistd/write
@@ -89,12 +90,17 @@ LIBK_OBJ := \
 	$(COMMON_OBJ)
 
 LIBC_OBJ += \
+	arch/i686/rfork \
 	arch/i686/syscall
 
 LIBC_OBJ := $(addprefix $(BUILD)/, $(addsuffix .o, $(LIBC_OBJ)))
 LIBK_OBJ := $(addprefix $(BUILD)/, $(addsuffix .libk.o, $(LIBK_OBJ)))
 
-all: $(BUILD)/libc.a $(BUILD)/libk.a $(CRT_OBJ)
+all: build_info $(BUILD)/libc.a $(BUILD)/libk.a $(CRT_OBJ)
+	@echo -n ${COLOR_RESET}
+
+build_info:
+	@echo ${COLOR_GREEN}Building libc...
 
 install: install-headers install-libs
 

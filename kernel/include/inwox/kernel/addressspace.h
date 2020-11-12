@@ -63,6 +63,7 @@ extern "C" {
  */
 class AddressSpace {
 public:
+    AddressSpace();
     ~AddressSpace();
     static void initialize();
     void activate();
@@ -77,7 +78,6 @@ public:
     void unmapMemory(inwox_vir_addr_t virtualAddress, size_t size);
     void unmapPhysical(inwox_vir_addr_t firstVirtualAddress, size_t size);
 private:
-    AddressSpace();
     bool isFree(size_t pdOffset, size_t ptOffset);
     inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, int protection);
     inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, int protection);

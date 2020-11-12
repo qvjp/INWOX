@@ -1,7 +1,11 @@
 TO_ROOT = .
 include $(TO_ROOT)/build-config/config.mk
 
-all: install-headers libc install-libc kernel tools tests strip-debug iso
+all: build_info install-headers libc install-libc kernel tools tests strip-debug iso
+	@echo -n ${COLOR_RESET}
+
+build_info:
+	@echo ${COLOR_YELLOW}Build beginning...
 
 install-headers:
 	$(MAKE) -C libc install-headers
@@ -19,6 +23,7 @@ iso: $(ISO)
 
 # 为调试生成kernel.sym，并删除kernel.elf中的多余调试信息
 strip-debug:
+	@echo ${COLOR_YELLOW}Building package...
 	i686-inwox-objcopy --only-keep-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(BUILD_DIR)/kernel.sym
 	i686-inwox-objcopy --strip-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 

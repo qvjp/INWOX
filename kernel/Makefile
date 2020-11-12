@@ -41,7 +41,11 @@ END_OBJ := $(CRTEND_O) $(CRTN_O)
 
 OBJ := $(START_OBJ) $(addprefix $(BUILD)/, $(OBJ)) $(END_OBJ)
 
-all: $(BUILD)/kernel
+all: build_info $(BUILD)/kernel
+	@echo -n ${COLOR_RESET}
+
+build_info:
+	@echo ${COLOR_BLUE}Building kernel...
 
 $(BUILD)/kernel: $(OBJ)
 	$(CXX) $(LDFLAGS) -o $(BUILD)/kernel.elf $^ $(LIBS)

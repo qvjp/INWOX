@@ -31,6 +31,19 @@
 
 #include <inwox/syscall.h>
 
+/**
+ * 以系统调用read为例
+ * DEFINE_SYSCALL_GLOBAL(SYSCALL_READ, ssize_t, read, (int, void *, size_t));
+ * 最终展开为：
+ * 
+ * .global read
+ * .pushsection .text
+ * read:
+ *     mov $3, %eax
+ *     jmp __syscall
+ * .popsection
+ * extern ssize_t read (int, void *, size_t)
+ */
 #define _SYSCALL_TOSTRING(x) #x
 
 #define _SYSCALL_BODY(number, name)                    \

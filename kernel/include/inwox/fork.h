@@ -21,28 +21,31 @@
  * SOFTWARE.
  */
 
-/**
- * tools/foo.c
- * 测试模块，直接退出，状态码0
+/* kernel/include/inwox/fork.h
+ * fork头文件
  */
 
-#include <stdio.h>
-#include <unistd.h>
+#ifndef INWOX_FORK_H_
+#define INWOX_FORK_H_
 
-int main(int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-    printf("fork test\n");
-    int x = 10;
-    pid_t pid = fork();
-    if (pid == -1) {
-        printf("fork() failed\n");
-    } else if (pid == 0) {
-        printf("child process: %d, x is: %d\n", pid, x);
-    } else {
-        printf("parent process: %d, x is: %d\n", pid, x);
-    }
+#include <stdint.h>
 
-    return 0;
-}
+// 下边宏定义为rfork的flags参数，参考Plan9/FreeBSD的rfork
+// https://9fans.github.io/plan9port/man/man3/rfork.html
+#define RFPROC  (1 << 0)        // 如果设置此位，则创建新进程，否则操作原进程
+#define RFFDG   (1 << 1)        // 如果设置此位，则复制文件描述符，否则使用共享的同一个fd表
+#define _RFFORK (RFPROC | RFFDG)
+
+struct regfork {
+    uint32_t rf_esp;
+    uint32_t rf_eip;
+    uint32_t rf_eax;
+    uint32_t rf_ebx;
+    uint32_t rf_ecx;
+    uint32_t rf_edx;
+    uint32_t rf_esi;
+    uint32_t rf_edi;
+    uint32_t rf_ebp;
+};
+
+#endif /* INWOX_FORK_H_ */

@@ -38,7 +38,7 @@
 Process *Process::current;
 static Process *firstProcess;
 static Process *idleProcess;
-
+static pid_t nextPid = 0;
 /**
  * 这里的进程我们只指一个程序的基本可执行实体，并不代表线程的容器（区别于现代面向线程设计的系统）。
  * 当前的INWOX中进程控制块比较简单，包括一个独立的地址空间、运行上下文、指向下一个进程的指针和内核堆栈、用户堆栈
@@ -53,6 +53,7 @@ Process::Process()
     memset(fd, 0, sizeof(fd));
     rootFd = nullptr;
     cwdFd = nullptr;
+    pid = nextPid++;
 }
 
 /**
@@ -63,7 +64,7 @@ void Process::initialize(FileDescription *rootFd)
 {
     idleProcess = new Process();
     idleProcess->rootFd = rootFd;
-    idleProcess->interruptContext = (struct regs *)malloc(sizeof(struct regs));
+    idleProcess->interruptContext = new regs();
     current = idleProcess;
     firstProcess = nullptr;
 }
@@ -83,7 +84,7 @@ Process *Process::loadELF(inwox_vir_addr_t elf)
     }
     struct ProgramHeader *programHeader = (struct ProgramHeader *)(elf + header->e_phoff);
 
-    AddressSpace *addressSpace = kernelSpace->fork();
+    AddressSpace *addressSpace = new AddressSpace();
 
     for (size_t i = 0; i < header->e_phnum; i++) {
         if (programHeader[i].p_type != PT_LOAD) {
@@ -203,7 +204,57 @@ void Process::exit(int status)
     delete rootFd;
     delete cwdFd;
 
-    Print::printf("Process exited with status: %d\n", status);
+    Print::printf("Process %u exited with status: %d\n", pid, status);
+}
+
+/**
+ * 进程的fork
+ * 创建新进程，分配新的内核栈，在新内核栈底部保存父进程寄存器信息，
+ * 然后复制父进程地址空间，复制文件描述符，并将新进程加入进程列表等待调度
+ */
+Process *Process::regfork(int flags, struct regfork *registers)
+{
+    (void) flags;
+    Process *process = new Process();
+
+    // fork 寄存器
+    process->kstack = (void*) kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
+    process->interruptContext = (struct regs*)((uintptr_t) process->kstack + 0x1000 - sizeof(struct regs));
+    process->interruptContext->eax = registers->rf_eax;
+    process->interruptContext->ebx = registers->rf_ebx;
+    process->interruptContext->ecx = registers->rf_ecx;
+    process->interruptContext->edx = registers->rf_edx;
+    process->interruptContext->esi = registers->rf_esi;
+    process->interruptContext->edi = registers->rf_edi;
+    process->interruptContext->ebp = registers->rf_ebp;
+    process->interruptContext->eip = registers->rf_eip;
+    process->interruptContext->esp = registers->rf_esp;
+
+    process->interruptContext->int_no = 0;
+    process->interruptContext->err_code = 0;
+    process->interruptContext->cs = 0x1B;
+    process->interruptContext->eflags = 0x200;
+    process->interruptContext->ss = 0x23;
+
+    // fork地址空间
+    process->addressSpace = addressSpace->fork();
+
+    // fork文件描述符
+    for (size_t i = 0; i < OPEN_MAX; i++) {
+        if (fd[i]) {
+            process->fd[i] = new FileDescription(*fd[i]);
+        }
+    }
+    process->rootFd = new FileDescription(*rootFd);
+    process->cwdFd = new FileDescription(*cwdFd);
+
+    // 将进程加入进程链表
+    process->next = firstProcess;
+    if (process->next) {
+        process->next->prev = process;
+    }
+    firstProcess = process;
+    return process;
 }
 
 /**

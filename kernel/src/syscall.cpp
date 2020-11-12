@@ -45,6 +45,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::munmap,
     (void*) Syscall::openat,
     (void*) Syscall::close,
+    (void*) Syscall::regfork,
 };
 
 /**
@@ -130,6 +131,15 @@ int Syscall::close(int fd)
     delete fDescr;
     Process::current->fd[fd] = nullptr;
     return 0;
+}
+
+pid_t Syscall::regfork(int flags, struct regfork *registers) {
+    if(!((flags & RFPROC) && (flags & RFFDG))) {
+        errno = EINVAL;
+        return -1;
+    }
+    Process *newProcess = Process::current->regfork(flags, registers);
+    return newProcess->pid;
 }
 
 /**

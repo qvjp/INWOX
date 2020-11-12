@@ -34,6 +34,7 @@
 #define __need_size_t
 #define __need_FILE
 #include <sys/types.h>
+#include <inwox/fork.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,8 +44,8 @@ ssize_t read(int, void *, size_t);
 ssize_t write(int, const void *, size_t);
 int close(int);
 
-/* 编译GCC需要此函数，当前未实现 */
 pid_t fork(void);
+pid_t rfork(int);
 int execv(const char *, char *const[]);
 int execve(const char *, char *const[], char *const[]);
 int execvp(const char *, char *const[]);

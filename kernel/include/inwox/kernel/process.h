@@ -29,6 +29,9 @@
 #ifndef KERNEL_PROCESS_H_
 #define KERNEL_PROCESS_H_
 
+#define __need_pid_t
+#include <sys/types.h>
+#include <inwox/fork.h>
 #include <inwox/kernel/addressspace.h> /* AddressSpace */
 #include <inwox/kernel/filedescription.h>
 #include <inwox/kernel/interrupt.h> /* struct regs */
@@ -39,6 +42,7 @@ class Process {
 public:
     Process();
     void exit(int status);
+    Process *regfork(int flags, struct regfork *registers);
     int registerFileDescriptor(FileDescription *descriptor);
 
 private:
@@ -58,6 +62,7 @@ public:
     static Process *loadELF(inwox_vir_addr_t elf);
     static Process *startProcess(void *entry, AddressSpace *addressspace);
     static Process *current;
+    pid_t pid;
 };
 
 void setKernelStack(uintptr_t kstack);

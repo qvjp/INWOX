@@ -28,7 +28,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <stdlib.h> /* malloc() */
 #include <string.h> /* memset() */
 #include <inwox/kernel/addressspace.h>
 #include <inwox/kernel/physicalmemory.h> /* pushPageFrame popPageFrame */
@@ -55,9 +54,24 @@ static inline int protectionToFlags(int protection) {
  */
 AddressSpace::AddressSpace()
 {
-    pageDir = 0;
-    firstSegment = nullptr;
-    next = nullptr;
+    if (this == &_kernelSpace) {
+        pageDir = 0;
+        firstSegment = nullptr;
+        next = nullptr;
+    } else {
+        // 用户态新建地址空间时，先分配物理内存用来存放该地址空间的页目录，并将页目录复制过去，
+        pageDir = PhysicalMemory::popPageFrame();
+        inwox_vir_addr_t kernelPageDir = (RECURSIVE_MAPPING + 0x3FF000); // FFFFF000为4G地址空间的最后4K，存放页目录
+        inwox_vir_addr_t newPageDir = kernelSpace->map(pageDir, PROT_WRITE);
+        memcpy((void*) newPageDir, (const void*) kernelPageDir, 0x1000);
+        kernelSpace->unMap(newPageDir);
+
+        firstSegment = new MemorySegment(0, 0x1000, PROT_NONE | SEG_NOUNMAP, nullptr, nullptr);
+        MemorySegment::addSegment(firstSegment, 0xC0000000, -0xC0000000, PROT_NONE | SEG_NOUNMAP);
+
+        next = firstAddressSpace;
+        firstAddressSpace = this;
+    }
 }
 
 AddressSpace::~AddressSpace()
@@ -139,20 +153,21 @@ void AddressSpace::activate()
  */
 AddressSpace *AddressSpace::fork()
 {
-    AddressSpace *result = (AddressSpace *)malloc(sizeof(AddressSpace));
-    result->pageDir = PhysicalMemory::popPageFrame();
-
-    inwox_vir_addr_t currentPageDir = kernelSpace->map(pageDir, PROT_READ);
-    inwox_vir_addr_t newPageDir = kernelSpace->map(result->pageDir, PROT_WRITE);
-
-    memcpy((void *)newPageDir, (const void *)currentPageDir, 0x1000);
-
-    kernelSpace->unMap(currentPageDir);
-    kernelSpace->unMap(newPageDir);
-    result->firstSegment = new MemorySegment(0, 0x1000, PROT_NONE | SEG_NOUNMAP, nullptr, nullptr);
-    MemorySegment::addSegment(result->firstSegment, 0xC0000000, -0xC0000000, PROT_NONE | SEG_NOUNMAP);
-    result->next = firstAddressSpace;
-    firstAddressSpace = result;
+    AddressSpace *result = new AddressSpace();
+    MemorySegment *segment = firstSegment->next;
+    while (segment) {
+        // 找到未使用的segment，分配并复制父进程的地质空间内容
+        if (!(segment->flags & SEG_NOUNMAP)) {
+            size_t size = segment->size;
+            result->mapMemory(segment->address, size, segment->flags);
+            inwox_vir_addr_t source = kernelSpace->mapFromOtherAddressSpace(this, segment->address, size, PROT_READ);
+            inwox_vir_addr_t dest = kernelSpace->mapFromOtherAddressSpace(result, segment->address, size, PROT_WRITE);
+            memcpy((void*) dest, (const void*) source, size);
+            kernelSpace->unmapPhysical(source, size);
+            kernelSpace->unmapPhysical(dest, size);
+        }
+        segment = segment->next;
+    }
 
     return result;
 }

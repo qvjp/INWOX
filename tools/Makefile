@@ -12,11 +12,15 @@ PROGRAMS = \
 	bar \
 	foo
 
+all: build_info install-tools
+	@echo -n ${COLOR_RESET}
+
+build_info:
+	@echo ${COLOR_CYAN}Building tools...
+
 install-tools: $(addprefix $(BUILD)/, $(PROGRAMS))
 	@mkdir -p $(BIN_DIR)
 	cp -f $^ $(BIN_DIR)
-
-all: $(addprefix $(BUILD)/, $(PROGRAMS))
 
 $(BUILD)/%: %.c
 	@mkdir -p $(dir $@)

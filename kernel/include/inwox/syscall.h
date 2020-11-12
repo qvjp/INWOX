@@ -36,8 +36,9 @@
 #define SYSCALL_MMAP   4
 #define SYSCALL_MUNMAP 5
 #define SYSCALL_OPENAT 6
-#define SYSCALL_CLOSE 7
+#define SYSCALL_CLOSE  7
+#define SYSCALL_REGFORK 8
 
-#define NUM_SYSCALLS 8
+#define NUM_SYSCALLS 9
 
 #endif /* INWOX_SYSCALL_H_ */

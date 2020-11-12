@@ -21,28 +21,15 @@
  * SOFTWARE.
  */
 
-/**
- * tools/foo.c
- * 测试模块，直接退出，状态码0
+/* libc/src/unistd/fork.c
+ * fork
  */
 
-#include <stdio.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
-int main(int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-    printf("fork test\n");
-    int x = 10;
-    pid_t pid = fork();
-    if (pid == -1) {
-        printf("fork() failed\n");
-    } else if (pid == 0) {
-        printf("child process: %d, x is: %d\n", pid, x);
-    } else {
-        printf("parent process: %d, x is: %d\n", pid, x);
-    }
+DEFINE_SYSCALL_GLOBAL(SYSCALL_REGFORK, pid_t, sys_fork, (int, struct regfork*));
 
-    return 0;
+pid_t fork(void) {
+    return rfork(_RFFORK);
 }

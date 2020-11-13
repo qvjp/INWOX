@@ -21,31 +21,14 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/include/inwox/kernel/syscall.h
- * 系统调用函数声明
+/* libc/src/unistd/execv.c
+ * 执行程序
  */
 
-#ifndef KERNEL_SYSCALL_H_
-#define KERNEL_SYSCALL_H_
+#include <unistd.h>
+extern char **environ;
 
-#include <sys/types.h>
-#include <inwox/fork.h>
-#include <inwox/syscall.h>
-
-struct __mmapRequest;
-namespace Syscall {
-void pad(void);
-__attribute__((__noreturn__)) void exit(int status);
-ssize_t read(int fd, void *buffer, size_t size);
-ssize_t write(int fd, const void *buffer, size_t size);
-void *mmap(__mmapRequest *request);
-int munmap(void *addr, size_t size);
-int openat(int fd, const char *path, int flags, mode_t mode);
-int close(int fd);
-pid_t regfork(int flags, struct regfork *registers);
-int execve(const char *path, char *const argv[], char *const envp[]);
-void badSyscall();
-} /* namespace Syscall */
-
-#endif /* KERNEL_SYSCALL_H_ */
+int execv(const char *path, char *const argv[])
+{
+    return execve(path, argv, environ);
+}

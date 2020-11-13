@@ -36,9 +36,9 @@ public:
     FileDescription *openat(const char *path, int flags, mode_t mode);
     ssize_t read(void *buffer, size_t size);
     ssize_t write(const void *buffer, size_t size);
+    Vnode *vnode;
 
 private:
-    Vnode *vnode;
     __off_t offset;
 };
 

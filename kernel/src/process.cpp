@@ -30,6 +30,7 @@
 #include <stdlib.h> /* malloc */
 #include <string.h> /* memset memcpy */
 #include <inwox/kernel/elf.h>            /* ElfHeader ProgramHeader */
+#include <inwox/kernel/file.h>
 #include <inwox/kernel/physicalmemory.h> /* popPageFrame */
 #include <inwox/kernel/print.h>          /* printf */
 #include <inwox/kernel/process.h>
@@ -45,7 +46,7 @@ static pid_t nextPid = 0;
  */
 Process::Process()
 {
-    addressSpace = kernelSpace;
+    addressSpace = nullptr;
     interruptContext = nullptr;
     next = nullptr;
     prev = nullptr;
@@ -54,6 +55,8 @@ Process::Process()
     rootFd = nullptr;
     cwdFd = nullptr;
     pid = nextPid++;
+    contextChanged = false;
+    fdInitialized = false;
 }
 
 /**
@@ -63,29 +66,35 @@ Process::Process()
 void Process::initialize(FileDescription *rootFd)
 {
     idleProcess = new Process();
+    idleProcess->addressSpace = kernelSpace;
     idleProcess->rootFd = rootFd;
     idleProcess->interruptContext = new regs();
     current = idleProcess;
     firstProcess = nullptr;
 }
 
-/**
- * 加载ELF可执行文件并运行
- *
- * 加载ELF可执行文件的过程：将p_vaddr开始p_memsz长的内存设为0，然后从p_offset
- * 开始复制p_filesz个字节到p_vaddr。
- */
-Process *Process::loadELF(inwox_vir_addr_t elf)
+void Process::addProcess(Process *process)
+{
+    process->next = firstProcess;
+    if (process->next) {
+        process->next->prev = process;
+    }
+    firstProcess = process;
+}
+
+uintptr_t Process::loadELF(uintptr_t elf)
 {
     struct ElfHeader *header = (struct ElfHeader *)elf;
     if (check_elf_magic(header)) {
         Print::printf("Elf Header Incorrect\n");
-        return NULL;
+        return -1;
     }
     struct ProgramHeader *programHeader = (struct ProgramHeader *)(elf + header->e_phoff);
 
-    AddressSpace *addressSpace = new AddressSpace();
-
+    if (addressSpace) {
+        delete addressSpace;
+    }
+    addressSpace = new AddressSpace();
     for (size_t i = 0; i < header->e_phnum; i++) {
         if (programHeader[i].p_type != PT_LOAD) {
             continue;
@@ -104,7 +113,7 @@ Process *Process::loadELF(inwox_vir_addr_t elf)
         /* 取消映射 */
         kernelSpace->unmapPhysical(dest, size);
     }
-    return startProcess((void *)header->e_entry, addressSpace);
+    return (uintptr_t) header->e_entry;
 }
 
 /**
@@ -115,7 +124,11 @@ Process *Process::loadELF(inwox_vir_addr_t elf)
  */
 struct regs *Process::schedule(struct regs *context)
 {
-    current->interruptContext = context;
+    if (likely(!current->contextChanged)) {
+        current->interruptContext = context;
+    } else {
+        current->contextChanged = false;
+    }
     if (current->next) {
         current = current->next;
     } else {
@@ -130,53 +143,42 @@ struct regs *Process::schedule(struct regs *context)
     return current->interruptContext;
 }
 
-/**
- * 开始新进程
- * 传入地址空间是为能在调用处确定内核态或用户态
- * 最后返回新创建的进程
- */
-Process *Process::startProcess(void *entry, AddressSpace *addressSpace)
+int Process::execute(FileDescription *descr, char *const argv[], char *const envp[])
 {
-    Process *process = new Process();
+    (void) argv;
+    (void) envp;
+    FileVnode *file = (FileVnode *) descr->vnode;
+    uintptr_t entry = loadELF((uintptr_t) file->data);
     /**
      * 分配两个栈，内核栈用来保存上下文信息
      * 用户栈处理其他
      */
-    process->kstack = (void*)kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
+    kstack = (void*)kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
     inwox_vir_addr_t stack = addressSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
 
-    process->interruptContext = (struct regs *)((uintptr_t)process->kstack + 0x1000 - sizeof(struct regs));
-    process->interruptContext->eax = 0;
-    process->interruptContext->ebx = 0;
-    process->interruptContext->ecx = 0;
-    process->interruptContext->edx = 0;
-    process->interruptContext->esi = 0;
-    process->interruptContext->edi = 0;
-    process->interruptContext->ebp = 0;
-    process->interruptContext->int_no = 0;
-    process->interruptContext->err_code = 0;
-    process->interruptContext->eip = (uint32_t)entry;
-    process->interruptContext->cs = 0x1B;      /* 用户代码段是0x18 因为在ring3，
+    interruptContext = (struct regs *)((uintptr_t)kstack + 0x1000 - sizeof(struct regs));
+    memset(interruptContext, 0, sizeof(struct regs));
+    interruptContext->eip = (uint32_t)entry;
+    interruptContext->cs = 0x1B;      /* 用户代码段是0x18 因为在ring3，
                                                 * 按Intel规定，要使用(0x18 | 0x3)
                                                 * 下边作为段选择子偏移ss的0x23也是
                                                 * 一样道理。
                                                 */
-    process->interruptContext->eflags = 0x200; /* 开启中断 */
-    process->interruptContext->useresp = stack + 0x1000;
-    process->interruptContext->ss = 0x23; /* 用户数据段 */
-
-    process->addressSpace = addressSpace;
-    process->fd[0] = new FileDescription(&terminal); /* 文件描述符0指向 stdin */
-    process->fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 stdout */
-    process->fd[2] = new FileDescription(&terminal); /* 文件描述符2指向 stderr */
-    process->rootFd = new FileDescription(*idleProcess->rootFd);
-    process->cwdFd = new FileDescription(*process->rootFd);
-    process->next = firstProcess;
-    if (process->next) {
-        process->next->prev = process;
+    interruptContext->eflags = 0x200; /* 开启中断 */
+    interruptContext->useresp = stack + 0x1000;
+    interruptContext->ss = 0x23; /* 用户数据段 */
+    if (!fdInitialized) {
+        fd[0] = new FileDescription(&terminal); /* 文件描述符0指向 stdin */
+        fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 stdout */
+        fd[2] = new FileDescription(&terminal); /* 文件描述符2指向 stderr */
+        rootFd = new FileDescription(*idleProcess->rootFd);
+        cwdFd = new FileDescription(*rootFd);
+        fdInitialized = true;
     }
-    firstProcess = process;
-    return process;
+    if (this == current) {
+        contextChanged = true;
+    }
+    return 0;
 }
 
 /**
@@ -247,13 +249,10 @@ Process *Process::regfork(int flags, struct regfork *registers)
     }
     process->rootFd = new FileDescription(*rootFd);
     process->cwdFd = new FileDescription(*cwdFd);
+    process->fdInitialized = true;
 
     // 将进程加入进程链表
-    process->next = firstProcess;
-    if (process->next) {
-        process->next->prev = process;
-    }
-    firstProcess = process;
+    addProcess(process);
     return process;
 }
 

@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[]) {
     (void) argc;
@@ -54,6 +55,22 @@ int main(int argc, char *argv[]) {
         if (strcmp(buffer, "exit") == 0) {
             puts("Exiting.");
             return 22;
+        }
+        if (strncmp(buffer, "/bin/", 5) == 0) {
+            printf("Run %s\n", buffer);
+            pid_t pid = fork();
+            if (pid == -1) {
+                printf("fork() failed\n");
+            } else if (pid == 0) {
+                printf("child process: %d\n", pid);
+                char *const args[] = {NULL};
+                if (execv(buffer, args) == -1) {
+                    printf("execv() failed\n");
+                }
+            } else {
+                printf("parent process: %d\n", pid);
+            }
+            continue;
         }
         FILE* file = fopen(buffer, "r");
         if (!file) {

@@ -104,13 +104,17 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     FileVnode *program = (FileVnode *)rootDir->openat("/bin/foo", 0, 0);
     if (program) {
         Print::printf("foo opened\n");
-        Process::loadELF((inwox_vir_addr_t)program->data);
+        Process *newProcess = new Process();
+        newProcess->execute(new FileDescription(program), nullptr, nullptr);
+        Process::addProcess(newProcess);
     }
 
     program = (FileVnode *)rootDir->openat("/bin/bar", 0, 0);
     if (program) {
         Print::printf("bar opened\n");
-        Process::loadELF((inwox_vir_addr_t)program->data);
+        Process *newProcess = new Process();
+        newProcess->execute(new FileDescription(program), nullptr, nullptr);
+        Process::addProcess(newProcess);
     }
     kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);
 

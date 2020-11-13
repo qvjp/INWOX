@@ -43,6 +43,7 @@ public:
     Process();
     void exit(int status);
     Process *regfork(int flags, struct regfork *registers);
+    int execute(FileDescription *descr, char *const argv[], char *const envp[]);
     int registerFileDescriptor(FileDescription *descriptor);
 
 private:
@@ -50,19 +51,24 @@ private:
     Process *prev;
     Process *next;
     void *kstack; /* 内核栈 */
-public:
-    FileDescription *fd[OPEN_MAX]; /* 文件描述符数组 */
-    FileDescription *rootFd;
-    FileDescription *cwdFd;
+    bool contextChanged;
+    bool fdInitialized;
 
 public:
     AddressSpace *addressSpace;                      /* 每个进程都有自己独立的地址空间 */
+    FileDescription *fd[OPEN_MAX]; /* 文件描述符数组 */
+    FileDescription *rootFd;
+    FileDescription *cwdFd;
+    pid_t pid;
+
+public:
+    static void addProcess(Process *process);
     static void initialize(FileDescription *rootFd); /* 初始化进场的时候要把进程根目录传进来 */
     static struct regs *schedule(struct regs *context);
-    static Process *loadELF(inwox_vir_addr_t elf);
-    static Process *startProcess(void *entry, AddressSpace *addressspace);
     static Process *current;
-    pid_t pid;
+
+private:
+    uintptr_t loadELF(uintptr_t elf);
 };
 
 void setKernelStack(uintptr_t kstack);

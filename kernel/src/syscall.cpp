@@ -46,6 +46,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::openat,
     (void*) Syscall::close,
     (void*) Syscall::regfork,
+    (void*) Syscall::execve,
 };
 
 /**
@@ -140,6 +141,16 @@ pid_t Syscall::regfork(int flags, struct regfork *registers) {
     }
     Process *newProcess = Process::current->regfork(flags, registers);
     return newProcess->pid;
+}
+
+int Syscall::execve(const char *path, char *const argv[], char *const envp[])
+{
+    FileDescription *descr = Process::current->rootFd->openat(path, 0, 0);
+    if (!descr || Process::current->execute(descr, argv, envp) == -1) {
+        return -1;
+    }
+    __asm__ __volatile__("int $49");
+    __builtin_unreachable();
 }
 
 /**

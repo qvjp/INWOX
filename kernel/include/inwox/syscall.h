@@ -38,7 +38,8 @@
 #define SYSCALL_OPENAT 6
 #define SYSCALL_CLOSE  7
 #define SYSCALL_REGFORK 8
+#define SYSCALL_EXECVE 9
 
-#define NUM_SYSCALLS 9
+#define NUM_SYSCALLS 10
 
 #endif /* INWOX_SYSCALL_H_ */

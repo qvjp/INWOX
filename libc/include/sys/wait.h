@@ -22,27 +22,25 @@
  */
 
 /**
- * tools/foo.c
- * 测试模块，状态码22
+ * lib/include/sys/wait.h
+ * wait
  */
 
-#include <stdio.h>
-#include <unistd.h>
+#ifndef SYS_WAIT_H
+#define SYS_WAIT_H
 
-int main(int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-    printf("fork test\n");
-    int x = 10;
-    pid_t pid = fork();
-    if (pid == -1) {
-        printf("fork() failed\n");
-    } else if (pid == 0) {
-        printf("child process: %d, x is: %d\n", pid, x);
-    } else {
-        printf("parent process: %d, x is: %d\n", pid, x);
-    }
+#define __need_pid_t
+#include <sys/types.h>
+#include <inwox/wait.h>
 
-    return 22;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+pid_t waitpid(pid_t, int *, int);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* end of SYS_WAIT_H */

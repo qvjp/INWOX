@@ -41,10 +41,12 @@
 class Process {
 public:
     Process();
+    ~Process();
     void exit(int status);
     Process *regfork(int flags, struct regfork *registers);
     int execute(FileDescription *descr, char *const argv[], char *const envp[]);
     int registerFileDescriptor(FileDescription *descriptor);
+    Process *waitpid(pid_t pid, int flags);
 
 private:
     struct regs *interruptContext;
@@ -53,6 +55,10 @@ private:
     void *kstack; /* 内核栈 */
     bool contextChanged;
     bool fdInitialized;
+    bool terminated;
+    Process *parent;
+    Process **children;
+    size_t numChildren;
 
 public:
     AddressSpace *addressSpace;                      /* 每个进程都有自己独立的地址空间 */
@@ -60,6 +66,7 @@ public:
     FileDescription *rootFd;
     FileDescription *cwdFd;
     pid_t pid;
+    int status;
 
 public:
     static void addProcess(Process *process);

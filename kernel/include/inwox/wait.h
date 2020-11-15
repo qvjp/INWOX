@@ -21,28 +21,16 @@
  * SOFTWARE.
  */
 
-/**
- * tools/foo.c
- * 测试模块，状态码22
+/* kernel/include/inwox/wait.h
+ * 定义wait相关常量
  */
 
-#include <stdio.h>
-#include <unistd.h>
+#ifndef INWOX_WAIT_H_
+#define INWOX_WAIT_H_
 
-int main(int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-    printf("fork test\n");
-    int x = 10;
-    pid_t pid = fork();
-    if (pid == -1) {
-        printf("fork() failed\n");
-    } else if (pid == 0) {
-        printf("child process: %d, x is: %d\n", pid, x);
-    } else {
-        printf("parent process: %d, x is: %d\n", pid, x);
-    }
+#define WNOHANG (1 << 0)
+#define WUNTRACED (1 << 1)
 
-    return 22;
-}
+#define WEXITSTATUS(status) ((status) & 0xFF)
+
+#endif /* INWOX_WAIT_H_ */

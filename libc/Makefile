@@ -82,6 +82,7 @@ LIBC_OBJ := \
 	stdlib/exit \
 	sys/mman/mmap \
 	sys/mman/munmap \
+	sys/wait/waitpid \
 	unistd/close \
 	unistd/environ \
 	unistd/execv \

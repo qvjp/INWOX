@@ -47,6 +47,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::close,
     (void*) Syscall::regfork,
     (void*) Syscall::execve,
+    (void*) Syscall::waitpid,
 };
 
 /**
@@ -151,6 +152,17 @@ int Syscall::execve(const char *path, char *const argv[], char *const envp[])
     }
     __asm__ __volatile__("int $49");
     __builtin_unreachable();
+}
+
+pid_t Syscall::waitpid(pid_t pid, int *status, int flags)
+{
+    Process *process = Process::current->waitpid(pid, flags);
+    if (!process) {
+        return -1;
+    }
+    *status = process->status;
+    delete process;
+    return pid;
 }
 
 /**

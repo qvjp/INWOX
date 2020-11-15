@@ -51,6 +51,7 @@ syscallHandler:
     mov $0x23, %cx          /* 切换回用户段 */
     mov %cx, %ds
 
+    mov errno, %ecx         /* 系统调用时设置错误码 */
     mov %ebp, %esp
     iret                    /* 返回用户态 */
 

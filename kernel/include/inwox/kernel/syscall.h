@@ -45,6 +45,7 @@ int openat(int fd, const char *path, int flags, mode_t mode);
 int close(int fd);
 pid_t regfork(int flags, struct regfork *registers);
 int execve(const char *path, char *const argv[], char *const envp[]);
+pid_t waitpid(pid_t pid, int *status, int flags);
 void badSyscall();
 } /* namespace Syscall */
 

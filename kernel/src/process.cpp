@@ -26,6 +26,7 @@
  * 实现INWOX中的进程
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h> /* malloc */
 #include <string.h> /* memset memcpy */
@@ -57,6 +58,18 @@ Process::Process()
     pid = nextPid++;
     contextChanged = false;
     fdInitialized = false;
+    terminated = false;
+    parent = nullptr;
+    children = nullptr;
+    numChildren = 0;
+    status = 0;
+}
+
+Process::~Process()
+{
+    assert(terminated);
+    kernelSpace->unmapMemory((inwox_vir_addr_t) kstack, 0x1000);
+    free(children);
 }
 
 /**
@@ -149,6 +162,10 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
     (void) envp;
     FileVnode *file = (FileVnode *) descr->vnode;
     uintptr_t entry = loadELF((uintptr_t) file->data);
+    if ((int)entry == -1) {
+        errno = ENOEXEC;
+        return -1;
+    }
     /**
      * 分配两个栈，内核栈用来保存上下文信息
      * 用户栈处理其他
@@ -205,6 +222,8 @@ void Process::exit(int status)
     }
     delete rootFd;
     delete cwdFd;
+    terminated = true;
+    this->status = status;
 
     Print::printf("Process %u exited with status: %d\n", pid, status);
 }
@@ -218,6 +237,9 @@ Process *Process::regfork(int flags, struct regfork *registers)
 {
     (void) flags;
     Process *process = new Process();
+    process->parent = this;
+    children = (Process**) realloc(children, ++numChildren * sizeof(Process*));
+    children[numChildren - 1] = process;
 
     // fork 寄存器
     process->kstack = (void*) kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
@@ -271,4 +293,30 @@ int Process::registerFileDescriptor(FileDescription *descr)
 
     errno = EMFILE;
     return -1;
+}
+
+Process *Process::waitpid(pid_t pid, int flags)
+{
+    if(flags != 0) {
+        errno = EINVAL;
+        return nullptr;
+    }
+
+    for (size_t i = 0; i < numChildren; i++) {
+        if (children[i]->pid == pid) {
+            Process *result = children[i];
+            // 等待进程停止
+            while (!result->terminated) {
+                __asm__ __volatile__("int $49");
+                __sync_synchronize();
+            }
+            if (i < numChildren - 1) {
+                children[i] = children[numChildren - 1];
+            }
+            realloc(children, --numChildren * sizeof(Process*));
+            return result;
+        }
+    }
+    errno = ECHILD;
+    return nullptr;
 }

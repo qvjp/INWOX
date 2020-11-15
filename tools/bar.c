@@ -26,9 +26,11 @@
  * 测试模块，打开文件，关闭文件，读文件
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 int main(int argc, char *argv[]) {
     (void) argc;
@@ -62,13 +64,18 @@ int main(int argc, char *argv[]) {
             if (pid == -1) {
                 printf("fork() failed\n");
             } else if (pid == 0) {
-                printf("child process: %d\n", pid);
+                printf("Exec new process\n");
                 char *const args[] = {NULL};
                 if (execv(buffer, args) == -1) {
-                    printf("execv() failed\n");
+                    printf("execv() failed: %d\n", errno);
                 }
             } else {
-                printf("parent process: %d\n", pid);
+                printf("New process has pid %d, waiting...\n", pid);
+                int status = 0;
+                waitpid(pid, &status, 0);
+                if (WEXITSTATUS(status)) {
+                    printf("Child process exited with status %u\n", status);
+                }
             }
             continue;
         }

@@ -22,38 +22,18 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/stdlib/calloc.c
+ * calloc
  */
 
-#ifndef STDLIB_H
-#define STDLIB_H
+#include <stdlib.h>
+#include <string.h>
 
-#define __need_size_t
-#include <sys/types.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void *);
-void *malloc(size_t);
-void *calloc(size_t, size_t);
-void *realloc(void *, size_t);
-long strtol(const char *__restrict, char **__restrict, int);
-unsigned long strtoul(const char *__restrict, char **__restrict, int);
-
-/* 编译GCC需要此函数，当前未实现 */
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char *);
-char *getenv(const char *);
-
-#ifdef __cplusplus
+void *calloc(size_t num, size_t size)
+{
+    void *result = malloc(num *size);
+    if (result != NULL) {
+        memset(result, 0, num * size);
+    }
+    return result;
 }
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H */

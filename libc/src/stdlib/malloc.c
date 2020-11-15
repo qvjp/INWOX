@@ -27,6 +27,7 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <stdalign.h>
 #include <stddef.h>
 #include "malloc.h"
@@ -54,8 +55,8 @@ Mem_Ctrl_Blk *firstBigBlock = emptyBigBlock;
 Mem_Ctrl_Blk *__allocateBigBlock(Mem_Ctrl_Blk *lastBigBlock, size_t size)
 {
     assert(lastBigBlock->magic == MAGIC_BIG_MCB);
-    /* 每次申请都会多出两个头尾MCB，所以要多申请两个的空间 */
-    size += 2 * sizeof(Mem_Ctrl_Blk);
+    /* 每次申请都会多出两个头尾MCB，所以要多申请两个的空间，再加上真实内存的控制块，一共3个 */
+    size += 3 * sizeof(Mem_Ctrl_Blk);
     /* 因为是按页申请，所以页对齐 */
     size = ALIGN_UP(size, PAGESIZE);
 
@@ -149,9 +150,9 @@ void *malloc(size_t size)
     while (1) {
         switch (currentBlock->magic) {
             case MAGIC_FREE_MCB:
-                if (currentBlock->size >= totalSize) {
+                if (currentBlock->size >= size) {
                     /* 找到需要的块 */
-                    if (currentBlock->size > totalSize + blockSize) {
+                    if (currentBlock->size > totalSize) {
                         __splitBlock(currentBlock, size);
                     }
                     currentBlock->magic = MAGIC_USED_MCB;
@@ -169,9 +170,10 @@ void *malloc(size_t size)
                     currentBigBlock = currentBigBlock->next;
                     currentBlock = currentBigBlock + 1;
                 } else {
-                    currentBigBlock = __allocateBigBlock(currentBigBlock, totalSize);
+                    currentBigBlock = __allocateBigBlock(currentBigBlock, size);
                     currentBlock = currentBigBlock + 1;
                     if (!currentBigBlock) {
+                        errno = ENOMEM;
                         return NULL;
                     }
                 }

@@ -29,6 +29,7 @@
 #define MALLOC_H
 
 #include <stddef.h> /* size_t */
+#include <stdlib.h>
 
 #if __is_inwox_libc
 #include <sys/mman.h>

@@ -25,8 +25,10 @@ COMMON_OBJ := \
 	libgen/basename \
 	libgen/dirname \
 	stdio/vcbprintf \
+	stdlib/calloc \
 	stdlib/free \
 	stdlib/malloc \
+	stdlib/realloc \
 	stdlib/strtol \
 	stdlib/strtoul \
 	string/stpcpy \

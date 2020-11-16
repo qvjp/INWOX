@@ -104,9 +104,6 @@ uintptr_t Process::loadELF(uintptr_t elf)
     }
     struct ProgramHeader *programHeader = (struct ProgramHeader *)(elf + header->e_phoff);
 
-    if (addressSpace) {
-        delete addressSpace;
-    }
     addressSpace = new AddressSpace();
     for (size_t i = 0; i < header->e_phnum; i++) {
         if (programHeader[i].p_type != PT_LOAD) {
@@ -156,10 +153,45 @@ struct regs *Process::schedule(struct regs *context)
     return current->interruptContext;
 }
 
+int Process::copyArguments(char *const argv[], char *const envp[], char **&newArgv, char **&newEnvp)
+{
+    int argc = 0;
+    int envc = 0;
+    size_t stringSizes = 0;
+    for (argc = 0; argv[argc]; argc++) {
+        stringSizes += strlen(argv[argc]) + 1;
+    }
+    for (envc = 0; envp[envc]; envc++) {
+        stringSizes += strlen(envp[envc]) + 1;
+    }
+    stringSizes = ALIGN_UP(stringSizes, sizeof(char*));
+    size_t size = ALIGN_UP(stringSizes + (argc + envc + 2) * sizeof(char *), 0x1000);
+    inwox_vir_addr_t page = addressSpace->mapMemory(size, PROT_READ | PROT_WRITE);
+    inwox_vir_addr_t pageMapped = kernelSpace->mapFromOtherAddressSpace(addressSpace, page, size, PROT_WRITE);
+    char *nextString = (char *) pageMapped;
+    char **argvMapped = (char **) (pageMapped + stringSizes);
+    char **envpMapped = argvMapped + argc + 1;
+
+    for (int i = 0; i < argc; i++) {
+        argvMapped[i] = nextString - pageMapped + page;
+        nextString = stpcpy(nextString, argv[i]) + 1;
+    }
+    for (int i = 0; i < envc; i++) {
+        envpMapped[i] = nextString;
+        nextString = stpcpy(nextString, envp[i]) + 1;
+    }
+    argvMapped[argc] = nullptr;
+    envpMapped[envc] = nullptr;
+    kernelSpace->unmapPhysical(pageMapped, size);
+
+    newArgv = (char **) (page + stringSizes);
+    newEnvp = (char **) (newArgv + (argc + 1) * sizeof(char *));
+    return argc;
+}
+
 int Process::execute(FileDescription *descr, char *const argv[], char *const envp[])
 {
-    (void) argv;
-    (void) envp;
+    AddressSpace *oldAddressSpace = addressSpace;
     FileVnode *file = (FileVnode *) descr->vnode;
     uintptr_t entry = loadELF((uintptr_t) file->data);
     if ((int)entry == -1) {
@@ -175,6 +207,12 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
 
     interruptContext = (struct regs *)((uintptr_t)kstack + 0x1000 - sizeof(struct regs));
     memset(interruptContext, 0, sizeof(struct regs));
+    char **newArgv;
+    char **newEnvp;
+    int argc = copyArguments(argv, envp, newArgv, newEnvp);
+    interruptContext->eax = argc;
+    interruptContext->ebx = (uint32_t) newArgv;
+    interruptContext->ecx = (uint32_t) newEnvp;
     interruptContext->eip = (uint32_t)entry;
     interruptContext->cs = 0x1B;      /* 用户代码段是0x18 因为在ring3，
                                                 * 按Intel规定，要使用(0x18 | 0x3)
@@ -194,6 +232,10 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
     }
     if (this == current) {
         contextChanged = true;
+        kernelSpace->activate();
+    }
+    if (oldAddressSpace) {
+        delete oldAddressSpace;
     }
     return 0;
 }

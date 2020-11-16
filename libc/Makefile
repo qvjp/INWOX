@@ -85,6 +85,7 @@ LIBC_OBJ := \
 	sys/wait/waitpid \
 	unistd/close \
 	unistd/environ \
+	unistd/execl \
 	unistd/execv \
 	unistd/execve \
 	unistd/fork \

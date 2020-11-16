@@ -105,7 +105,8 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     if (program) {
         Print::printf("foo opened\n");
         Process *newProcess = new Process();
-        newProcess->execute(new FileDescription(program), nullptr, nullptr);
+        char *args[] = {nullptr};
+        newProcess->execute(new FileDescription(program), args, args);
         Process::addProcess(newProcess);
     }
 
@@ -113,7 +114,8 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     if (program) {
         Print::printf("bar opened\n");
         Process *newProcess = new Process();
-        newProcess->execute(new FileDescription(program), nullptr, nullptr);
+        char *args[] = {nullptr};
+        newProcess->execute(new FileDescription(program), args, args);
         Process::addProcess(newProcess);
     }
     kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);

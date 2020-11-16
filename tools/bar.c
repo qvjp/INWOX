@@ -58,6 +58,21 @@ int main(int argc, char *argv[]) {
             puts("Exiting.");
             return 22;
         }
+        if (strcmp(buffer, "test") == 0) {
+            pid_t pid = fork();
+            if (pid == 0) {
+                execl("/bin/foo", "hello", "inwox", NULL);
+                printf("test failed\n");
+            }
+        }
+        if (strcmp(buffer, "test2") == 0) {
+            pid_t pid = fork();
+            if (pid == 0) {
+                char *const args[] = {"hello", "shenme", NULL};
+                execv("/bin/foo", args);
+                printf("test failed\n");
+            }
+        }
         if (strncmp(buffer, "/bin/", 5) == 0) {
             printf("Run %s\n", buffer);
             pid_t pid = fork();

@@ -46,6 +46,7 @@ int close(int);
 
 pid_t fork(void);
 pid_t rfork(int);
+int execl(const char *, const char *, ...);
 int execv(const char *, char *const[]);
 int execve(const char *, char *const[], char *const[]);
 int execvp(const char *, char *const[]);

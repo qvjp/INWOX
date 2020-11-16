@@ -21,19 +21,34 @@
  * SOFTWARE.
  */
 
-/**
- * tools/foo.c
- * 测试模块，状态码22
+/* libc/src/unistd/execl.c
+ * 执行程序
  */
 
-#include <stdio.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-int main(int argc, char *argv[])
+int execl(const char *path, const char *argv0, ...)
 {
-    printf("argc: %d\n", argc);
-    for (int i = 0; i < argc; i++) {
-        printf("%d %s\n", i, argv[i]);
+    int argc = 1;
+    va_list ap;
+    va_start(ap, argv0);
+    while (va_arg(ap, char *)) {
+        argc++;
     }
-    return argc;
+    va_end(ap);
+
+    char **argv = malloc(sizeof(char*) * (argc + 1));
+    va_start(ap, argv0);
+    argv[0] = (char*) argv0;
+    for (int i = 1; i < argc; i++) {
+        argv[i] = va_arg(ap, char *);
+    }
+    argv[argc] = NULL;
+    va_end(ap);
+    execv(path, argv);
+    free(argv);
+    return -1;
 }

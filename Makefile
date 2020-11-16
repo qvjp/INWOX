@@ -68,6 +68,9 @@ qemu-curses-dbg: $(ISO)
 install-toolchain: install-headers
 	SYSROOT=$(SYSROOT) $(TO_ROOT)/build-config/install-toolchains.sh
 
+install-toolchain-from-china: install-headers
+	SYSROOT=$(SYSROOT) $(TO_ROOT)/build-config/install-toolchains.sh cn
+
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf $(ISO)

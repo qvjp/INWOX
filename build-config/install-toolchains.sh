@@ -2,9 +2,12 @@
 
 set -e
 
-TIME_START=`date`
 binutils_repo=https://github.com/qvjp/binutils-2.34-inwox.git
 gcc_repo=https://github.com/qvjp/gcc-10.1.0-inwox.git
+
+[ "$1x" = "cnx" ] && \
+    binutils_repo=https://gitee.com/qvjp/binutils-2.34-inwox.git && \
+    gcc_repo=https://gitee.com/qvjp/gcc-10.1.0-inwox.git
 
 [ -z "${PREFIX+x}" ] && PREFIX="$HOME/inwox-toolchain"
 [ -z "$SRCDIR" ] && SRCDIR="$HOME/src"
@@ -43,6 +46,7 @@ cd "$SRCDIR"
 git clone $binutils_repo inwox-binutils
 git clone $gcc_repo inwox-gcc
 
+TIME_START=`date`
 echo Building binutils...
 mkdir -p "$BUILDDIR/build-binutils"
 cd "$BUILDDIR/build-binutils"

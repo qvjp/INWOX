@@ -101,23 +101,15 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     Process::initialize(rootFd);
     Print::printf("Processes Initialized\n");
 
-    FileVnode *program = (FileVnode *)rootDir->openat("/bin/foo", 0, 0);
+    FileVnode *program = (FileVnode *)rootDir->openat("/bin/shell", 0, 0);
     if (program) {
-        Print::printf("foo opened\n");
+        Print::printf("shell starting\n");
         Process *newProcess = new Process();
         char *args[] = {nullptr};
         newProcess->execute(new FileDescription(program), args, args);
         Process::addProcess(newProcess);
     }
 
-    program = (FileVnode *)rootDir->openat("/bin/bar", 0, 0);
-    if (program) {
-        Print::printf("bar opened\n");
-        Process *newProcess = new Process();
-        char *args[] = {nullptr};
-        newProcess->execute(new FileDescription(program), args, args);
-        Process::addProcess(newProcess);
-    }
     kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);
 
     Interrupt::initPic();

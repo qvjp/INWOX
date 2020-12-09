@@ -21,41 +21,24 @@
  * SOFTWARE.
  */
 
-/**
- * lib/include/stdlib.h
- * 标准库定义
+/* libc/src/stdio/fwrite.c
+ * 把ptr所指向的数据写入到给定流file中
  */
 
-#ifndef STRING_H
-#define STRING_H
+#include <stdio.h>
 
-#define __need_NULL
-#define __need_size_t
-#include <stddef.h>
-#include <sys/types.h>
+size_t fwrite(const void* restrict ptr, size_t size, size_t count, FILE* restrict file) {
+    const unsigned char* p = (const unsigned char*) ptr;
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+    if (size == 0 || count == 0) return 0;
 
-int memcmp(const void *, const void *, size_t);
-void *memcpy(void *__restrict, const void *__restrict, size_t);
-void *memmove(void *, const void *, size_t);
-void *memset(void *, int, size_t);
-
-char *stpcpy(char *__restrict, const char *__restrict);
-char *strdup(const char *);
-size_t strlen(const char *);
-size_t strnlen(const char *, size_t);
-char *strcpy(char *__restrict, const char *__restrict);
-int strcmp(const char *str1, const char *str2);
-size_t strcspn(const char *, const char *);
-int strncmp(const char *str1, const char *str2, size_t length);
-char *strrchr(const char *, int);
-char *strtok(char *__restrict, const char *__restrict);
-
-#ifdef __cplusplus
+    size_t i;
+    for (i = 0; i < count; i++) {
+        for (size_t j = 0; j < size; j++) {
+            if (fputc(p[i * size + j], file) < 0) {
+                return i;
+            }
+        }
+    }
+    return i;
 }
-#endif /* __cplusplus */
-
-#endif /* STRING_H */

@@ -42,7 +42,8 @@ COMMON_OBJ := \
 	string/strlen \
 	string/strnlen \
 	string/strncmp \
-	string/strrchr
+	string/strrchr \
+	string/strtok
 
 CRT_OBJ := \
 	$(BUILD)/arch/i686/crt0.o \
@@ -64,6 +65,7 @@ LIBC_OBJ := \
 	stdio/fputc \
 	stdio/fputs \
 	stdio/fopen \
+	stdio/fwrite \
 	stdio/getc \
 	stdio/getchar \
 	stdio/printf \

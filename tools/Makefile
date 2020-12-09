@@ -9,8 +9,8 @@ CFLAGS ?= -O0 -g
 CFLAGS += -Wall -Wextra
 
 PROGRAMS = \
-	bar \
-	foo
+	foo \
+	shell
 
 all: build_info install-tools
 	@echo -n ${COLOR_RESET}

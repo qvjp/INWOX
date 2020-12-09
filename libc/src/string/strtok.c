@@ -21,41 +21,28 @@
  * SOFTWARE.
  */
 
-/**
- * lib/include/stdlib.h
- * 标准库定义
+/* libc/src/string/strtok.c
+ * 分割字符串
  */
 
-#ifndef STRING_H
-#define STRING_H
+#include <string.h>
 
-#define __need_NULL
-#define __need_size_t
-#include <stddef.h>
-#include <sys/types.h>
+static char *next = NULL;
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-int memcmp(const void *, const void *, size_t);
-void *memcpy(void *__restrict, const void *__restrict, size_t);
-void *memmove(void *, const void *, size_t);
-void *memset(void *, int, size_t);
-
-char *stpcpy(char *__restrict, const char *__restrict);
-char *strdup(const char *);
-size_t strlen(const char *);
-size_t strnlen(const char *, size_t);
-char *strcpy(char *__restrict, const char *__restrict);
-int strcmp(const char *str1, const char *str2);
-size_t strcspn(const char *, const char *);
-int strncmp(const char *str1, const char *str2, size_t length);
-char *strrchr(const char *, int);
-char *strtok(char *__restrict, const char *__restrict);
-
-#ifdef __cplusplus
+char *strtok(char *restrict str, const char *restrict seperator)
+{
+    if (!str) {
+        str = next;
+        if (!str) {
+            return NULL;
+        }
+    }
+    size_t tokenEnd = strcspn(str, seperator);
+    if (str[tokenEnd] == '\0') {
+        next = NULL;
+    } else {
+        str[tokenEnd] = '\0';
+        next = str + tokenEnd + 1;
+    }
+    return str;
 }
-#endif /* __cplusplus */
-
-#endif /* STRING_H */

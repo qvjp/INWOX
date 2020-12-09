@@ -23,7 +23,7 @@
 
 /**
  * tools/foo.c
- * 测试模块，状态码22
+ * 测试模块
  */
 
 #include <stdio.h>
@@ -35,5 +35,5 @@ int main(int argc, char *argv[])
     for (int i = 0; i < argc; i++) {
         printf("%d %s\n", i, argv[i]);
     }
-    return argc;
+    return 0;
 }

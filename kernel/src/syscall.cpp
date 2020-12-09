@@ -146,6 +146,9 @@ pid_t Syscall::regfork(int flags, struct regfork *registers) {
 
 int Syscall::execve(const char *path, char *const argv[], char *const envp[])
 {
+    if (path == NULL || path[0] == '\0') {
+        return -1;
+    }
     FileDescription *descr = Process::current->rootFd->openat(path, 0, 0);
     if (!descr || Process::current->execute(descr, argv, envp) == -1) {
         return -1;

@@ -31,7 +31,9 @@
 int fputs(const char *restrict s, FILE *restrict file)
 {
     while (*s) {
-        write(file->fd, s++, 1);
+        if (write(file->fd, s++, 1) < 0) {
+            return EOF;
+        }
     }
     return 1;
 }

@@ -30,6 +30,8 @@
 
 int fputc(int c, FILE *file)
 {
-    write(file->fd, &c, 1);
+    if (write(file->fd, &c, 1) < 0) {
+        return EOF;
+    }
     return c;
 }

@@ -355,7 +355,7 @@ Process *Process::waitpid(pid_t pid, int flags)
             if (i < numChildren - 1) {
                 children[i] = children[numChildren - 1];
             }
-            realloc(children, --numChildren * sizeof(Process*));
+            children = (Process**) realloc(children, --numChildren * sizeof(Process*));
             return result;
         }
     }

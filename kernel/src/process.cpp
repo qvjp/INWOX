@@ -164,7 +164,7 @@ int Process::copyArguments(char *const argv[], char *const envp[], char **&newAr
     for (envc = 0; envp[envc]; envc++) {
         stringSizes += strlen(envp[envc]) + 1;
     }
-    stringSizes = ALIGN_UP(stringSizes, sizeof(char*));
+    stringSizes = ALIGN_UP(stringSizes, alignof(char*));
     size_t size = ALIGN_UP(stringSizes + (argc + envc + 2) * sizeof(char *), 0x1000);
     inwox_vir_addr_t page = addressSpace->mapMemory(size, PROT_READ | PROT_WRITE);
     inwox_vir_addr_t pageMapped = kernelSpace->mapFromOtherAddressSpace(addressSpace, page, size, PROT_WRITE);
@@ -185,7 +185,7 @@ int Process::copyArguments(char *const argv[], char *const envp[], char **&newAr
     kernelSpace->unmapPhysical(pageMapped, size);
 
     newArgv = (char **) (page + stringSizes);
-    newEnvp = (char **) (newArgv + (argc + 1) * sizeof(char *));
+    newEnvp = (char **) ((char*)newArgv + (argc + 1) * sizeof(char *));
     return argc;
 }
 

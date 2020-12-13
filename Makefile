@@ -1,7 +1,7 @@
 TO_ROOT = .
 include $(TO_ROOT)/build-config/config.mk
 
-all: build_info install-headers libc install-libc kernel tools tests strip-debug iso
+all: build_info install-headers libc install-libc kernel programs tests strip-debug iso
 	@echo -n ${COLOR_RESET}
 
 build_info:
@@ -50,8 +50,8 @@ $(INITRD): $(SYSROOT)
 	echo "INWOX 0.0.1-dev" > $(BIN_DIR)/inwox
 	cd $(SYSROOT) && tar cvf ../$(INITRD) --format=ustar *
 
-tools:
-	$(MAKE) -C tools
+programs:
+	$(MAKE) -C programs
 
 tests:
 	$(MAKE) -C tests
@@ -76,4 +76,4 @@ clean:
 	rm -rf $(ISO)
 	rm -rf ./sysroot ./iso
 
-.PHONY: all kernel iso qemu clean libc install-headers install-libc strip-debug tools tests
+.PHONY: all kernel iso qemu clean libc install-headers install-libc strip-debug programs tests

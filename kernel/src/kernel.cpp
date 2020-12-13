@@ -108,6 +108,8 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
         char *args[] = {nullptr};
         newProcess->execute(new FileDescription(program), args, args);
         Process::addProcess(newProcess);
+    } else {
+        Print::printf("launch shell failed\n");
     }
 
     kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);

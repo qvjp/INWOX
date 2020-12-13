@@ -36,6 +36,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define EXIT_FAILURE 1
+#define EXIT_SUCCESS 0
+
 __attribute__((__noreturn__)) void _Exit(int);
 __attribute__((__noreturn__)) void exit(int);
 

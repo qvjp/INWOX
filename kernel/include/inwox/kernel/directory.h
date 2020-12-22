@@ -32,7 +32,7 @@
 
 class DirectoryVnode : public Vnode {
 public:
-    DirectoryVnode(DirectoryVnode *parent);
+    DirectoryVnode(DirectoryVnode *parent, mode_t mode);
     void addChildNode(const char *path, Vnode *vnode);
     virtual Vnode *openat(const char *path, int flags, mode_t mode);
 

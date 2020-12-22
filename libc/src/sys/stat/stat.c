@@ -22,32 +22,12 @@
  */
 
 /**
- * kernel/include/inwox/kernel/syscall.h
- * 系统调用函数声明
+ * libc/src/sys/stat/stat.c
+ * 获取文件信息
  */
+#include <fcntl.h>
+#include <sys/stat.h>
 
-#ifndef KERNEL_SYSCALL_H_
-#define KERNEL_SYSCALL_H_
-
-#include <sys/types.h>
-#include <inwox/fork.h>
-#include <inwox/syscall.h>
-
-struct __mmapRequest;
-namespace Syscall {
-void pad(void);
-__attribute__((__noreturn__)) void exit(int status);
-ssize_t read(int fd, void *buffer, size_t size);
-ssize_t write(int fd, const void *buffer, size_t size);
-void *mmap(__mmapRequest *request);
-int munmap(void *addr, size_t size);
-int openat(int fd, const char *path, int flags, mode_t mode);
-int close(int fd);
-pid_t regfork(int flags, struct regfork *registers);
-int execve(const char *path, char *const argv[], char *const envp[]);
-pid_t waitpid(pid_t pid, int *status, int flags);
-int fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags);
-void badSyscall();
-} /* namespace Syscall */
-
-#endif /* KERNEL_SYSCALL_H_ */
+int stat(const char* restrict path, struct stat* restrict result) {
+    return fstatat(AT_FDCWD, path, result, 0);
+}

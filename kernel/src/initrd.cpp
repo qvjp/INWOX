@@ -56,7 +56,7 @@ struct TarHeader {
 
 DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
 {
-    DirectoryVnode *root = new DirectoryVnode(nullptr);
+    DirectoryVnode *root = new DirectoryVnode(nullptr, 0755);
     TarHeader *header = (TarHeader *)initrd;
 
     while (strcmp(header->magic, TMAGIC) == 0) {
@@ -87,11 +87,12 @@ DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
 
         // 读取文件（标准文件或目录）到newFile并给header加上偏移量
         Vnode *newFile;
+        mode_t mode = strtol(header->mode, nullptr, 8);
         if (header->typeflag == REGTYPE || header->typeflag == AREGTYPE) {
-            newFile = new FileVnode(header + 1, size);
+            newFile = new FileVnode(header + 1, size, mode);
             header += 1 + ALIGN_UP(size, 512) / 512;
         } else if (header->typeflag == DIRTYPE) {
-            newFile = new DirectoryVnode(directory);
+            newFile = new DirectoryVnode(directory, mode);
             header++;
         } else {
             Print::printf("Unknown typeflag '%c'\n", header->typeflag);
@@ -100,7 +101,6 @@ DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
 
         // 将文件添加到目录
         directory->addChildNode(fileName, newFile);
-        Print::printf("File: /%s/%s, size = %zu\n", dirName, fileName, size);
 
         free(path);
         free(path2);

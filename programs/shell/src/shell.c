@@ -32,6 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 int main(int argc, char* argv[]) {
     (void) argc; (void) argv;
@@ -63,7 +64,9 @@ int main(int argc, char* argv[]) {
             str = strtok(NULL, " ");
         }
         arguments[argumentCount] = NULL;
-
+        struct stat sstat = {.st_mode = 0};
+        stat(arguments[0], &sstat);
+        printf("%o\n", sstat.st_mode);
         pid_t pid = fork();
         if (pid < 0) {
             fputs("fork() failed\n", stderr);

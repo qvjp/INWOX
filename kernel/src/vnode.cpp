@@ -28,6 +28,11 @@
 #include <errno.h>
 #include <inwox/kernel/vnode.h>
 
+Vnode::Vnode(mode_t mode)
+{
+    this->mode = mode;
+}
+
 /* 默认实现，具体看继承函数如何实现 */
 ssize_t Vnode::read(void * /* buffer */, size_t /* size */)
 {
@@ -56,4 +61,10 @@ ssize_t Vnode::pread(void * /* buffer */, size_t /* size */, off_t /* offset */)
 {
     errno = EBADF;
     return -1;
+}
+
+int Vnode::stat(struct stat *result)
+{
+    result->st_mode = mode;
+    return 0;
 }

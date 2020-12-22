@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <stdlib.h> /* malloc */
 #include <string.h> /* memset memcpy */
+#include <sys/stat.h>
 #include <inwox/kernel/elf.h>            /* ElfHeader ProgramHeader */
 #include <inwox/kernel/file.h>
 #include <inwox/kernel/physicalmemory.h> /* popPageFrame */
@@ -99,7 +100,7 @@ uintptr_t Process::loadELF(uintptr_t elf)
 {
     struct ElfHeader *header = (struct ElfHeader *)elf;
     if (check_elf_magic(header)) {
-        Print::printf("Elf Header Incorrect\n");
+        errno = EACCES;
         return -1;
     }
     struct ProgramHeader *programHeader = (struct ProgramHeader *)(elf + header->e_phoff);
@@ -193,6 +194,10 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
 {
     AddressSpace *oldAddressSpace = addressSpace;
     FileVnode *file = (FileVnode *) descr->vnode;
+    if (!S_ISREG(descr->vnode->mode)) {
+        errno = EACCES;
+        return -1;
+    }
     uintptr_t entry = loadELF((uintptr_t) file->data);
     if ((int)entry == -1) {
         errno = ENOEXEC;

@@ -21,33 +21,41 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/include/inwox/kernel/syscall.h
- * 系统调用函数声明
+/* kernel/include/inwox/stat.h
+ * 文件信息相关定义
  */
 
-#ifndef KERNEL_SYSCALL_H_
-#define KERNEL_SYSCALL_H_
+#ifndef INWOX_STAT_H_
+#define INWOX_STAT_H_
 
-#include <sys/types.h>
-#include <inwox/fork.h>
-#include <inwox/syscall.h>
+#include <inwox/types.h>
 
-struct __mmapRequest;
-namespace Syscall {
-void pad(void);
-__attribute__((__noreturn__)) void exit(int status);
-ssize_t read(int fd, void *buffer, size_t size);
-ssize_t write(int fd, const void *buffer, size_t size);
-void *mmap(__mmapRequest *request);
-int munmap(void *addr, size_t size);
-int openat(int fd, const char *path, int flags, mode_t mode);
-int close(int fd);
-pid_t regfork(int flags, struct regfork *registers);
-int execve(const char *path, char *const argv[], char *const envp[]);
-pid_t waitpid(pid_t pid, int *status, int flags);
-int fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags);
-void badSyscall();
-} /* namespace Syscall */
+#define S_IFMT  00170000    /* 文件类型掩码 */
+#define S_IFSOCK 0140000
+#define S_IFLNK  0120000
+#define S_IFREG  0100000
+#define S_IFBLK  0060000
+#define S_IFDIR  0040000
+#define S_IFCHR  0020000
+#define S_IFIFO  0010000
 
-#endif /* KERNEL_SYSCALL_H_ */
+#define S_IRWXU 00700
+#define S_IRUSR 00400
+#define S_IWUSR 00200
+#define S_IXUSR 00100
+#define S_IRWXG 00070
+#define S_IRGRP 00040
+#define S_IWGRP 00020
+#define S_IXGRP 00010
+#define S_IRWXO 00007
+#define S_IROTH 00004
+#define S_IWOTH 00002
+#define S_IXOTH 00001
+#define S_ISUID 04000
+#define S_ISGID 02000
+
+struct stat {
+    __mode_t st_mode;
+};
+
+#endif /* INWOX_STAT_H_ */

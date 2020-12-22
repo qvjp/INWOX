@@ -26,6 +26,7 @@
  */
 
 #include <inwox/kernel/terminal.h>
+#include <inwox/stat.h>
 
 Terminal terminal;
 /* 0xC0000000是视频内存首地址 */
@@ -89,7 +90,7 @@ static void printChar(char c)
     cursorPostX++;
 }
 
-Terminal::Terminal()
+Terminal::Terminal() : Vnode(S_IFCHR)
 {
     readIndex = 0;
     writeIndex = 0;

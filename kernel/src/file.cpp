@@ -27,8 +27,9 @@
 
 #include <string.h>
 #include <inwox/kernel/file.h>
+#include <inwox/stat.h>
 
-FileVnode::FileVnode(const void *data, size_t size)
+FileVnode::FileVnode(const void *data, size_t size, mode_t mode) : Vnode(S_IFREG | mode)
 {
     this->data = new char[size];
     memcpy(this->data, data, size);

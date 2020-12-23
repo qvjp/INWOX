@@ -105,8 +105,9 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     if (program) {
         Print::printf("shell starting\n");
         Process *newProcess = new Process();
-        char *args[] = {nullptr};
-        newProcess->execute(new FileDescription(program), args, args);
+        const char *argv[] = {"/bin/sh", nullptr};
+        const char *envp[] = {"PATH=/bin", nullptr};
+        newProcess->execute(new FileDescription(program), (char**)argv, (char**)envp);
         Process::addProcess(newProcess);
     } else {
         Print::printf("launch shell failed\n");

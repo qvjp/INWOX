@@ -22,40 +22,27 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/stdlib/getenv.c
+ * 获取环境变量
  */
 
-#ifndef STDLIB_H
-#define STDLIB_H
+#include <stdlib.h>
+#include <string.h>
 
-#define __need_size_t
-#include <sys/types.h>
+extern char **environ;
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-#define EXIT_FAILURE 1
-#define EXIT_SUCCESS 0
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void *);
-void *malloc(size_t);
-void *calloc(size_t, size_t);
-void *realloc(void *, size_t);
-long strtol(const char *__restrict, char **__restrict, int);
-unsigned long strtoul(const char *__restrict, char **__restrict, int);
-
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char *);
-char *getenv(const char *);
-
-#ifdef __cplusplus
+char *getenv(const char *name)
+{
+    size_t nameSize = strlen(name);
+    char **envp = environ;
+    while (*envp)
+    {
+        size_t length = strcspn(*envp, "=");
+        if (length == nameSize && strncmp(name, *envp, length) == 0) {
+            return *envp + length + 1;
+        }
+        envp++;
+    }
+    
+    return NULL;
 }
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H */

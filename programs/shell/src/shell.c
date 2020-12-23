@@ -34,7 +34,64 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-int main(int argc, char* argv[]) {
+static const char* getExecutablePath(const char* command)
+{
+    size_t commandLength = strlen(command);
+    const char* path = getenv("PATH");
+
+    while (*path) {
+        size_t length = strcspn(path, ":");
+        char* buffer = malloc(commandLength + length + 2);
+
+        memcpy(buffer, path, length);
+        buffer[length] = '/';
+        memcpy(buffer + length + 1, command, commandLength);
+        buffer[commandLength + length + 1] = '\0';
+
+        if (access(buffer, X_OK) == 0) {
+            return buffer;
+        }
+
+        free(buffer);
+        path += length + 1;
+    }
+    return NULL;
+}
+
+static int executeCommand(char* arguments[])
+{
+    const char* command = arguments[0];
+    // shell 内置命令
+    if (strcmp(command, "exit") == 0) {
+        exit(0);
+    }
+
+    struct stat sstat = {.st_mode = 0};
+    pid_t pid = fork();
+    if (pid < 0) {
+        fputs("fork() failed\n", stderr);
+        return -1;
+    } else if (pid == 0) {
+        if (!strchr(command, '/')) {
+            command = getExecutablePath(command);
+        }
+        if (command) {
+            stat(command, &sstat);
+            printf("%s: %o\n", command, sstat.st_mode);
+            execv(command, arguments);
+        }
+        fputs("Bad command\n", stderr);
+        _Exit(127);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        return WEXITSTATUS(status);
+    }
+    return -1;
+}
+
+int main(int argc, char *argv[])
+{
     (void) argc; (void) argv;
 
     while (true) {
@@ -64,21 +121,8 @@ int main(int argc, char* argv[]) {
             str = strtok(NULL, " ");
         }
         arguments[argumentCount] = NULL;
-        struct stat sstat = {.st_mode = 0};
-        stat(arguments[0], &sstat);
-        printf("%o\n", sstat.st_mode);
-        pid_t pid = fork();
-        if (pid < 0) {
-            fputs("fork() failed\n", stderr);
-        } else if (pid == 0) {
-            execv(arguments[0], arguments);
-            fputs("Bad command\n", stderr);
-            _Exit(127);
-        } else {
-            int status;
-            waitpid(pid, &status, 0);
-        }
 
+        executeCommand(arguments);
         free(arguments);
     }
 }

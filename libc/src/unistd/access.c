@@ -22,40 +22,30 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/unistd/access.c
+ * 测试文件是否拥有某权限
  */
 
-#ifndef STDLIB_H
-#define STDLIB_H
+#include <stdbool.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
-#define __need_size_t
-#include <sys/types.h>
+int access(const char *path, int mode)
+{
+    struct stat st;
+    if (stat(path, &st) < 0) {
+        return -1;
+    }
+    bool accessible = true;
+    if (mode & R_OK) {
+        accessible &= (st.st_mode & (S_IRUSR | S_IRGRP | S_IROTH));
+    }
+    if (mode & W_OK) {
+        accessible &= (st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH));
+    }
+    if (mode & X_OK) {
+        accessible &= (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH));
+    }
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-#define EXIT_FAILURE 1
-#define EXIT_SUCCESS 0
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void *);
-void *malloc(size_t);
-void *calloc(size_t, size_t);
-void *realloc(void *, size_t);
-long strtol(const char *__restrict, char **__restrict, int);
-unsigned long strtoul(const char *__restrict, char **__restrict, int);
-
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char *);
-char *getenv(const char *);
-
-#ifdef __cplusplus
+    return accessible ? 0 : -1;
 }
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H */

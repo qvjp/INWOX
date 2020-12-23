@@ -22,40 +22,18 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/stdlib/strchr.c
+ * 返回字符串第一次出现某字符的位置
  */
 
-#ifndef STDLIB_H
-#define STDLIB_H
+#include <string.h>
 
-#define __need_size_t
-#include <sys/types.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-#define EXIT_FAILURE 1
-#define EXIT_SUCCESS 0
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void *);
-void *malloc(size_t);
-void *calloc(size_t, size_t);
-void *realloc(void *, size_t);
-long strtol(const char *__restrict, char **__restrict, int);
-unsigned long strtoul(const char *__restrict, char **__restrict, int);
-
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char *);
-char *getenv(const char *);
-
-#ifdef __cplusplus
+char *strchr(const char *s, int c)
+{
+    do {
+        if(*s == (char)c) {
+            return (char *)s;
+        }
+    } while (*s++);
+    return NULL;
 }
-#endif /* __cplusplus */
-
-#endif /* STDLIB_H */

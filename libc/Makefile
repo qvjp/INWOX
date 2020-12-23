@@ -34,6 +34,7 @@ COMMON_OBJ := \
 	string/stpcpy \
 	string/memcmp \
 	string/memcpy \
+	string/strchr \
 	string/memmove \
 	string/memset \
 	string/strcmp \
@@ -82,11 +83,13 @@ LIBC_OBJ := \
 	stdio/vsprintf \
 	stdlib/_Exit \
 	stdlib/exit \
+	stdlib/getenv \
 	sys/mman/mmap \
 	sys/mman/munmap \
 	sys/stat/fstatat \
 	sys/stat/stat \
 	sys/wait/waitpid \
+	unistd/access \
 	unistd/close \
 	unistd/environ \
 	unistd/execl \

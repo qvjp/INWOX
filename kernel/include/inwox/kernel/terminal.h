@@ -36,6 +36,19 @@
 
 typedef uint8_t color_t;
 
+class TerminalBuffer {
+public:
+    TerminalBuffer();
+    bool backspace();
+    char read();
+    void write(char c);
+private:
+    char circularBuffer[CIRCULAR_BUFFER_SIZE];
+    volatile size_t readIndex;
+    volatile size_t lineIndex;
+    volatile size_t writeIndex;
+};
+
 class Terminal : public Vnode, public KeyboardListener {
 public:
     Terminal();
@@ -48,13 +61,9 @@ public:
 
 private:
     virtual void onKeyboardEvent(int key);
-    void writeToCircularBuffer(char c);
-    char readFromCircularBuffer();
 
 private:
-    char circularBuffer[CIRCULAR_BUFFER_SIZE];
-    volatile size_t readIndex;
-    volatile size_t writeIndex;
+    TerminalBuffer terminalBuffer;
 };
 
 extern Terminal terminal;

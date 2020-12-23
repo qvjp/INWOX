@@ -25,14 +25,15 @@
  * Terminal class.
  */
 
+#include <inwox/kernel/inwox.h>
 #include <inwox/kernel/terminal.h>
 #include <inwox/stat.h>
 
 Terminal terminal;
 /* 0xC0000000是视频内存首地址 */
 static uint8_t *video = (uint8_t *)0xC0000000;
-static uint8_t cursorPostX = 0;
-static uint8_t cursorPostY = 0;
+static int8_t cursorPostX = 0;
+static int8_t cursorPostY = 0;
 /*
  * 每个VGA buffer都是BBBBFFFFCCCCCCCC的结构
  * 如下图：
@@ -92,21 +93,40 @@ static void printChar(char c)
 
 Terminal::Terminal() : Vnode(S_IFCHR)
 {
+}
+
+TerminalBuffer::TerminalBuffer() {
     readIndex = 0;
+    lineIndex = 0;
     writeIndex = 0;
 }
 
-void Terminal::writeToCircularBuffer(char c)
+bool TerminalBuffer::backspace() {
+    if (lineIndex == writeIndex) {
+        return false;
+    }
+    if (likely(writeIndex != 0)) {
+        writeIndex = (writeIndex - 1) % CIRCULAR_BUFFER_SIZE;
+    } else {
+        writeIndex = CIRCULAR_BUFFER_SIZE - 1;
+    }
+    return true;
+}
+
+void TerminalBuffer::write(char c)
 {
     while ((writeIndex + 1) % CIRCULAR_BUFFER_SIZE == readIndex) {
     } /* 写到读指针时停止写 */
     circularBuffer[writeIndex] = c;
     writeIndex = (writeIndex + 1) % CIRCULAR_BUFFER_SIZE;
+    if (c == '\n') {
+        lineIndex = writeIndex;
+    }
 }
 
-char Terminal::readFromCircularBuffer()
+char TerminalBuffer::read()
 {
-    while (readIndex == writeIndex) {
+    while (readIndex == lineIndex) {
     } /* 读到写指针时停止读 */
     char result = circularBuffer[readIndex];
     readIndex = (readIndex + 1) % CIRCULAR_BUFFER_SIZE;
@@ -116,10 +136,19 @@ char Terminal::readFromCircularBuffer()
 void Terminal::onKeyboardEvent(int key)
 {
     char c = Keyboard::getCharFromKey(key);
-
-    if (c) {
-        printChar(c);             /* 输出到Terminal */
-        writeToCircularBuffer(c); /* 写到环形缓冲区，等待read */
+    if (c == '\b') {
+        if (terminalBuffer.backspace()) {
+            cursorPostX--;
+            if (cursorPostX < 0) {
+                cursorPostX = 79;
+                cursorPostY--;
+            }
+            video[cursorPostY * 2 * 80 + 2 * cursorPostX] = 0;
+            video[cursorPostY * 2 * 80 + 2 * cursorPostX + 1] = 0;
+        }
+    } else if (c) {
+        printChar(c);
+        terminalBuffer.write(c);
     }
 }
 
@@ -127,7 +156,7 @@ ssize_t Terminal::read(void *buffer, size_t size)
 {
     char *buf = (char *)buffer;
     for (size_t i = 0; i < size; i++) {
-        buf[i] = readFromCircularBuffer();
+        buf[i] = terminalBuffer.read();
     }
     return (ssize_t)size;
 }

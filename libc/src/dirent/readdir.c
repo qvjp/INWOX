@@ -21,56 +21,40 @@
  * SOFTWARE.
  */
 
-/* kernel/src/vnode.cpp
- * Vnode class.
+/* libc/src/dirent/readdir.c
+ * 读取目录内容
  */
 
-#include <errno.h>
-#include <inwox/kernel/vnode.h>
+#include <dirent.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <sys/syscall.h>
+#define __need_ssize_t
+#include <sys/types.h>
 
-Vnode::Vnode(mode_t mode)
-{
-    this->mode = mode;
-}
+DEFINE_SYSCALL(SYSCALL_READDIR, ssize_t, sys_readdir, (int, unsigned long, void *, size_t));
 
-/* 默认实现，具体看继承函数如何实现 */
-ssize_t Vnode::read(void * /* buffer */, size_t /* size */)
+struct dirent *readdir(DIR *dir)
 {
-    errno = EBADF;
-    return -1;
-}
+    if (!dir->dirent) {
+        dir->dirent = malloc(sizeof(struct dirent));
+        dir->dirent->d_reclen = sizeof(struct dirent);
+    }
+    size_t entrySize = dir->dirent->d_reclen;
+    ssize_t size = sys_readdir(dir->fd, dir->offset, dir->dirent, entrySize);
 
-ssize_t Vnode::readdir(unsigned long /* offset */, void */* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-ssize_t Vnode::write(const void * /* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-bool Vnode::isSeekable()
-{
-    return false;
-}
-
-Vnode *Vnode::openat(const char * /* path */, int /* flags */, mode_t /* mode */)
-{
-    errno = ENOTDIR;
-    return nullptr;
-}
-
-ssize_t Vnode::pread(void * /* buffer */, size_t /* size */, off_t /* offset */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-int Vnode::stat(struct stat *result)
-{
-    result->st_mode = mode;
-    return 0;
+    if (size < 0) {
+        return NULL;
+    } else if (size == 0) {
+        return NULL;
+    } else if ((size_t) size <= entrySize) {
+        dir->offset++;
+        return dir->dirent;
+    } else {
+        free(dir->dirent);
+        dir->dirent = malloc((size_t) size);
+        sys_readdir(dir->fd, dir->offset, dir->dirent, (size_t) size);
+        dir->offset++;
+        return dir->dirent;
+    }
 }

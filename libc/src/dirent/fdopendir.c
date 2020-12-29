@@ -21,56 +21,19 @@
  * SOFTWARE.
  */
 
-/* kernel/src/vnode.cpp
- * Vnode class.
+/* libc/src/dirent/fdopendir.c
+ * 打开目录
  */
 
-#include <errno.h>
-#include <inwox/kernel/vnode.h>
+#include <dirent.h>
+#include <stdlib.h>
+#include <stddef.h>
 
-Vnode::Vnode(mode_t mode)
+DIR *fdopendir(int fd)
 {
-    this->mode = mode;
-}
-
-/* 默认实现，具体看继承函数如何实现 */
-ssize_t Vnode::read(void * /* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-ssize_t Vnode::readdir(unsigned long /* offset */, void */* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-ssize_t Vnode::write(const void * /* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-bool Vnode::isSeekable()
-{
-    return false;
-}
-
-Vnode *Vnode::openat(const char * /* path */, int /* flags */, mode_t /* mode */)
-{
-    errno = ENOTDIR;
-    return nullptr;
-}
-
-ssize_t Vnode::pread(void * /* buffer */, size_t /* size */, off_t /* offset */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-int Vnode::stat(struct stat *result)
-{
-    result->st_mode = mode;
-    return 0;
+    DIR *dir = malloc(sizeof(DIR));
+    dir->fd = fd;
+    dir->offset = 0;
+    dir->dirent = NULL;
+    return dir;
 }

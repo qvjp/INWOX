@@ -49,6 +49,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::execve,
     (void*) Syscall::waitpid,
     (void*) Syscall::fstatat,
+    (void*) Syscall::readdir,
 };
 
 /**
@@ -180,6 +181,12 @@ int Syscall::fstatat(int fd, const char *__restrict path, struct stat *__restric
         return -1;
     }
     return vnode->stat(result);
+}
+
+ssize_t Syscall::readdir(int fd, unsigned long offset, void *buffer, size_t size)
+{
+    FileDescription *descr = Process::current->fd[fd];
+    return descr->readdir(offset, buffer, size);
 }
 
 /**

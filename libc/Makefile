@@ -38,6 +38,7 @@ COMMON_OBJ := \
 	string/memmove \
 	string/memset \
 	string/strcmp \
+	string/strcpy \
 	string/strcspn \
 	string/strdup \
 	string/strlen \
@@ -54,6 +55,10 @@ CRT_OBJ := \
 LIBC_OBJ := \
 	$(COMMON_OBJ) \
 	assert/assert \
+	dirent/closedir \
+	dirent/fdopendir \
+	dirent/opendir \
+	dirent/readdir \
 	fcntl/open \
 	fcntl/openat \
 	stdio/dprintf \

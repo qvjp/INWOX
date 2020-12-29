@@ -49,6 +49,7 @@ public:
     virtual ssize_t pread(void *buffer, size_t size, off_t offset); /* pread的`p`是positional，从指定位置读 */
     virtual ssize_t write(const void *buffer, size_t size);
     virtual ssize_t read(void *buffer, size_t size);
+    virtual ssize_t readdir(unsigned long offset, void *buffer, size_t size);
     virtual int stat(struct stat* result);
     virtual ~Vnode() {}
 public:

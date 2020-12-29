@@ -21,56 +21,34 @@
  * SOFTWARE.
  */
 
-/* kernel/src/vnode.cpp
- * Vnode class.
+/* libc/include/dirent.h
+ * 目录操作头文件
  */
 
-#include <errno.h>
-#include <inwox/kernel/vnode.h>
+#ifndef DIRENT_H
+#define DIRENT_H
 
-Vnode::Vnode(mode_t mode)
-{
-    this->mode = mode;
-}
+#include <inwox/dirent.h>
 
-/* 默认实现，具体看继承函数如何实现 */
-ssize_t Vnode::read(void * /* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-ssize_t Vnode::readdir(unsigned long /* offset */, void */* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
+typedef struct __DIR DIR;
+#ifdef __is_inwox_libc
+struct __DIR {
+    int fd;
+    struct dirent *dirent;
+    unsigned long offset;
+};
+#endif
 
-ssize_t Vnode::write(const void * /* buffer */, size_t /* size */)
-{
-    errno = EBADF;
-    return -1;
-}
+int closedir(DIR*);
+DIR *fdopendir(int);
+DIR *opendir(const char *);
+struct dirent *readdir(DIR*);
 
-bool Vnode::isSeekable()
-{
-    return false;
+#ifdef __cplusplus
 }
-
-Vnode *Vnode::openat(const char * /* path */, int /* flags */, mode_t /* mode */)
-{
-    errno = ENOTDIR;
-    return nullptr;
-}
-
-ssize_t Vnode::pread(void * /* buffer */, size_t /* size */, off_t /* offset */)
-{
-    errno = EBADF;
-    return -1;
-}
-
-int Vnode::stat(struct stat *result)
-{
-    result->st_mode = mode;
-    return 0;
-}
+#endif
+#endif /* DIRENT_H */

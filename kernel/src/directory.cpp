@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <inwox/dirent.h>
 #include <inwox/kernel/directory.h>
 #include <inwox/stat.h>
 
@@ -68,8 +69,9 @@ Vnode *DirectoryVnode::openat(const char *path, int flags, mode_t mode)
 
     if (strncmp(path, ".", length) == 0) {
         return this->openat(path + length, flags, mode);
-    } else if (length == 2 && strncmp(path, "..", length) == 0 && parent) {
-        return parent->openat(path + length, flags, mode);
+    } else if (length == 2 && strncmp(path, "..", length) == 0) {
+        Vnode *dotdot = parent ? parent : this;
+        return dotdot->openat(path + length, flags, mode);
     }
 
     for (size_t i = 0; i < childCount; i++) {
@@ -84,4 +86,27 @@ Vnode *DirectoryVnode::openat(const char *path, int flags, mode_t mode)
 
     errno = ENOENT;
     return nullptr;
+}
+
+ssize_t DirectoryVnode::readdir(unsigned long offset, void *buffer, size_t size)
+{
+    const char *name;
+    if (offset == 0) {
+        name = ".";
+    } else if (offset == 1) {
+        name = "..";
+    } else if (offset - 2 < childCount) {
+        name = fileNames[offset - 2];
+    } else if (offset - 2 == childCount) {
+        return 0;
+    } else {
+        return -1;
+    }
+    size_t structSize = sizeof(struct dirent) + strlen(name) + 1;
+    if (size >= structSize) {
+        struct dirent *entry = (struct dirent*) buffer;
+        entry->d_reclen = size;
+        strcpy(entry->d_name, name);
+    }
+    return structSize;
 }

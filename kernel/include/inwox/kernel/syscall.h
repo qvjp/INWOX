@@ -47,6 +47,7 @@ pid_t regfork(int flags, struct regfork *registers);
 int execve(const char *path, char *const argv[], char *const envp[]);
 pid_t waitpid(pid_t pid, int *status, int flags);
 int fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags);
+ssize_t readdir(int fd, unsigned long offset, void *buffer, size_t size);
 void badSyscall();
 } /* namespace Syscall */
 

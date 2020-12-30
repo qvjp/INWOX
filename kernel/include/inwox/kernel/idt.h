@@ -73,7 +73,7 @@
 /**
  * 定义IDT入口，指定packed是为了阻止编译器“优化”
  */
-struct idt_entry {
+struct idtEntry {
     uint16_t offset_low;
     uint16_t selector;
     uint8_t unused;
@@ -99,7 +99,7 @@ struct idt_entry {
  * 定义指向IDT的结构，包括IDT的大小和IDT的首地址，和设置GDT时一样
  * 同样这里设置为packed
  */
-struct idt_desc {
+struct idtDesc {
     uint16_t size;
     void *offset;
 } __attribute__((__packed__));
@@ -111,6 +111,6 @@ struct idt_desc {
  * selector: 中断服务程序所在段
  * attr: 权限
  */
-void idt_set_gate(uint8_t num, uint32_t offset, uint16_t selector, uint8_t attr);
+void idtSetGate(uint8_t num, uint32_t offset, uint16_t selector, uint8_t attr);
 
 #endif /* KERNEL_IDT_H_ */

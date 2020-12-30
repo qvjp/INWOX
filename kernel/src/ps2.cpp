@@ -74,7 +74,7 @@ static uint8_t sendPS2CommandWithResponse(uint8_t command);
 
 static PS2Device *ps2Device1;
 
-static void irqHandler(struct regs *r)
+static void irqHandler(struct context *r)
 {
     assert(r->int_no == 33);
     if (ps2Device1) {
@@ -173,7 +173,7 @@ void PS2::initialize()
                     PS2Keyboard *keyboard = new PS2Keyboard();
                     keyboard->listener = &terminal;
                     ps2Device1 = keyboard;
-                    Interrupt::isr_install_handler(33, irqHandler);
+                    Interrupt::isrInstallHandler(33, irqHandler);
                 }
             }
         } while (0);

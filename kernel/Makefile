@@ -19,6 +19,7 @@ OBJ := \
 	memorysegment.o \
 	pic.o \
 	physicalmemory.o \
+	pit.o \
 	ps2.o \
 	ps2keyboard.o \
 	print.o \

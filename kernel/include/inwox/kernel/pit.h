@@ -22,19 +22,15 @@
  */
 
 /**
- * kernel/include/inwox/kernel/pic.h
- * 初始化PIC
+ * kernel/include/inwox/kernel/pit.h
+ * 初始化PIT
  */
 
-#ifndef KERNEL_PIC_H_
-#define KERNEL_PIC_H_
+#ifndef KERNEL_PIT_H_
+#define KERNEL_PIT_H_
 
-#define PIC1_COMMAND 0x20
-#define PIC1_DATA    0x21
-#define PIC2_COMMAND 0xA0
-#define PIC2_DATA    0xA1
-#define PIC_EOI      0x20 /* End of Interrupt  */
+namespace Pit {
+void initialize();
+}
 
-void picRemap(void);
-
-#endif /* end KERNEL_PIC_H_ */
+#endif /* end KERNEL_PIT_H_ */

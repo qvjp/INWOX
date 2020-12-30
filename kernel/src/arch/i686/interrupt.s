@@ -35,7 +35,7 @@ isr_\no:
     cli
     push $0 /* 对于没有错误码的异常，push一个0是为了统一栈帧 */
     push $\no
-    jmp isr_commonHandler
+    jmp isrCommonHandler
 .endm
 
 /* 处理有错误码的ISR */
@@ -45,7 +45,7 @@ isr_\no:
     cli
     /* 有错误码的isr就不需要手动push了，已经自动push进错误码了 */
     push $\no
-    jmp isr_commonHandler
+    jmp isrCommonHandler
 .endm
 
 /**
@@ -54,7 +54,7 @@ isr_\no:
  * 最后回到之前的栈帧
  */
 
-isr_commonHandler:
+isrCommonHandler:
     pusha                   /* push eax, ecx, edx, ebx, esp, ebp, esi, edi. */
 
     /* 切换到内核数据段处理中断 */
@@ -62,7 +62,7 @@ isr_commonHandler:
     mov %ax, %ds
 
     push %esp               /* interrupt_handler的参数，指向刚pusha后的栈d顶 */
-    call interrupt_handler  /* 调用C语言编写的中断处理程序 */
+    call interruptHandler  /* 调用C语言编写的中断处理程序 */
 
     /* 恢复现场的顺序和保存现场的顺序正好相反 */
     mov %eax, %esp          /* eax是interrupt_handler的返回值，也就是newContext */

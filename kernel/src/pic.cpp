@@ -37,7 +37,7 @@
  * 2. 主/从PIC如何连接（ICW3）
  * 3. 额外信息（ICW4）
  */
-void pic_remap()
+void picRemap()
 {
     /* 开始初始化序列 */
     Hardwarecommunication::outportb(PIC1_COMMAND, 0x11);

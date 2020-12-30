@@ -82,7 +82,7 @@ void Process::initialize(FileDescription *rootFd)
     idleProcess = new Process();
     idleProcess->addressSpace = kernelSpace;
     idleProcess->rootFd = rootFd;
-    idleProcess->interruptContext = new regs();
+    idleProcess->interruptContext = new context();
     current = idleProcess;
     firstProcess = nullptr;
 }
@@ -133,7 +133,7 @@ uintptr_t Process::loadELF(uintptr_t elf)
  * 若当前正在执行的进程next域有其他进程，那么返回这个进程
  * 若没有其他进程，执行空闲进程
  */
-struct regs *Process::schedule(struct regs *context)
+struct context *Process::schedule(struct context *context)
 {
     if (likely(!current->contextChanged)) {
         current->interruptContext = context;
@@ -210,8 +210,8 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
     kstack = (void*)kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
     inwox_vir_addr_t stack = addressSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
 
-    interruptContext = (struct regs *)((uintptr_t)kstack + 0x1000 - sizeof(struct regs));
-    memset(interruptContext, 0, sizeof(struct regs));
+    interruptContext = (struct context *)((uintptr_t)kstack + 0x1000 - sizeof(struct context));
+    memset(interruptContext, 0, sizeof(struct context));
     char **newArgv;
     char **newEnvp;
     int argc = copyArguments(argv, envp, newArgv, newEnvp);
@@ -290,7 +290,7 @@ Process *Process::regfork(int flags, struct regfork *registers)
 
     // fork 寄存器
     process->kstack = (void*) kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
-    process->interruptContext = (struct regs*)((uintptr_t) process->kstack + 0x1000 - sizeof(struct regs));
+    process->interruptContext = (struct context*)((uintptr_t) process->kstack + 0x1000 - sizeof(struct context));
     process->interruptContext->eax = registers->rf_eax;
     process->interruptContext->ebx = registers->rf_ebx;
     process->interruptContext->ecx = registers->rf_ecx;

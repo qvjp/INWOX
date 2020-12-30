@@ -34,64 +34,64 @@
 #include <inwox/kernel/process.h> /* Process::schedule(r) */
 
 /**
- * 挨个设置IDT中的ISR
+ * 挨个设置IDT中的ISR，下列的isr_*只是占位符，无实际逻辑，内部都是通过调用interrupt_handler实现
  */
-void irqs_install()
+void irqsInstall()
 {
     /* Exceptions */
-    idt_set_gate(0, (uint32_t)isr_0, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(1, (uint32_t)isr_1, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(2, (uint32_t)isr_2, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(3, (uint32_t)isr_3, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(4, (uint32_t)isr_4, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(5, (uint32_t)isr_5, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(6, (uint32_t)isr_6, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(7, (uint32_t)isr_7, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(8, (uint32_t)isr_8, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(9, (uint32_t)isr_9, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(10, (uint32_t)isr_10, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(11, (uint32_t)isr_11, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(12, (uint32_t)isr_12, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(13, (uint32_t)isr_13, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(14, (uint32_t)isr_14, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(15, (uint32_t)isr_15, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(16, (uint32_t)isr_16, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(17, (uint32_t)isr_17, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(18, (uint32_t)isr_18, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(19, (uint32_t)isr_19, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(20, (uint32_t)isr_20, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(21, (uint32_t)isr_21, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(22, (uint32_t)isr_22, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(23, (uint32_t)isr_23, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(24, (uint32_t)isr_24, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(25, (uint32_t)isr_25, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(26, (uint32_t)isr_26, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(27, (uint32_t)isr_27, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(28, (uint32_t)isr_28, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(29, (uint32_t)isr_29, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(30, (uint32_t)isr_30, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(31, (uint32_t)isr_31, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(0, (uint32_t)isr_0, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(1, (uint32_t)isr_1, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(2, (uint32_t)isr_2, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(3, (uint32_t)isr_3, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(4, (uint32_t)isr_4, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(5, (uint32_t)isr_5, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(6, (uint32_t)isr_6, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(7, (uint32_t)isr_7, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(8, (uint32_t)isr_8, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(9, (uint32_t)isr_9, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(10, (uint32_t)isr_10, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(11, (uint32_t)isr_11, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(12, (uint32_t)isr_12, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(13, (uint32_t)isr_13, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(14, (uint32_t)isr_14, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(15, (uint32_t)isr_15, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(16, (uint32_t)isr_16, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(17, (uint32_t)isr_17, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(18, (uint32_t)isr_18, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(19, (uint32_t)isr_19, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(20, (uint32_t)isr_20, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(21, (uint32_t)isr_21, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(22, (uint32_t)isr_22, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(23, (uint32_t)isr_23, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(24, (uint32_t)isr_24, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(25, (uint32_t)isr_25, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(26, (uint32_t)isr_26, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(27, (uint32_t)isr_27, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(28, (uint32_t)isr_28, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(29, (uint32_t)isr_29, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(30, (uint32_t)isr_30, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(31, (uint32_t)isr_31, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
     /* IRQs */
-    idt_set_gate(32, (unsigned)isr_32, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(33, (unsigned)isr_33, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(34, (unsigned)isr_34, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(35, (unsigned)isr_35, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(36, (unsigned)isr_36, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(37, (unsigned)isr_37, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(38, (unsigned)isr_38, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(39, (unsigned)isr_39, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(40, (unsigned)isr_40, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(41, (unsigned)isr_41, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(42, (unsigned)isr_42, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(43, (unsigned)isr_43, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(44, (unsigned)isr_44, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(45, (unsigned)isr_45, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(46, (unsigned)isr_46, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(47, (unsigned)isr_47, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(32, (unsigned)isr_32, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(33, (unsigned)isr_33, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(34, (unsigned)isr_34, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(35, (unsigned)isr_35, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(36, (unsigned)isr_36, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(37, (unsigned)isr_37, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(38, (unsigned)isr_38, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(39, (unsigned)isr_39, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(40, (unsigned)isr_40, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(41, (unsigned)isr_41, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(42, (unsigned)isr_42, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(43, (unsigned)isr_43, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(44, (unsigned)isr_44, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(45, (unsigned)isr_45, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(46, (unsigned)isr_46, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(47, (unsigned)isr_47, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
 
-    idt_set_gate(48, (unsigned)isr_48, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(49, (unsigned)isr_49, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
-    idt_set_gate(73, (unsigned)syscallHandler, 0x08, IDT_TRAP_GATE | IDT_RING3 | IDT_PRESENT);
+    idtSetGate(48, (unsigned)isr_48, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(49, (unsigned)isr_49, 0x08, IDT_INTERRUPT_GATE | IDT_RING0 | IDT_PRESENT);
+    idtSetGate(73, (unsigned)syscallHandler, 0x08, IDT_TRAP_GATE | IDT_RING3 | IDT_PRESENT);
 }
 
 /**
@@ -102,16 +102,16 @@ void Interrupt::enable()
     __asm__ __volatile__("sti");
 }
 
-void (*isr_routines[256])(regs *) = {0};
+void (*isrRoutines[256])(context *) = {0};
 
-void Interrupt::isr_install_handler(int isr, void (*handler)(struct regs *r))
+void Interrupt::isrInstallHandler(int isr, void (*handler)(struct context *r))
 {
-    isr_routines[isr] = handler;
+    isrRoutines[isr] = handler;
 }
 
-void isr_uninstall_handler(int isr)
+void Interrupt::isrUninstallHandler(int isr)
 {
-    isr_routines[isr] = 0;
+    isrRoutines[isr] = 0;
 }
 
 void Interrupt::initPic()
@@ -119,19 +119,19 @@ void Interrupt::initPic()
     /**
      * 先重新映射了IRQ在IDT中的位置，再在IDT正确的位置放适当的IRQ处理程序
      */
-    pic_remap();
-    irqs_install();
+    picRemap();
+    irqsInstall();
 }
 
-extern "C" struct regs *interrupt_handler(struct regs *r)
+extern "C" struct context *interruptHandler(struct context *r)
 {
-    struct regs *newContext = r;
+    struct context *newContext = r;
     if (r->int_no < 32) {
         Print::warnTerminal();
         Print::printf("eax: 0x%x, ebx: 0x%x, ecx: 0x%x, edx: 0x%x\n", r->eax, r->ebx, r->ecx, r->edx);
         Print::printf("edi: 0x%x, esi: 0x%x, ebp: 0x%x, esp: 0x%x\n", r->edi, r->esi, r->ebp, r->esp);
         Print::printf("cs: 0x%x, eip: 0x%x, eflags: 0x%x, ss: 0x%x\n", r->cs, r->eip, r->eflags, r->ss);
-        Print::printf("%s", exception_messages[r->int_no]);
+        Print::printf("%s", exceptionMessages[r->int_no]);
         Print::printf(" Exception. System Halted!\n");
         while (1)
         {
@@ -142,12 +142,12 @@ extern "C" struct regs *interrupt_handler(struct regs *r)
         /**
          * 定义一个空函数指针用来放具体的IRQ处理程序
          */
-        void (*handler)(struct regs * r);
+        void (*handler)(struct context * r);
         /* 当时钟中断发生时，进行进程调度 */
         if (r->int_no == 32) {
             newContext = Process::schedule(r);
         }
-        handler = isr_routines[r->int_no];
+        handler = isrRoutines[r->int_no];
         if (handler) {
             handler(r);
         }

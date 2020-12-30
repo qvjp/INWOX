@@ -49,7 +49,7 @@ public:
     Process *waitpid(pid_t pid, int flags);
 
 private:
-    struct regs *interruptContext;
+    struct context *interruptContext;
     Process *prev;
     Process *next;
     void *kstack; /* 内核栈 */
@@ -71,7 +71,7 @@ public:
 public:
     static void addProcess(Process *process);
     static void initialize(FileDescription *rootFd); /* 初始化进场的时候要把进程根目录传进来 */
-    static struct regs *schedule(struct regs *context);
+    static struct context *schedule(struct context *context);
     static Process *current;
 
 private:

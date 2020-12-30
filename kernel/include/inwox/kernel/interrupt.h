@@ -34,7 +34,7 @@
 /**
  * 异常提示信息
  */
-const char* const exception_messages[] = {
+const char* const exceptionMessages[] = {
     "Devide-by-zero",
     "Debug",
     "Non-maskable Interrupt",
@@ -138,7 +138,7 @@ extern "C" {
 /**
  * 这个结构定义ISR运行后栈的样子
  */
-struct regs {
+struct context {
     /* uint32_t gs, fs, es, ds; */ /* 最后push的几个寄存器 */
     /* 为不混淆视听，遂将几个段寄存器删掉，用时再说 */
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; /* "pasha" 将数据压如这几个寄存器 */
@@ -147,12 +147,13 @@ struct regs {
 };
 
 /* 将IRQs设置到IDT中 */
-void irqs_install();
+void irqsInstall();
 
 namespace Interrupt {
 void initPic();
 void enable();
-void isr_install_handler(int isr, void (*handler)(struct regs *r));
+void isrInstallHandler(int isr, void (*handler)(struct context *r));
+void isrUninstallHandler(int isr);
 } /* namespace Interrupt */
 
 #endif /* KERNEL_INTERRUPTS_H_ */

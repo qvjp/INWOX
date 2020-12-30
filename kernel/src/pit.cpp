@@ -22,19 +22,42 @@
  */
 
 /**
- * kernel/include/inwox/kernel/pic.h
- * 初始化PIC
+ * kernel/src/pit.cpp
+ * 初始化Programmable Interval Timer
  */
 
-#ifndef KERNEL_PIC_H_
-#define KERNEL_PIC_H_
+#include <inwox/kernel/interrupt.h>
+#include <inwox/kernel/pit.h>
+#include <inwox/kernel/port.h>
+#include <inwox/kernel/print.h>
+#include <limits.h>
 
-#define PIC1_COMMAND 0x20
-#define PIC1_DATA    0x21
-#define PIC2_COMMAND 0xA0
-#define PIC2_DATA    0xA1
-#define PIC_EOI      0x20 /* End of Interrupt  */
+#define PIT_FREQUENCY 1193182 // Hz
+#define HZ 1000 // 每秒嘀嗒次数
 
-void picRemap(void);
+#define PIT_PORT_CHANNEL0 0x40
+#define PIT_PORT_MODE 0x43
 
-#endif /* end KERNEL_PIC_H_ */
+#define PIT_MODE_RATE_GENERATOR 0x4
+#define PIT_MODE_LOBYTE_HIBYTE 0x30
+
+/**
+ * @brief 从开机起嘀嗒次数
+ * 18446744073709551615(UINT64_MAX) / (86400 * 365 * 1000(HZ)) = 584,942,417（年）
+ */
+static int64_t pit_ticker = 0;
+
+static void irqHandler(struct context *)
+{
+    pit_ticker++;
+    Print::printf("uptime: %llu\n", pit_ticker);
+}
+
+void Pit::initialize()
+{
+    uint16_t frequency = PIT_FREQUENCY / HZ;
+    Interrupt::isrInstallHandler(32, irqHandler);
+    Hardwarecommunication::outportb(PIT_PORT_MODE, PIT_MODE_RATE_GENERATOR | PIT_MODE_LOBYTE_HIBYTE);
+    Hardwarecommunication::outportb(PIT_PORT_CHANNEL0, frequency & 0xFF);
+    Hardwarecommunication::outportb(PIT_PORT_CHANNEL0, (frequency >> 8) & 0xFF);
+}

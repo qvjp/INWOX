@@ -38,6 +38,7 @@
 #include <inwox/kernel/inwox.h>     /* MULTIBOOT_BOOTLOADER_MAGIC */
 #include <inwox/kernel/interrupt.h> /* Interrupt::initPic() Interrupt::enable() */
 #include <inwox/kernel/physicalmemory.h>
+#include <inwox/kernel/pit.h>
 #include <inwox/kernel/ps2.h>
 #include <inwox/kernel/print.h> /* printf() */
 #include <inwox/kernel/process.h>
@@ -116,6 +117,7 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);
 
     Interrupt::initPic();
+    Pit::initialize();
     Interrupt::enable();
     Print::printf("Interrupt Initialized\n");
 

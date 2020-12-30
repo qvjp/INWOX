@@ -30,7 +30,6 @@
 #include <inwox/kernel/pit.h>
 #include <inwox/kernel/port.h>
 #include <inwox/kernel/print.h>
-#include <limits.h>
 
 #define PIT_FREQUENCY 1193182 // Hz
 #define HZ 1000 // 每秒嘀嗒次数
@@ -41,6 +40,12 @@
 #define PIT_MODE_RATE_GENERATOR 0x4
 #define PIT_MODE_LOBYTE_HIBYTE 0x30
 
+static const uint16_t frequency = PIT_FREQUENCY / HZ;
+static const unsigned long nanoseconds = 1000000000L / PIT_FREQUENCY * frequency;
+
+#define NUM_TIMERS 20
+static Timer *timers[NUM_TIMERS] = {0};
+
 /**
  * @brief 从开机起嘀嗒次数
  * 18446744073709551615(UINT64_MAX) / (86400 * 365 * 1000(HZ)) = 584,942,417（年）
@@ -50,12 +55,32 @@ static int64_t pit_ticker = 0;
 static void irqHandler(struct context *)
 {
     pit_ticker++;
-    Print::printf("uptime: %llu\n", pit_ticker);
+    for (size_t i = 0; i < NUM_TIMERS; i++) {
+        if(timers[i]) {
+            timers[i]->advance(nanoseconds);
+        }
+    }
+}
+
+void Pit::deregisterTimer(size_t index)
+{
+    timers[index] = nullptr;
+}
+
+size_t Pit::registerTimer(Timer *timer)
+{
+    for (size_t i = 0; i < NUM_TIMERS; i++) {
+        if (!timers[i]) {
+            timers[i] = timer;
+            return i;
+        }
+    }
+    Print::printf("Error: Too many timers\n");
+    return -1;
 }
 
 void Pit::initialize()
 {
-    uint16_t frequency = PIT_FREQUENCY / HZ;
     Interrupt::isrInstallHandler(32, irqHandler);
     Hardwarecommunication::outportb(PIT_PORT_MODE, PIT_MODE_RATE_GENERATOR | PIT_MODE_LOBYTE_HIBYTE);
     Hardwarecommunication::outportb(PIT_PORT_CHANNEL0, frequency & 0xFF);

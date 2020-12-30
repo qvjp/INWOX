@@ -21,19 +21,67 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/include/inwox/kernel/pit.h
- * 初始化PIT
+/* kernel/src/tiemr.cpp
+ * 定时器
  */
 
-#ifndef KERNEL_PIT_H_
-#define KERNEL_PIT_H_
-
+#include <inwox/kernel/pit.h>
 #include <inwox/kernel/timer.h>
-namespace Pit {
-void initialize();
-void deregisterTimer(size_t index);
-size_t registerTimer(Timer *timer);
+#include <inwox/kernel/syscall.h>
+
+static inline void minus(struct timespec *time, unsigned long nanoseconds)
+{
+    time->tv_nsec -= nanoseconds;
+    while (time->tv_nsec < 0)
+    {
+        time->tv_sec--;
+        time->tv_nsec += 1000000000L;
+    }
+    if (time->tv_sec < 0) {
+        time->tv_sec = 0;
+        time->tv_nsec = 0;
+    }
 }
 
-#endif /* end KERNEL_PIT_H_ */
+static inline bool isZero(struct timespec time)
+{
+    return (time.tv_sec == 0 && time.tv_nsec == 0);
+}
+
+Timer::Timer(struct timespec time)
+{
+    this->time = time;
+    index = 0;
+}
+
+void Timer::advance(unsigned long nanosecodes)
+{
+    minus(&time, nanosecodes);
+}
+
+void Timer::start()
+{
+    index = Pit::registerTimer(this);
+}
+
+void Timer::wait()
+{
+    while (!isZero(time)) {
+        __asm__ __volatile__("int $0x31");
+        __sync_synchronize();
+    }
+    Pit::deregisterTimer(index);
+}
+
+int Syscall::nanosleep(const struct timespec *request, struct timespec *remaining)
+{
+    Timer timer(*request);
+    timer.start();
+    timer.wait();
+
+    if (remaining) { 
+        remaining->tv_sec = 0;
+        remaining->tv_nsec = 0;
+    }
+    return 0;
+}

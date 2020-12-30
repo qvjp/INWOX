@@ -22,18 +22,24 @@
  */
 
 /**
- * kernel/include/inwox/kernel/pit.h
- * 初始化PIT
+ * libc/src/time/sleep.c
+ * sleep
  */
 
-#ifndef KERNEL_PIT_H_
-#define KERNEL_PIT_H_
+#include <time.h>
+#include <unistd.h>
 
-#include <inwox/kernel/timer.h>
-namespace Pit {
-void initialize();
-void deregisterTimer(size_t index);
-size_t registerTimer(Timer *timer);
+unsigned int sleep(unsigned int seconds) {
+    struct timespec requested;
+    struct timespec remaining;
+
+    requested.tv_sec = seconds;
+    requested.tv_nsec = 0;
+
+    int result = nanosleep(&requested, &remaining);
+
+    if (result < 0) {
+        return remaining.tv_sec;
+    }
+    return 0;
 }
-
-#endif /* end KERNEL_PIT_H_ */

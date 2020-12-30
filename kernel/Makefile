@@ -18,14 +18,15 @@ OBJ := \
 	keyboard.o \
 	memorysegment.o \
 	pic.o \
-	physicalmemory.o \
 	pit.o \
+	physicalmemory.o \
 	ps2.o \
 	ps2keyboard.o \
 	print.o \
 	process.o \
 	syscall.o \
 	terminal.o \
+	timer.o \
 	vnode.o
 
 OBJ += arch/i686/interrupt.o \

@@ -29,6 +29,28 @@
 #ifndef TIME_H
 #define TIME_H
 
-/* 编译GCC需要此文件，当前未实现 */
+#define __need_clock_t
+#define __need_locale_t
+#define __need_NULL
+#define __need_size_t
+#define __need_time_t
+#if __USE_INWOX || __USE_POSIX
+#  define __need_clockid_t
+#  define __need_timer_t
+#endif
+#include <sys/types.h>
+#include <inwox/timespec.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if __USE_INWOX || __USE_POSIX
+int nanosleep(const struct timespec*, struct timespec*);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TIME_H */

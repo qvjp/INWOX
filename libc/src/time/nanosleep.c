@@ -22,18 +22,12 @@
  */
 
 /**
- * kernel/include/inwox/kernel/pit.h
- * 初始化PIT
+ * libc/src/time/nanosleep.c
+ * 细粒度sleep
  */
 
-#ifndef KERNEL_PIT_H_
-#define KERNEL_PIT_H_
+#include <time.h>
+#include <sys/syscall.h>
 
-#include <inwox/kernel/timer.h>
-namespace Pit {
-void initialize();
-void deregisterTimer(size_t index);
-size_t registerTimer(Timer *timer);
-}
-
-#endif /* end KERNEL_PIT_H_ */
+DEFINE_SYSCALL_GLOBAL(SYSCALL_NANOSLEEP, int, nanosleep,
+        (const struct timespec*, struct timespec*));

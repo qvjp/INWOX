@@ -29,9 +29,13 @@
 #ifndef KERNEL_SYSCALL_H_
 #define KERNEL_SYSCALL_H_
 
+#define __need_ssize_t
+#define __need_mode_t
+#define __need_pid_t
 #include <sys/types.h>
 #include <inwox/fork.h>
 #include <inwox/syscall.h>
+#include <inwox/timespec.h>
 
 struct __mmapRequest;
 namespace Syscall {
@@ -48,6 +52,7 @@ int execve(const char *path, char *const argv[], char *const envp[]);
 pid_t waitpid(pid_t pid, int *status, int flags);
 int fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags);
 ssize_t readdir(int fd, unsigned long offset, void *buffer, size_t size);
+int nanosleep(const struct timespec *request, struct timespec *remaining);
 void badSyscall();
 } /* namespace Syscall */
 

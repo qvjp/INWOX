@@ -31,6 +31,7 @@
 #include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
 #include <inwox/kernel/syscall.h>
+#include <inwox/kernel/timer.h>
 
 /**
  * 系统调用表
@@ -50,6 +51,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::waitpid,
     (void*) Syscall::fstatat,
     (void*) Syscall::readdir,
+    (void*) Syscall::nanosleep,
 };
 
 /**

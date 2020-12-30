@@ -94,6 +94,7 @@ LIBC_OBJ := \
 	sys/stat/fstatat \
 	sys/stat/stat \
 	sys/wait/waitpid \
+	time/nanosleep \
 	unistd/access \
 	unistd/close \
 	unistd/environ \
@@ -103,6 +104,7 @@ LIBC_OBJ := \
 	unistd/fork \
 	unistd/_exit \
 	unistd/read \
+	unistd/sleep \
 	unistd/write
 
 LIBK_OBJ := \

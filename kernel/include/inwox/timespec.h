@@ -22,18 +22,18 @@
  */
 
 /**
- * kernel/include/inwox/kernel/pit.h
- * 初始化PIT
+ * kernel/include/inwox/timespec.h
+ * 系统调用号
  */
 
-#ifndef KERNEL_PIT_H_
-#define KERNEL_PIT_H_
+#ifndef INWOX_TIMESPEC_H_
+#define INWOX_TIMESPEC_H_
 
-#include <inwox/kernel/timer.h>
-namespace Pit {
-void initialize();
-void deregisterTimer(size_t index);
-size_t registerTimer(Timer *timer);
-}
+#include <inwox/types.h>
 
-#endif /* end KERNEL_PIT_H_ */
+struct timespec {
+    __time_t tv_sec;
+    long tv_nsec;
+};
+
+#endif /* INWOX_TIMESPEC_H_ */

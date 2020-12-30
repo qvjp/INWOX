@@ -21,19 +21,25 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/include/inwox/kernel/pit.h
- * 初始化PIT
+/* kernel/include/inwox/kernel/terminal.h
+ * Terminal class.
  */
 
-#ifndef KERNEL_PIT_H_
-#define KERNEL_PIT_H_
+#ifndef KERNEL_TIMER_H_
+#define KERNEL_TIMER_H_
 
-#include <inwox/kernel/timer.h>
-namespace Pit {
-void initialize();
-void deregisterTimer(size_t index);
-size_t registerTimer(Timer *timer);
-}
+#include <stddef.h>
+#include <inwox/timespec.h>
 
-#endif /* end KERNEL_PIT_H_ */
+class Timer {
+public:
+    Timer(struct timespec time);
+    void advance(unsigned long nanosecondes);
+    void start();
+    void wait();
+private:
+    struct timespec time;
+    size_t index;
+};
+
+#endif /* KERNEL_TIMER_H_ */

@@ -53,7 +53,7 @@ PS2Keyboard::PS2Keyboard()
 {
     listener = nullptr;
     sendKeyboardCommand(KEYBOARD_ENABLE_SCANNING);
-    Print::printf("Keyboard enable\n");
+    Print::printf("PS/2 Keyboard found\n");
 }
 
 enum {

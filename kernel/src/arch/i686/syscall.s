@@ -42,6 +42,7 @@ syscallHandler:
 
     mov $0x10, %cx          /* 进入内核态执行 */
     mov %cx, %ds
+    mov %cx, %es
 
     call getSyscallHandler  /* 将系统调用号转换为具体系统调用地址给eax */
 
@@ -50,6 +51,7 @@ syscallHandler:
 
     mov $0x23, %cx          /* 切换回用户段 */
     mov %cx, %ds
+    mov %cx, %es
 
     mov errno, %ecx         /* 系统调用时设置错误码 */
     mov %ebp, %esp

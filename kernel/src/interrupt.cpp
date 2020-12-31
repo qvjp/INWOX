@@ -102,6 +102,10 @@ void Interrupt::enable()
     __asm__ __volatile__("sti");
 }
 
+void Interrupt::disable() {
+    __asm__ __volatile__("cli");
+}
+
 void (*isrRoutines[256])(context *) = {0};
 
 void Interrupt::isrInstallHandler(int isr, void (*handler)(struct context *r))

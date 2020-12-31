@@ -6,7 +6,7 @@ include $(TO_ROOT)/build-config/config.mk
 
 BUILD = $(BUILD_DIR)/libc
 
-ARFLAGS := -rcs
+ARFLAGS = -rcs
 CFLAGS ?= -O0 -g
 CFLAGS += --sysroot=$(SYSROOT) -std=gnu11 -ffreestanding -Wall -Wextra
 CFLAGS += -D__USE_INWOX
@@ -17,7 +17,7 @@ CPPFLAGS += -I include -I $(SYSROOT)/usr/include
 LIBC_FLAGS += -D__is_inwox_libc
 LIBK_FLAGS += -D__is_inwox_libk
 
-COMMON_OBJ := \
+COMMON_OBJ = \
 	ctype/isspace \
 	cxx/new \
 	cxx/purevirtual \
@@ -45,14 +45,15 @@ COMMON_OBJ := \
 	string/strnlen \
 	string/strncmp \
 	string/strrchr \
+	string/strspn \
 	string/strtok
 
-CRT_OBJ := \
+CRT_OBJ = \
 	$(BUILD)/arch/i686/crt0.o \
 	$(BUILD)/arch/i686/crti.o \
 	$(BUILD)/arch/i686/crtn.o
 
-LIBC_OBJ := \
+LIBC_OBJ = \
 	$(COMMON_OBJ) \
 	assert/assert \
 	dirent/closedir \
@@ -107,7 +108,7 @@ LIBC_OBJ := \
 	unistd/sleep \
 	unistd/write
 
-LIBK_OBJ := \
+LIBK_OBJ = \
 	$(COMMON_OBJ)
 
 LIBC_OBJ += \

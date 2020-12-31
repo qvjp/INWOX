@@ -75,8 +75,8 @@ public:
     static Process *current;
 
 private:
-    int copyArguments(char *const argv[], char *const envp[], char **&newArgv, char **&newEnvp);
-    uintptr_t loadELF(uintptr_t elf);
+    int copyArguments(char *const argv[], char *const envp[], char **&newArgv, char **&newEnvp, AddressSpace *newAddressSpace);
+    uintptr_t loadELF(uintptr_t elf, AddressSpace *newAddressSpace);
 };
 
 void setKernelStack(uintptr_t kstack);

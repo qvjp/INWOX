@@ -3,9 +3,9 @@ BUILD_DIR = $(TO_ROOT)/build/programs
 SYSROOT ?= $(TO_ROOT)/sysroot
 BIN_DIR = $(SYSROOT)/bin
 
-AR := $(ARCH)-inwox-ar
-CC := $(ARCH)-inwox-gcc
-CXX := $(ARCH)-inwox-g++
+AR = $(ARCH)-inwox-ar
+CC = $(ARCH)-inwox-gcc
+CXX = $(ARCH)-inwox-g++
 
 CFLAGS ?= -O0 -g
 CFLAGS += -Wall -Wextra

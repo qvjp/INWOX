@@ -60,6 +60,7 @@ isrCommonHandler:
     /* 切换到内核数据段处理中断 */
     mov $0x10, %ax
     mov %ax, %ds
+    mov %ax, %es
 
     push %esp               /* interrupt_handler的参数，指向刚pusha后的栈d顶 */
     call interruptHandler  /* 调用C语言编写的中断处理程序 */
@@ -70,6 +71,7 @@ isrCommonHandler:
     /* 处理完中断切换到用户数据段 */
     mov $0x23, %ax          /* 0x23 = 0x18 | 0x3 即 3*8 | 011b */
     mov %ax, %ds
+    mov %ax, %es
 
     popa                    /* pop edi, esi, ebp, esp, ebx, edx, ecx, eax */
 

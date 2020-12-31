@@ -1,0 +1,1 @@
+INWOX_VERSION = A

@@ -21,32 +21,20 @@
  * SOFTWARE.
  */
 
-/* libc/src/string/strtok.c
- * 分割字符串
+/* libc/src/string/strspn.c
+ * 返回characters中第一个不在字符串string中出现的字符下标
  */
 
 #include <string.h>
 
-static char *next = NULL;
-
-char *strtok(char *restrict str, const char *restrict seperator)
-{
-    if (!str) {
-        str = next;
-        if (!str) {
-            return NULL;
+size_t strspn(const char* string, const char* characters) {
+    size_t result = 0;
+    while (1) {
+        for (size_t i = 0; characters[i]; i++) {
+            if (string[result] != characters[i]) {
+                return result;
+            }
         }
+        result++;
     }
-    str = str + strspn(str, seperator);
-    if (!*str) {
-        return NULL;
-    }
-    size_t tokenEnd = strcspn(str, seperator);
-    if (str[tokenEnd] == '\0') {
-        next = NULL;
-    } else {
-        str[tokenEnd] = '\0';
-        next = str + tokenEnd + 1;
-    }
-    return str;
 }

@@ -53,6 +53,7 @@ int strcmp(const char *str1, const char *str2);
 size_t strcspn(const char *, const char *);
 int strncmp(const char *str1, const char *str2, size_t length);
 char *strrchr(const char *, int);
+size_t strspn(const char*, const char*);
 char *strtok(char *__restrict, const char *__restrict);
 
 #ifdef __cplusplus

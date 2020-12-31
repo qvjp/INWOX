@@ -43,6 +43,10 @@
 #include <inwox/kernel/print.h> /* printf() */
 #include <inwox/kernel/process.h>
 
+#ifndef INWOX_VERSION
+#define INWOX_VERSION ""
+#endif
+
 /**
  * 从multiboot信息中解析initrd
  *
@@ -83,28 +87,27 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     }
 
     Print::initTerminal();
-    Print::printf("HELLO WORLD!\n");
-
+    Print::printf("Welcome to INWOX " INWOX_VERSION "\n");
+    Print::printf("Initializing AddressSpace...\n");
     AddressSpace::initialize();
-    Print::printf("AddressSpace Initialized\n");
 
+    Print::printf("Initializing Physical Memory...\n");
     multiboot_info *multiboot = (multiboot_info *)kernelSpace->mapPhysical(multibootAddress, 0x1000, PROT_READ);
     PhysicalMemory::initialize(multiboot);
-    Print::printf("Physical Memory Initialized\n");
 
+    Print::printf("Initializing PS/2 Controller...\n");
     PS2::initialize();
-    Print::printf("PS2 Initialized\n");
 
+    Print::printf("Loading initrd...\n");
     DirectoryVnode *rootDir = loadInitrd(multiboot);
     FileDescription *rootFd = new FileDescription(rootDir);
-    Print::printf("Initrd loaded\n");
 
+    Print::printf("Initializing Process...\n");
     Process::initialize(rootFd);
-    Print::printf("Processes Initialized\n");
 
     FileVnode *program = (FileVnode *)rootDir->openat("/bin/shell", 0, 0);
     if (program) {
-        Print::printf("shell starting\n");
+        Print::printf("Launching shell...\n");
         Process *newProcess = new Process();
         const char *argv[] = {"/bin/sh", nullptr};
         const char *envp[] = {"PATH=/bin", nullptr};
@@ -116,10 +119,12 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
 
     kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);
 
+    Print::printf("Initializing Interrupt...\n");
     Interrupt::initPic();
     Pit::initialize();
     Interrupt::enable();
-    Print::printf("Interrupt Initialized\n");
+
+    Print::printf("Initialization completed!\n");
 
     while (1) {
         /* 暂停CPU，当中断到来再开始执行 */

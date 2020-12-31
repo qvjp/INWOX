@@ -152,6 +152,7 @@ void irqsInstall();
 namespace Interrupt {
 void initPic();
 void enable();
+void disable();
 void isrInstallHandler(int isr, void (*handler)(struct context *r));
 void isrUninstallHandler(int isr);
 } /* namespace Interrupt */

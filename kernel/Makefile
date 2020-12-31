@@ -1,10 +1,12 @@
 TO_ROOT = ..
 include $(TO_ROOT)/build-config/config.mk
+include $(TO_ROOT)/build-config/version.mk
 CPPFLAGS += -D__is_inwox_kernel
+CPPFLAGS += -DINWOX_VERSION=\"$(INWOX_VERSION)\"
 
 BUILD = $(BUILD_DIR)/$(ARCH)/kernel
 
-OBJ := \
+OBJ = \
 	addressspace.o \
 	assert.o \
 	directory.o \
@@ -33,13 +35,13 @@ OBJ += arch/i686/interrupt.o \
 	arch/i686/loader.o \
 	arch/i686/syscall.o
 
-CRTI_O := $(shell $(CXX) $(CXXFLAGS) -print-file-name=crti.o)
-CRTBEGIN_O := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtbegin.o)
-CRTEND_O := $(shell $(CC) $(CXXFLAGS) -print-file-name=crtend.o)
-CRTN_O := $(shell $(CXX) $(CXXFLAGS) -print-file-name=crtn.o)
+CRTI_O = $(shell $(CXX) $(CXXFLAGS) -print-file-name=crti.o)
+CRTBEGIN_O = $(shell $(CC) $(CXXFLAGS) -print-file-name=crtbegin.o)
+CRTEND_O = $(shell $(CC) $(CXXFLAGS) -print-file-name=crtend.o)
+CRTN_O = $(shell $(CXX) $(CXXFLAGS) -print-file-name=crtn.o)
 
-START_OBJ := $(CRTI_O) $(CRTBEGIN_O)
-END_OBJ := $(CRTEND_O) $(CRTN_O)
+START_OBJ = $(CRTI_O) $(CRTBEGIN_O)
+END_OBJ = $(CRTEND_O) $(CRTN_O)
 
 OBJ := $(START_OBJ) $(addprefix $(BUILD)/, $(OBJ)) $(END_OBJ)
 

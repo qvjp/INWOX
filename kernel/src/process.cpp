@@ -96,7 +96,7 @@ void Process::addProcess(Process *process)
     firstProcess = process;
 }
 
-uintptr_t Process::loadELF(uintptr_t elf)
+uintptr_t Process::loadELF(uintptr_t elf, AddressSpace *newAddressSpace)
 {
     struct ElfHeader *header = (struct ElfHeader *)elf;
     if (check_elf_magic(header)) {
@@ -105,7 +105,6 @@ uintptr_t Process::loadELF(uintptr_t elf)
     }
     struct ProgramHeader *programHeader = (struct ProgramHeader *)(elf + header->e_phoff);
 
-    addressSpace = new AddressSpace();
     for (size_t i = 0; i < header->e_phnum; i++) {
         if (programHeader[i].p_type != PT_LOAD) {
             continue;
@@ -115,8 +114,8 @@ uintptr_t Process::loadELF(uintptr_t elf)
         const void *src = (void *)(elf + programHeader[i].p_offset);
         size_t size = ALIGN_UP(programHeader[i].p_memsz + offset, 0x1000);
         /* 将申请到的物理内存映射到连续虚拟内存 */
-        addressSpace->mapMemory(loadAddressAligned, size, PROT_READ | PROT_WRITE | PROT_EXEC);
-        inwox_vir_addr_t dest = kernelSpace->mapFromOtherAddressSpace(addressSpace, loadAddressAligned, size, PROT_WRITE);
+        newAddressSpace->mapMemory(loadAddressAligned, size, PROT_READ | PROT_WRITE | PROT_EXEC);
+        inwox_vir_addr_t dest = kernelSpace->mapFromOtherAddressSpace(newAddressSpace, loadAddressAligned, size, PROT_WRITE);
         /* 将申请到的虚拟内存保存的内容全部设为0 */
         memset((void *)(dest + offset), 0, programHeader[i].p_memsz);
         /* 将p_offset开始，长度为p_filesz的内容复制到目标内存 */
@@ -154,7 +153,7 @@ struct context *Process::schedule(struct context *context)
     return current->interruptContext;
 }
 
-int Process::copyArguments(char *const argv[], char *const envp[], char **&newArgv, char **&newEnvp)
+int Process::copyArguments(char *const argv[], char *const envp[], char **&newArgv, char **&newEnvp, AddressSpace *newAddressSpace)
 {
     int argc = 0;
     int envc = 0;
@@ -167,8 +166,8 @@ int Process::copyArguments(char *const argv[], char *const envp[], char **&newAr
     }
     stringSizes = ALIGN_UP(stringSizes, alignof(char*));
     size_t size = ALIGN_UP(stringSizes + (argc + envc + 2) * sizeof(char *), 0x1000);
-    inwox_vir_addr_t page = addressSpace->mapMemory(size, PROT_READ | PROT_WRITE);
-    inwox_vir_addr_t pageMapped = kernelSpace->mapFromOtherAddressSpace(addressSpace, page, size, PROT_WRITE);
+    inwox_vir_addr_t page = newAddressSpace->mapMemory(size, PROT_READ | PROT_WRITE);
+    inwox_vir_addr_t pageMapped = kernelSpace->mapFromOtherAddressSpace(newAddressSpace, page, size, PROT_WRITE);
     char *nextString = (char *) pageMapped;
     char **argvMapped = (char **) (pageMapped + stringSizes);
     char **envpMapped = argvMapped + argc + 1;
@@ -192,13 +191,13 @@ int Process::copyArguments(char *const argv[], char *const envp[], char **&newAr
 
 int Process::execute(FileDescription *descr, char *const argv[], char *const envp[])
 {
-    AddressSpace *oldAddressSpace = addressSpace;
     FileVnode *file = (FileVnode *) descr->vnode;
     if (!S_ISREG(descr->vnode->mode)) {
         errno = EACCES;
         return -1;
     }
-    uintptr_t entry = loadELF((uintptr_t) file->data);
+    AddressSpace *newAddressSpace = new AddressSpace();
+    uintptr_t entry = loadELF((uintptr_t) file->data, newAddressSpace);
     if ((int)entry == -1) {
         errno = ENOEXEC;
         return -1;
@@ -208,25 +207,25 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
      * 用户栈处理其他
      */
     kstack = (void*)kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
-    inwox_vir_addr_t stack = addressSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
+    inwox_vir_addr_t stack = newAddressSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
 
-    interruptContext = (struct context *)((uintptr_t)kstack + 0x1000 - sizeof(struct context));
-    memset(interruptContext, 0, sizeof(struct context));
+    struct context *newInterruptContext = (struct context *)((uintptr_t)kstack + 0x1000 - sizeof(struct context));
+    memset(newInterruptContext, 0, sizeof(struct context));
     char **newArgv;
     char **newEnvp;
-    int argc = copyArguments(argv, envp, newArgv, newEnvp);
-    interruptContext->eax = argc;
-    interruptContext->ebx = (uint32_t) newArgv;
-    interruptContext->ecx = (uint32_t) newEnvp;
-    interruptContext->eip = (uint32_t)entry;
-    interruptContext->cs = 0x1B;      /* 用户代码段是0x18 因为在ring3，
+    int argc = copyArguments(argv, envp, newArgv, newEnvp, newAddressSpace);
+    newInterruptContext->eax = argc;
+    newInterruptContext->ebx = (uint32_t) newArgv;
+    newInterruptContext->ecx = (uint32_t) newEnvp;
+    newInterruptContext->eip = (uint32_t)entry;
+    newInterruptContext->cs = 0x1B;      /* 用户代码段是0x18 因为在ring3，
                                                 * 按Intel规定，要使用(0x18 | 0x3)
                                                 * 下边作为段选择子偏移ss的0x23也是
                                                 * 一样道理。
                                                 */
-    interruptContext->eflags = 0x200; /* 开启中断 */
-    interruptContext->useresp = stack + 0x1000;
-    interruptContext->ss = 0x23; /* 用户数据段 */
+    newInterruptContext->eflags = 0x200; /* 开启中断 */
+    newInterruptContext->useresp = stack + 0x1000;
+    newInterruptContext->ss = 0x23; /* 用户数据段 */
     if (!fdInitialized) {
         fd[0] = new FileDescription(&terminal); /* 文件描述符0指向 stdin */
         fd[1] = new FileDescription(&terminal); /* 文件描述符1指向 stdout */
@@ -235,12 +234,18 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
         cwdFd = new FileDescription(*rootFd);
         fdInitialized = true;
     }
+    Interrupt::disable();
     if (this == current) {
         contextChanged = true;
         kernelSpace->activate();
     }
-    if (oldAddressSpace) {
-        delete oldAddressSpace;
+    if (addressSpace) {
+        delete addressSpace;
+    }
+    addressSpace = newAddressSpace;
+    interruptContext = newInterruptContext;
+    if (this == current) {
+        Interrupt::enable();
     }
     return 0;
 }
@@ -251,6 +256,7 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
  */
 void Process::exit(int status)
 {
+    Interrupt::disable();
     if (next) {
         next->prev = prev;
     }
@@ -271,8 +277,7 @@ void Process::exit(int status)
     delete cwdFd;
     terminated = true;
     this->status = status;
-
-    Print::printf("Process %u exited with status: %d\n", pid, status);
+    Interrupt::enable();
 }
 
 /**

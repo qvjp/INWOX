@@ -51,6 +51,8 @@ public:
     virtual ssize_t read(void *buffer, size_t size);
     virtual ssize_t readdir(unsigned long offset, void *buffer, size_t size);
     virtual int stat(struct stat* result);
+    virtual int tcgetattr(struct termios *termios);
+    virtual int tcsetattr(int flags, const struct termios *termio);
     virtual ~Vnode() {}
 public:
     mode_t mode;

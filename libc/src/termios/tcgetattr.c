@@ -21,28 +21,12 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/kernel/filedescription.h
- * FileDescription class.
+/**
+ * libc/src/termios/tcgetattr.c
+ * 获取终端属性
  */
 
-#ifndef KERNEL_FILEDESCRIPTION_H_
-#define KERNEL_FILEDESCRIPTION_H_
+#include <termios.h>
+#include <sys/syscall.h>
 
-#include <inwox/kernel/vnode.h>
-
-class FileDescription {
-public:
-    FileDescription(Vnode *vnode);
-    FileDescription *openat(const char *path, int flags, mode_t mode);
-    ssize_t read(void *buffer, size_t size);
-    ssize_t readdir(unsigned long offset, void *buffer, size_t size);
-    int tcgetattr(struct termios *result);
-    int tcsetattr(int flags, const struct termios *termio);
-    ssize_t write(const void *buffer, size_t size);
-    Vnode *vnode;
-
-private:
-    __off_t offset;
-};
-
-#endif /* KERNEL_FILEDESCRIPTION_H_ */
+DEFINE_SYSCALL_GLOBAL(SYSCALL_TCGETATTR, int, tcgetattr, (int, struct termios *));

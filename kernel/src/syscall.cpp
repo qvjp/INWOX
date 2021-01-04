@@ -52,6 +52,8 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::fstatat,
     (void*) Syscall::readdir,
     (void*) Syscall::nanosleep,
+    (void*) Syscall::tcgetattr,
+    (void*) Syscall::tcsetattr,
 };
 
 /**
@@ -189,6 +191,18 @@ ssize_t Syscall::readdir(int fd, unsigned long offset, void *buffer, size_t size
 {
     FileDescription *descr = Process::current->fd[fd];
     return descr->readdir(offset, buffer, size);
+}
+
+int Syscall::tcgetattr(int fd, struct termios *result)
+{
+    FileDescription *descr = Process::current->fd[fd];
+    return descr->tcgetattr(result);
+}
+
+int Syscall::tcsetattr(int fd, int flags, const struct termios *termio)
+{
+    FileDescription *descr = Process::current->fd[fd];
+    return descr->tcsetattr(flags, termio);
 }
 
 /**

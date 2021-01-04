@@ -64,3 +64,13 @@ ssize_t FileDescription::write(const void *buffer, size_t size)
 {
     return vnode->write(buffer, size);
 }
+
+int FileDescription::tcgetattr(struct termios *result)
+{
+    return vnode->tcgetattr(result);
+}
+
+int FileDescription::tcsetattr(int flags, const struct termios *termio)
+{
+    return vnode->tcsetattr(flags, termio);
+}

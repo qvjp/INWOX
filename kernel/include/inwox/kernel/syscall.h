@@ -53,6 +53,8 @@ pid_t waitpid(pid_t pid, int *status, int flags);
 int fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags);
 ssize_t readdir(int fd, unsigned long offset, void *buffer, size_t size);
 int nanosleep(const struct timespec *request, struct timespec *remaining);
+int tcgetattr(int fd, struct termios *result);
+int tcsetattr(int fd, int flags, const struct termios *termio);
 void badSyscall();
 } /* namespace Syscall */
 

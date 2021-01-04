@@ -93,12 +93,16 @@ static void printChar(char c)
 
 Terminal::Terminal() : Vnode(S_IFCHR)
 {
+    termio.c_lflag = ECHO | ICANON;
+    termio.c_cc[VMIN] = 1;
 }
 
 TerminalBuffer::TerminalBuffer() {
-    readIndex = 0;
-    lineIndex = 0;
-    writeIndex = 0;
+    reset();
+}
+
+size_t TerminalBuffer::available() {
+    return lineIndex >= readIndex ? lineIndex - readIndex : readIndex - lineIndex;
 }
 
 bool TerminalBuffer::backspace() {
@@ -113,13 +117,20 @@ bool TerminalBuffer::backspace() {
     return true;
 }
 
-void TerminalBuffer::write(char c)
+void TerminalBuffer::reset()
+{
+    readIndex = 0;
+    lineIndex = 0;
+    writeIndex = 0;
+}
+
+void TerminalBuffer::write(char c, bool canonicalMode)
 {
     while ((writeIndex + 1) % CIRCULAR_BUFFER_SIZE == readIndex) {
     } /* 写到读指针时停止写 */
     circularBuffer[writeIndex] = c;
     writeIndex = (writeIndex + 1) % CIRCULAR_BUFFER_SIZE;
-    if (c == '\n') {
+    if (c == '\n' || !canonicalMode) {
         lineIndex = writeIndex;
     }
 }
@@ -136,8 +147,8 @@ char TerminalBuffer::read()
 void Terminal::onKeyboardEvent(int key)
 {
     char c = Keyboard::getCharFromKey(key);
-    if (c == '\b') {
-        if (terminalBuffer.backspace()) {
+    if ((termio.c_lflag & ICANON) && c == '\b') {
+        if (terminalBuffer.backspace() && (termio.c_lflag & ECHO)) {
             cursorPostX--;
             if (cursorPostX < 0) {
                 cursorPostX = 79;
@@ -147,14 +158,21 @@ void Terminal::onKeyboardEvent(int key)
             video[cursorPostY * 2 * 80 + 2 * cursorPostX + 1] = 0;
         }
     } else if (c) {
-        printChar(c);
-        terminalBuffer.write(c);
+        if (termio.c_lflag & ECHO) {
+            printChar(c);
+        }
+        terminalBuffer.write(c, termio.c_lflag & ICANON);
     }
 }
 
 ssize_t Terminal::read(void *buffer, size_t size)
 {
     char *buf = (char *)buffer;
+    if (termio.c_cc[VMIN] == 0 && !terminalBuffer.available()) {
+        return 0;
+    }
+    while (termio.c_cc[VMIN] > terminalBuffer.available());
+
     for (size_t i = 0; i < size; i++) {
         buf[i] = terminalBuffer.read();
     }
@@ -169,6 +187,21 @@ ssize_t Terminal::write(const void *buffer, size_t size)
         printChar(buf[i]);
     }
     return (ssize_t)size;
+}
+
+int Terminal::tcgetattr(struct termios *result)
+{
+    *result = termio;
+    return 0;
+}
+
+int Terminal::tcsetattr(int flags, const struct termios *termio)
+{
+    this->termio = *termio;
+    if (flags == TCSAFLUSH) {
+        terminalBuffer.reset();
+    }
+    return 0;
 }
 
 /**

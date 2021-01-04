@@ -21,28 +21,31 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/kernel/filedescription.h
- * FileDescription class.
+/**
+ * libc/src/stdlib/atexit.c
+ * 注册一个在进程正常退出时执行的函数
  */
+#define __need_ssize_t
+#include <stdlib.h>
+#include <sys/types.h>
 
-#ifndef KERNEL_FILEDESCRIPTION_H_
-#define KERNEL_FILEDESCRIPTION_H_
+#define ATEXIT_MAX 32
+static void (*atexitHandlers[ATEXIT_MAX])(void);
 
-#include <inwox/kernel/vnode.h>
+int atexit(void (*func)(void)) {
+    for (size_t i = 0; i < ATEXIT_MAX; i++) {
+        if (!atexitHandlers[i]) {
+            atexitHandlers[i] = func;
+            return 0;
+        }
+    }
+    return -1;
+}
 
-class FileDescription {
-public:
-    FileDescription(Vnode *vnode);
-    FileDescription *openat(const char *path, int flags, mode_t mode);
-    ssize_t read(void *buffer, size_t size);
-    ssize_t readdir(unsigned long offset, void *buffer, size_t size);
-    int tcgetattr(struct termios *result);
-    int tcsetattr(int flags, const struct termios *termio);
-    ssize_t write(const void *buffer, size_t size);
-    Vnode *vnode;
-
-private:
-    __off_t offset;
-};
-
-#endif /* KERNEL_FILEDESCRIPTION_H_ */
+void __callAtexitHandlers(void) {
+    for (ssize_t i = ATEXIT_MAX - 1; i >= 0; i--) {
+        if (atexitHandlers[i]) {
+            atexitHandlers[i]();
+        }
+    }
+}

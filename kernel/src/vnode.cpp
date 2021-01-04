@@ -74,3 +74,15 @@ int Vnode::stat(struct stat *result)
     result->st_mode = mode;
     return 0;
 }
+
+int Vnode::tcgetattr(struct termios *)
+{
+    errno = ENOTTY;
+    return -1;
+}
+
+int Vnode::tcsetattr(int, const struct termios *)
+{
+    errno = ENOTTY;
+    return -1;
+}

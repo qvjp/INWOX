@@ -28,6 +28,7 @@
 #ifndef KERNEL_TERMINAL_H_
 #define KERNEL_TERMINAL_H_
 
+#include <inwox/termios.h>
 #include <inwox/kernel/keyboard.h>
 #include <inwox/kernel/vnode.h>
 #include <stdint.h>
@@ -39,9 +40,11 @@ typedef uint8_t color_t;
 class TerminalBuffer {
 public:
     TerminalBuffer();
+    size_t available();
     bool backspace();
     char read();
-    void write(char c);
+    void reset();
+    void write(char c, bool canonicalMode);
 private:
     char circularBuffer[CIRCULAR_BUFFER_SIZE];
     volatile size_t readIndex;
@@ -58,12 +61,15 @@ public:
     virtual void warnTerminal();
     virtual void setFontColor(color_t color);
     virtual color_t getFontColor();
+    virtual int tcgetattr(struct termios *termios);
+    virtual int tcsetattr(int flags, const struct termios *termio);
 
 private:
     virtual void onKeyboardEvent(int key);
 
 private:
     TerminalBuffer terminalBuffer;
+    struct termios termio;
 };
 
 extern Terminal terminal;

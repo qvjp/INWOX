@@ -21,28 +21,25 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/kernel/filedescription.h
- * FileDescription class.
+/**
+ * lib/include/termios.h
+ * Terminal Interface
  */
 
-#ifndef KERNEL_FILEDESCRIPTION_H_
-#define KERNEL_FILEDESCRIPTION_H_
+#ifndef TERMIOS_H
+#define TERMIOS_H
 
-#include <inwox/kernel/vnode.h>
+#include <inwox/termios.h>
 
-class FileDescription {
-public:
-    FileDescription(Vnode *vnode);
-    FileDescription *openat(const char *path, int flags, mode_t mode);
-    ssize_t read(void *buffer, size_t size);
-    ssize_t readdir(unsigned long offset, void *buffer, size_t size);
-    int tcgetattr(struct termios *result);
-    int tcsetattr(int flags, const struct termios *termio);
-    ssize_t write(const void *buffer, size_t size);
-    Vnode *vnode;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-private:
-    __off_t offset;
-};
+int tcgetattr(int, struct termios *);
+int tcsetattr(int, int, const struct termios *);
 
-#endif /* KERNEL_FILEDESCRIPTION_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* TERMIOS_H */

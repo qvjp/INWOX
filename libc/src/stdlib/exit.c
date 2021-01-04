@@ -28,10 +28,12 @@
 
 #include <stdlib.h>
 
+__attribute__((weak)) void __callAtexitHandlers(void) {}
 extern void _fini(void);
 
 __attribute__((__noreturn__)) void exit(int status)
 {
+    __callAtexitHandlers();
     _fini();
     _Exit(status);
 }

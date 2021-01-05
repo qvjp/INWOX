@@ -38,7 +38,7 @@ SYSROOT="$(cd "$SYSROOT" && pwd)"
 export PATH="$PREFIX/bin:$PATH"
 
 rm -rf "$SRCDIR/inwox-binutils" "$SRCDIR/inwox-gcc"
-rm -rf "$BUILDDIR/build-binutils" "$BUILDDIR/build-gcc"
+rm -rf "$BUILDDIR/build-binutils-inwox" "$BUILDDIR/build-gcc-inwox"
 
 echo Downloading sources...
 mkdir -p "$SRCDIR"
@@ -48,16 +48,16 @@ git clone $gcc_repo inwox-gcc
 
 TIME_START=`date`
 echo Building binutils...
-mkdir -p "$BUILDDIR/build-binutils"
-cd "$BUILDDIR/build-binutils"
+mkdir -p "$BUILDDIR/build-binutils-inwox"
+cd "$BUILDDIR/build-binutils-inwox"
 "$SRCDIR/inwox-binutils/configure" --target=$TARGET --prefix="$PREFIX" --with-sysroot="$SYSROOT" \
         --disable-nls --disable-werror
 make -j"$CPU_CORE"
 make install
 
 echo Building gcc...
-mkdir -p "$BUILDDIR/build-gcc"
-cd "$BUILDDIR/build-gcc"
+mkdir -p "$BUILDDIR/build-gcc-inwox"
+cd "$BUILDDIR/build-gcc-inwox"
 "$SRCDIR/inwox-gcc/configure" --target=$TARGET --prefix="$PREFIX" --disable-nls \
         --enable-languages=c,c++ --with-sysroot="$SYSROOT"
 make -j"$CPU_CORE" all-gcc all-target-libgcc

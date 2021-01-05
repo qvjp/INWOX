@@ -47,6 +47,8 @@
 #define INWOX_VERSION ""
 #endif
 
+static multiboot_info multiboot;
+
 /**
  * 从multiboot信息中解析initrd
  *
@@ -59,7 +61,8 @@ static DirectoryVnode *loadInitrd(multiboot_info *multiboot)
     DirectoryVnode *root = nullptr;
     inwox_phy_addr_t modulesAligned = multiboot->mods_addr & ~0xFFF;
     ptrdiff_t offset = multiboot->mods_addr - modulesAligned;
-    inwox_vir_addr_t modulesPage = kernelSpace->mapPhysical(modulesAligned, 0x1000, PROT_READ);
+    size_t mappedSize = ALIGN_UP(offset + multiboot->mods_count * sizeof(multiboot_mod_list), 0x1000);
+    inwox_vir_addr_t modulesPage = kernelSpace->mapPhysical(modulesAligned, mappedSize, PROT_READ);
 
     /* *modules是真正要处理模块的首地址 */
     const struct multiboot_mod_list *modules = (struct multiboot_mod_list *)(modulesPage + offset);
@@ -74,7 +77,7 @@ static DirectoryVnode *loadInitrd(multiboot_info *multiboot)
             break;
         }
     }
-    kernelSpace->unmapPhysical((inwox_vir_addr_t)modulesPage, 0x1000);
+    kernelSpace->unmapPhysical((inwox_vir_addr_t)modulesPage, mappedSize);
     return root;
 }
 
@@ -92,14 +95,18 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     AddressSpace::initialize();
 
     Print::printf("Initializing Physical Memory...\n");
-    multiboot_info *multiboot = (multiboot_info *)kernelSpace->mapPhysical(multibootAddress, 0x1000, PROT_READ);
-    PhysicalMemory::initialize(multiboot);
+    multiboot_info *multibootMapped = (multiboot_info *)kernelSpace->mapPhysical(multibootAddress, 0x1000, PROT_READ);
+    memcpy(&multiboot, multibootMapped, sizeof(multiboot_info));
+    kernelSpace->unmapPhysical((inwox_vir_addr_t) multibootMapped, 0x1000);
+
+    Print::printf("Initializing Physical Memory...\n");
+    PhysicalMemory::initialize(&multiboot);
 
     Print::printf("Initializing PS/2 Controller...\n");
     PS2::initialize();
 
     Print::printf("Loading initrd...\n");
-    DirectoryVnode *rootDir = loadInitrd(multiboot);
+    DirectoryVnode *rootDir = loadInitrd(&multiboot);
     FileDescription *rootFd = new FileDescription(rootDir);
 
     Print::printf("Initializing Process...\n");
@@ -116,8 +123,6 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     } else {
         Print::printf("launch shell failed\n");
     }
-
-    kernelSpace->unmapPhysical((inwox_vir_addr_t)multiboot, 0x1000);
 
     Print::printf("Initializing Interrupt...\n");
     Interrupt::initPic();

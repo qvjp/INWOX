@@ -32,7 +32,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 
 static const char* getExecutablePath(const char* command)
 {
@@ -66,7 +65,6 @@ static int executeCommand(char* arguments[])
         exit(0);
     }
 
-    struct stat sstat = {.st_mode = 0};
     pid_t pid = fork();
     if (pid < 0) {
         fputs("fork() failed\n", stderr);
@@ -76,8 +74,6 @@ static int executeCommand(char* arguments[])
             command = getExecutablePath(command);
         }
         if (command) {
-            stat(command, &sstat);
-            printf("%s: %o\n", command, sstat.st_mode);
             execv(command, arguments);
         }
         fputs("Bad command\n", stderr);

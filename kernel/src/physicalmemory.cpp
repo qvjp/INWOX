@@ -42,10 +42,27 @@ static size_t stackLeft = 0;
  * 通过判断该地址是否在bootstrapBegin->bootstrapEnd或
  * kernelPhysicalBegin->kernelPhysicalEnd内
  */
-static inline bool isAddressInUse(inwox_phy_addr_t physicalAddress)
+static inline bool isUsedByKernel(inwox_phy_addr_t physicalAddress)
 {
-    return (physicalAddress >= (inwox_phy_addr_t)&bootstrapBegin && physicalAddress <= (inwox_phy_addr_t)&bootstrapEnd) ||
-           (physicalAddress >= (inwox_phy_addr_t)&kernelPhysicalBegin && physicalAddress <= (inwox_phy_addr_t)&kernelPhysicalEnd) || physicalAddress == 0;
+    return (physicalAddress >= (inwox_phy_addr_t)&bootstrapBegin && physicalAddress < (inwox_phy_addr_t)&bootstrapEnd) ||
+           (physicalAddress >= (inwox_phy_addr_t)&kernelPhysicalBegin && physicalAddress < (inwox_phy_addr_t)&kernelPhysicalEnd) || physicalAddress == 0;
+}
+
+static inline bool isUsedByModule(inwox_phy_addr_t physicalAddress, multiboot_mod_list *modules, uint32_t moduleCount) {
+    for (size_t i = 0; i < moduleCount; i++) {
+        if (physicalAddress >= modules[i].mod_start && physicalAddress < modules[i].mod_end) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool isUsedByMultiboot(inwox_phy_addr_t physicalAddress,
+        multiboot_info *multiboot) {
+    inwox_phy_addr_t mmapEnd = multiboot->mmap_addr + multiboot->mmap_length;
+    inwox_phy_addr_t modsEnd = multiboot->mods_addr + multiboot->mods_count * sizeof(multiboot_mod_list);
+    return ((physicalAddress >= (multiboot->mmap_addr & ~0xFFF) && physicalAddress < mmapEnd) ||
+            (physicalAddress >= (multiboot->mods_addr & ~0xFFF) && physicalAddress < modsEnd));
 }
 
 /**
@@ -66,26 +83,37 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
 
     inwox_phy_addr_t mmapPhys = (inwox_phy_addr_t)multiboot->mmap_addr;
     inwox_phy_addr_t mmapAligned = mmapPhys & ~0xFFF;
-    ptrdiff_t offset = mmapPhys - mmapAligned;
+    ptrdiff_t mmapOffset = mmapPhys - mmapAligned;
+    size_t mmapSize = ALIGN_UP(mmapOffset + multiboot->mmap_length, 0x1000);
 
-    inwox_vir_addr_t virtualAddress = kernelSpace->mapPhysical(mmapAligned, 0x1000, PROT_READ);
+    inwox_phy_addr_t modulesPhys = (inwox_phy_addr_t) multiboot->mods_addr;
+    inwox_phy_addr_t modulesAligned = modulesPhys & ~0xFFF;
+    ptrdiff_t modulesOffset = modulesPhys - modulesAligned;
+    size_t modulesSize = ALIGN_UP(modulesOffset + multiboot->mods_count * sizeof(multiboot_mod_list), 0x1000);
 
-    inwox_vir_addr_t mmap = virtualAddress + offset;
+    inwox_vir_addr_t mmapMapped = kernelSpace->mapPhysical(mmapAligned, mmapSize, PROT_READ);
+    inwox_vir_addr_t modulesMapped = kernelSpace->mapPhysical(modulesAligned, modulesSize, PROT_READ);
+
+    inwox_vir_addr_t mmap = mmapMapped + mmapOffset;
     inwox_vir_addr_t mmapEnd = mmap + multiboot->mmap_length;
+
+    multiboot_mod_list* modules = (multiboot_mod_list*) (modulesMapped + modulesOffset);
 
     while (mmap < mmapEnd) {
         multiboot_mmap_entry *mmapEntry = (multiboot_mmap_entry *)mmap;
         if (mmapEntry->type == MULTIBOOT_MEMORY_AVAILABLE && mmapEntry->base_addr + mmapEntry->length <= UINTPTR_MAX) {
             inwox_phy_addr_t addr = (inwox_phy_addr_t)mmapEntry->base_addr;
             for (uint64_t i = 0; i < mmapEntry->length; i += 0x1000) {
-                if (isAddressInUse(addr + i))
+                if (isUsedByModule(addr + i, modules, multiboot->mods_count) || isUsedByKernel(addr + i) || isUsedByMultiboot(addr + i, multiboot)) {
                     continue;
+                }
                 pushPageFrame(addr + i);
             }
         }
         mmap += mmapEntry->size + 4;
     }
-    kernelSpace->unmapPhysical(virtualAddress, 0x1000);
+    kernelSpace->unmapPhysical(mmapMapped, mmapSize);
+    kernelSpace->unmapPhysical(modulesMapped, modulesSize);
     Print::printf("Free Memory: %u KiB\n", stackUsed * 4);
 }
 

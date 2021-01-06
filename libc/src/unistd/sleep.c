@@ -29,7 +29,8 @@
 #include <time.h>
 #include <unistd.h>
 
-unsigned int sleep(unsigned int seconds) {
+unsigned int sleep(unsigned int seconds)
+{
     struct timespec requested;
     struct timespec remaining;
 

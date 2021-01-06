@@ -45,6 +45,7 @@ public:
     char read();
     void reset();
     void write(char c, bool canonicalMode);
+
 private:
     char circularBuffer[CIRCULAR_BUFFER_SIZE];
     volatile size_t readIndex;

@@ -40,7 +40,8 @@ AddressSpace *kernelSpace;
 
 static AddressSpace *firstAddressSpace = nullptr;
 
-static inline int protectionToFlags(int protection) {
+static inline int protectionToFlags(int protection)
+{
     int flags = PAGE_PRESENT;
     if (protection & PROT_WRITE) {
         flags |= PAGE_WRITABLE;
@@ -63,7 +64,7 @@ AddressSpace::AddressSpace()
         pageDir = PhysicalMemory::popPageFrame();
         inwox_vir_addr_t kernelPageDir = (RECURSIVE_MAPPING + 0x3FF000); // FFFFF000为4G地址空间的最后4K，存放页目录
         inwox_vir_addr_t newPageDir = kernelSpace->map(pageDir, PROT_WRITE);
-        memcpy((void*) newPageDir, (const void*) kernelPageDir, 0x1000);
+        memcpy((void *)newPageDir, (const void *)kernelPageDir, 0x1000);
         kernelSpace->unMap(newPageDir);
 
         firstSegment = new MemorySegment(0, 0x1000, PROT_NONE | SEG_NOUNMAP, nullptr, nullptr);
@@ -89,8 +90,9 @@ AddressSpace::~AddressSpace()
 
 static MemorySegment segment1(0, 0xC0000000, PROT_NONE, nullptr, nullptr);
 static MemorySegment segment2(0xC0000000, 0x1000, PROT_READ | PROT_WRITE, &segment1, nullptr);
-static MemorySegment segment3((inwox_vir_addr_t) &kernelVirtualBegin, (inwox_vir_addr_t) &kernelVirtualEnd - (inwox_vir_addr_t) &kernelVirtualBegin,
-        PROT_READ | PROT_WRITE | PROT_EXEC, &segment2, nullptr);
+static MemorySegment segment3((inwox_vir_addr_t)&kernelVirtualBegin,
+                              (inwox_vir_addr_t)&kernelVirtualEnd - (inwox_vir_addr_t)&kernelVirtualBegin,
+                              PROT_READ | PROT_WRITE | PROT_EXEC, &segment2, nullptr);
 static MemorySegment segment4(RECURSIVE_MAPPING, -RECURSIVE_MAPPING, PROT_READ | PROT_WRITE, &segment3, nullptr);
 
 /**
@@ -163,7 +165,7 @@ AddressSpace *AddressSpace::fork()
             result->mapMemory(segment->address, size, segment->flags);
             inwox_vir_addr_t source = kernelSpace->mapFromOtherAddressSpace(this, segment->address, size, PROT_READ);
             inwox_vir_addr_t dest = kernelSpace->mapFromOtherAddressSpace(result, segment->address, size, PROT_WRITE);
-            memcpy((void*) dest, (const void*) source, size);
+            memcpy((void *)dest, (const void *)source, size);
             kernelSpace->unmapPhysical(source, size);
             kernelSpace->unmapPhysical(dest, size);
         }
@@ -299,7 +301,8 @@ inwox_vir_addr_t AddressSpace::mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_a
     return mapAtWithFlags(pdIndex, ptIndex, physicalAddress, flags);
 }
 
-inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdOffset, size_t ptOffset, inwox_phy_addr_t physicalAddress, int flags)
+inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdOffset, size_t ptOffset, inwox_phy_addr_t physicalAddress,
+                                              int flags)
 {
     assert(!(flags & ~0xFFF));
     uintptr_t *pageDirectory;
@@ -351,15 +354,15 @@ inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdOffset, size_t ptOffset, 
     return virtualAddress;
 }
 
-inwox_vir_addr_t AddressSpace::mapFromOtherAddressSpace(AddressSpace* sourceSpace,
-        inwox_vir_addr_t sourceVirtualAddress, size_t size, int protection) {
+inwox_vir_addr_t AddressSpace::mapFromOtherAddressSpace(AddressSpace *sourceSpace,
+                                                        inwox_vir_addr_t sourceVirtualAddress, size_t size,
+                                                        int protection)
+{
     inwox_vir_addr_t destination = MemorySegment::findFreeSegment(firstSegment, size);
 
-    for (size_t i = 0 ; i < size; i += 0x1000) {
-        inwox_phy_addr_t physicalAddress =
-                sourceSpace->getPhysicalAddress(sourceVirtualAddress + i);
-        if (!physicalAddress ||
-                !mapAt(destination + i, physicalAddress, protection)) {
+    for (size_t i = 0; i < size; i += 0x1000) {
+        inwox_phy_addr_t physicalAddress = sourceSpace->getPhysicalAddress(sourceVirtualAddress + i);
+        if (!physicalAddress || !mapAt(destination + i, physicalAddress, protection)) {
             return 0;
         }
     }
@@ -369,20 +372,19 @@ inwox_vir_addr_t AddressSpace::mapFromOtherAddressSpace(AddressSpace* sourceSpac
     return destination;
 }
 
-inwox_vir_addr_t AddressSpace::mapMemory(size_t size, int protection) {
-    inwox_vir_addr_t virtualAddress =
-            MemorySegment::findFreeSegment(firstSegment, size);
+inwox_vir_addr_t AddressSpace::mapMemory(size_t size, int protection)
+{
+    inwox_vir_addr_t virtualAddress = MemorySegment::findFreeSegment(firstSegment, size);
     return mapMemory(virtualAddress, size, protection);
 }
 
-inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t size,
-        int protection) {
+inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t size, int protection)
+{
     inwox_phy_addr_t physicalAddress;
 
     for (size_t i = 0; i < size; i += 0x1000) {
         physicalAddress = PhysicalMemory::popPageFrame();
-        if (!physicalAddress ||
-                !mapAt(virtualAddress + i, physicalAddress, protection)) {
+        if (!physicalAddress || !mapAt(virtualAddress + i, physicalAddress, protection)) {
             return 0;
         }
     }
@@ -392,15 +394,15 @@ inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t
     return virtualAddress;
 }
 
-inwox_vir_addr_t AddressSpace::mapPhysical(inwox_phy_addr_t physicalAddress, size_t size,
-        int protection) {
-    inwox_vir_addr_t virtualAddress =
-            MemorySegment::findFreeSegment(firstSegment, size);
+inwox_vir_addr_t AddressSpace::mapPhysical(inwox_phy_addr_t physicalAddress, size_t size, int protection)
+{
+    inwox_vir_addr_t virtualAddress = MemorySegment::findFreeSegment(firstSegment, size);
     return mapPhysical(virtualAddress, physicalAddress, size, protection);
 }
 
-inwox_vir_addr_t AddressSpace::mapPhysical(inwox_vir_addr_t virtualAddress,
-        inwox_phy_addr_t physicalAddress, size_t size, int protection) {
+inwox_vir_addr_t AddressSpace::mapPhysical(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress,
+                                           size_t size, int protection)
+{
     for (size_t i = 0; i < size; i += 0x1000) {
         if (!mapAt(virtualAddress + i, physicalAddress + i, protection)) {
             return 0;
@@ -412,13 +414,15 @@ inwox_vir_addr_t AddressSpace::mapPhysical(inwox_vir_addr_t virtualAddress,
     return virtualAddress;
 }
 
-void AddressSpace::unMap(inwox_vir_addr_t virtualAddress) {
+void AddressSpace::unMap(inwox_vir_addr_t virtualAddress)
+{
     size_t pdIndex, ptIndex;
     address2offset(virtualAddress, pdIndex, ptIndex);
     mapAtWithFlags(pdIndex, ptIndex, 0, 0);
 }
 
-void AddressSpace::unmapMemory(inwox_vir_addr_t virtualAddress, size_t size) {
+void AddressSpace::unmapMemory(inwox_vir_addr_t virtualAddress, size_t size)
+{
     for (size_t i = 0; i < size; i += 0x1000) {
         inwox_phy_addr_t physicalAddress = getPhysicalAddress(virtualAddress + i);
         unMap(virtualAddress + i);
@@ -428,7 +432,8 @@ void AddressSpace::unmapMemory(inwox_vir_addr_t virtualAddress, size_t size) {
     MemorySegment::removeSegment(firstSegment, virtualAddress, size);
 }
 
-void AddressSpace::unmapPhysical(inwox_vir_addr_t virtualAddress, size_t size) {
+void AddressSpace::unmapPhysical(inwox_vir_addr_t virtualAddress, size_t size)
+{
     for (size_t i = 0; i < size; i += 0x1000) {
         unMap(virtualAddress + i);
     }
@@ -436,26 +441,27 @@ void AddressSpace::unmapPhysical(inwox_vir_addr_t virtualAddress, size_t size) {
     MemorySegment::removeSegment(firstSegment, virtualAddress, size);
 }
 
-static void* mmapImplementation(void* /*addr*/, size_t size,
-        int protection, int flags, int /*fd*/, off_t /*offset*/) {
+static void *mmapImplementation(void * /*addr*/, size_t size, int protection, int flags, int /*fd*/, off_t /*offset*/)
+{
     if (size == 0 || !(flags & MAP_PRIVATE)) {
         errno = EINVAL;
         return MAP_FAILED;
     }
 
     if (flags & MAP_ANONYMOUS) {
-        AddressSpace* addressSpace = Process::current->addressSpace;
-        return (void*) addressSpace->mapMemory(size, protection);
+        AddressSpace *addressSpace = Process::current->addressSpace;
+        return (void *)addressSpace->mapMemory(size, protection);
     }
 
-    //TODO: Implement other flags than MAP_ANONYMOUS
+    // TODO: Implement other flags than MAP_ANONYMOUS
     errno = ENOTSUP;
     return MAP_FAILED;
 }
 
 void *Syscall::mmap(__mmapRequest *request)
 {
-    return mmapImplementation(request->_addr, request->_size, request->_protection, request->_flags, request->_fd, request->_offset);
+    return mmapImplementation(request->_addr, request->_size, request->_protection, request->_flags, request->_fd,
+                              request->_offset);
 }
 
 int Syscall::munmap(void *addr, size_t size)
@@ -477,9 +483,9 @@ int Syscall::munmap(void *addr, size_t size)
  */
 extern "C" void *__mapMemory(size_t size)
 {
-    return (void*) kernelSpace->mapMemory(size, PROT_READ | PROT_WRITE);
+    return (void *)kernelSpace->mapMemory(size, PROT_READ | PROT_WRITE);
 }
 extern "C" void __unmapMemory(void *addr, size_t size)
 {
-    kernelSpace->unmapMemory((inwox_vir_addr_t) addr, size);
+    kernelSpace->unmapMemory((inwox_vir_addr_t)addr, size);
 }

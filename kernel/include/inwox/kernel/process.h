@@ -61,7 +61,7 @@ private:
     size_t numChildren;
 
 public:
-    AddressSpace *addressSpace;                      /* 每个进程都有自己独立的地址空间 */
+    AddressSpace *addressSpace;    /* 每个进程都有自己独立的地址空间 */
     FileDescription *fd[OPEN_MAX]; /* 文件描述符数组 */
     FileDescription *rootFd;
     FileDescription *cwdFd;
@@ -75,7 +75,8 @@ public:
     static Process *current;
 
 private:
-    int copyArguments(char *const argv[], char *const envp[], char **&newArgv, char **&newEnvp, AddressSpace *newAddressSpace);
+    int copyArguments(char *const argv[], char *const envp[], char **&newArgv, char **&newEnvp,
+                      AddressSpace *newAddressSpace);
     uintptr_t loadELF(uintptr_t elf, AddressSpace *newAddressSpace);
 };
 

@@ -97,15 +97,18 @@ Terminal::Terminal() : Vnode(S_IFCHR)
     termio.c_cc[VMIN] = 1;
 }
 
-TerminalBuffer::TerminalBuffer() {
+TerminalBuffer::TerminalBuffer()
+{
     reset();
 }
 
-size_t TerminalBuffer::available() {
+size_t TerminalBuffer::available()
+{
     return lineIndex >= readIndex ? lineIndex - readIndex : readIndex - lineIndex;
 }
 
-bool TerminalBuffer::backspace() {
+bool TerminalBuffer::backspace()
+{
     if (lineIndex == writeIndex) {
         return false;
     }
@@ -171,7 +174,8 @@ ssize_t Terminal::read(void *buffer, size_t size)
     if (termio.c_cc[VMIN] == 0 && !terminalBuffer.available()) {
         return 0;
     }
-    while (termio.c_cc[VMIN] > terminalBuffer.available());
+    while (termio.c_cc[VMIN] > terminalBuffer.available()) {
+    }
 
     for (size_t i = 0; i < size; i++) {
         buf[i] = terminalBuffer.read();

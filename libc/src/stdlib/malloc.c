@@ -40,10 +40,8 @@
  * |//////////|
  * +----------+ <------ MAGIC_BIG_MCB
  */
-static Mem_Ctrl_Blk emptyBigBlock[2] = {
-    {MAGIC_BIG_MCB, sizeof(emptyBigBlock), NULL, NULL},
-    {MAGIC_END_MCB, 0, NULL, NULL}
-};
+static Mem_Ctrl_Blk emptyBigBlock[2] = {{MAGIC_BIG_MCB, sizeof(emptyBigBlock), NULL, NULL},
+                                        {MAGIC_END_MCB, 0, NULL, NULL}};
 
 /* firstBigBlock指向最开始的空内存控制块，每次分配内存都从这里开始 */
 Mem_Ctrl_Blk *firstBigBlock = emptyBigBlock;

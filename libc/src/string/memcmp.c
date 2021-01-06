@@ -35,8 +35,7 @@ int memcmp(const void *p1, const void *p2, size_t size)
     for (size_t i = 0; i < size; i++) {
         if (a[i] < b[i]) {
             return -1;
-        }
-        else if (a[i] > b[i]) {
+        } else if (a[i] > b[i]) {
             return 1;
         }
     }

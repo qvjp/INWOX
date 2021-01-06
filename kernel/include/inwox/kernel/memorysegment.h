@@ -51,7 +51,7 @@ public:
 
 private:
     static void addSegment(MemorySegment *firstSegment, MemorySegment *newSegment);
-    static MemorySegment* allocateSegment(inwox_vir_addr_t address, size_t size, int flags);
+    static MemorySegment *allocateSegment(inwox_vir_addr_t address, size_t size, int flags);
     static void deallocateSegment(MemorySegment *segment);
     static void verifySegmentList();
 };

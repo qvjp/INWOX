@@ -29,7 +29,7 @@
 #ifndef INWOX_TERMIOS_H_
 #define INWOX_TERMIOS_H_
 
-#define ECHO (1 << 0)
+#define ECHO   (1 << 0)
 #define ICANON (1 << 1)
 
 #define VMIN 0

@@ -102,7 +102,8 @@ void Interrupt::enable()
     __asm__ __volatile__("sti");
 }
 
-void Interrupt::disable() {
+void Interrupt::disable()
+{
     __asm__ __volatile__("cli");
 }
 
@@ -137,8 +138,7 @@ extern "C" struct context *interruptHandler(struct context *r)
         Print::printf("cs: 0x%x, eip: 0x%x, eflags: 0x%x, ss: 0x%x\n", r->cs, r->eip, r->eflags, r->ss);
         Print::printf("%s", exceptionMessages[r->int_no]);
         Print::printf(" Exception. System Halted!\n");
-        while (1)
-        {
+        while (1) {
         }
     }
     /* 设备IRQ */

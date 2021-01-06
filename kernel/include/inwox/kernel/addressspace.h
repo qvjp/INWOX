@@ -1,18 +1,18 @@
 /**
  * @file addressspace.h
  * @author Qv Junping (qvjunping@gmail.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2020-12-23
- * 
+ *
  * @copyright Copyright (c) 2020
- * 
+ *
  */
 
 #ifndef KERNEL_ADDRESSSPACE_H_
 #define KERNEL_ADDRESSSPACE_H_
 
-#include <stddef.h>             /* size_t */
+#include <stddef.h> /* size_t */
 #include <inwox/mman.h>
 #include <inwox/kernel/inwox.h> /* inwox_phy_addr_t inwox_vir_addr_t */
 #include <inwox/kernel/memorysegment.h>
@@ -32,13 +32,13 @@
  * 的地址
  */
 extern "C" {
-    void bootstrapBegin();
-    void bootstrapEnd();
-    void kernelPhysicalBegin();
-    void kernelPhysicalEnd();
-    void kernelPageDirectory();
-    void kernelVirtualBegin();
-    void kernelVirtualEnd();
+void bootstrapBegin();
+void bootstrapEnd();
+void kernelPhysicalBegin();
+void kernelPhysicalEnd();
+void kernelPageDirectory();
+void kernelVirtualBegin();
+void kernelVirtualEnd();
 }
 
 /**
@@ -52,14 +52,16 @@ public:
     void activate();
     AddressSpace *fork();
     inwox_phy_addr_t getPhysicalAddress(inwox_vir_addr_t virtualAddress);
-    inwox_vir_addr_t mapFromOtherAddressSpace(AddressSpace* sourceSpace,
-    inwox_vir_addr_t sourceVirtualAddress, size_t size, int protection);
+    inwox_vir_addr_t mapFromOtherAddressSpace(AddressSpace *sourceSpace, inwox_vir_addr_t sourceVirtualAddress,
+                                              size_t size, int protection);
     inwox_vir_addr_t mapMemory(size_t size, int protection);
     inwox_vir_addr_t mapMemory(inwox_vir_addr_t virtualAddress, size_t size, int protection);
     inwox_vir_addr_t mapPhysical(inwox_phy_addr_t physicalAddress, size_t size, int protection);
-    inwox_vir_addr_t mapPhysical(inwox_phy_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, size_t size, int protection);
+    inwox_vir_addr_t mapPhysical(inwox_phy_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, size_t size,
+                                 int protection);
     void unmapMemory(inwox_vir_addr_t virtualAddress, size_t size);
     void unmapPhysical(inwox_vir_addr_t firstVirtualAddress, size_t size);
+
 private:
     bool isFree(size_t pdOffset, size_t ptOffset);
     inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, int protection);
@@ -75,7 +77,7 @@ private:
      * 都会将fork父进程的页表，然后更新%cr3寄存器
      */
     inwox_phy_addr_t pageDir;
-    MemorySegment* firstSegment;
+    MemorySegment *firstSegment;
     AddressSpace *next;
 
 private:

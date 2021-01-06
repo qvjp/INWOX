@@ -97,7 +97,7 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     Print::printf("Initializing Physical Memory...\n");
     multiboot_info *multibootMapped = (multiboot_info *)kernelSpace->mapPhysical(multibootAddress, 0x1000, PROT_READ);
     memcpy(&multiboot, multibootMapped, sizeof(multiboot_info));
-    kernelSpace->unmapPhysical((inwox_vir_addr_t) multibootMapped, 0x1000);
+    kernelSpace->unmapPhysical((inwox_vir_addr_t)multibootMapped, 0x1000);
 
     Print::printf("Initializing Physical Memory...\n");
     PhysicalMemory::initialize(&multiboot);
@@ -118,7 +118,7 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
         Process *newProcess = new Process();
         const char *argv[] = {"/bin/sh", nullptr};
         const char *envp[] = {"PATH=/bin", nullptr};
-        newProcess->execute(new FileDescription(program), (char**)argv, (char**)envp);
+        newProcess->execute(new FileDescription(program), (char **)argv, (char **)envp);
         Process::addProcess(newProcess);
     } else {
         Print::printf("launch shell failed\n");

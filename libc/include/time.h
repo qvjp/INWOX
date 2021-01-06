@@ -35,8 +35,8 @@
 #define __need_size_t
 #define __need_time_t
 #if __USE_INWOX || __USE_POSIX
-#  define __need_clockid_t
-#  define __need_timer_t
+#define __need_clockid_t
+#define __need_timer_t
 #endif
 #include <sys/types.h>
 #include <inwox/timespec.h>
@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 #if __USE_INWOX || __USE_POSIX
-int nanosleep(const struct timespec*, struct timespec*);
+int nanosleep(const struct timespec *, struct timespec *);
 #endif
 
 #ifdef __cplusplus

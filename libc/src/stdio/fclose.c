@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int fclose(FILE* file)
+int fclose(FILE *file)
 {
     if (fflush(file) == EOF) {
         return EOF;

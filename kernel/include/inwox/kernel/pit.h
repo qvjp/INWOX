@@ -34,6 +34,6 @@ namespace Pit {
 void initialize();
 void deregisterTimer(size_t index);
 size_t registerTimer(Timer *timer);
-}
+} // namespace Pit
 
 #endif /* end KERNEL_PIT_H_ */

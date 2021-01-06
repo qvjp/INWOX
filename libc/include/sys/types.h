@@ -64,7 +64,7 @@ typedef __SSIZE_TYPE__ ssize_t;
 
 #if defined(__need_time_t) && !defined(__time_t_defined)
 typedef __time_t time_t;
-#  define __time_t_defined
+#define __time_t_defined
 #endif
 
 #undef __need_FILE

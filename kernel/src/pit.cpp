@@ -32,13 +32,13 @@
 #include <inwox/kernel/print.h>
 
 #define PIT_FREQUENCY 1193182 // Hz
-#define HZ 1000 // 每秒嘀嗒次数
+#define HZ            1000    // 每秒嘀嗒次数
 
 #define PIT_PORT_CHANNEL0 0x40
-#define PIT_PORT_MODE 0x43
+#define PIT_PORT_MODE     0x43
 
 #define PIT_MODE_RATE_GENERATOR 0x4
-#define PIT_MODE_LOBYTE_HIBYTE 0x30
+#define PIT_MODE_LOBYTE_HIBYTE  0x30
 
 static const uint16_t frequency = PIT_FREQUENCY / HZ;
 static const unsigned long nanoseconds = 1000000000L / PIT_FREQUENCY * frequency;
@@ -56,7 +56,7 @@ static void irqHandler(struct context *)
 {
     pit_ticker++;
     for (size_t i = 0; i < NUM_TIMERS; i++) {
-        if(timers[i]) {
+        if (timers[i]) {
             timers[i]->advance(nanoseconds);
         }
     }

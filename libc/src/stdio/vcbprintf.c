@@ -91,8 +91,8 @@ static size_t convert_integer(char *destination, uintmax_t value, uintmax_t base
     return length;
 }
 
-static int printInteger(void *param, size_t (*callback)(void *, const char *, size_t), char specifier, uintmax_t value, int fieldWidth, int precision,
-                        int flags)
+static int printInteger(void *param, size_t (*callback)(void *, const char *, size_t), char specifier, uintmax_t value,
+                        int fieldWidth, int precision, int flags)
 {
     bool negative = false;
     if (specifier == 'd' || specifier == 'i') {
@@ -187,7 +187,8 @@ static int printInteger(void *param, size_t (*callback)(void *, const char *, si
     return unpaddedLength >= fieldWidth ? unpaddedLength : fieldWidth;
 }
 
-static int printString(void *param, size_t (*callback)(void *, const char *, size_t), const char *s, int length, int fieldWidth, int flags)
+static int printString(void *param, size_t (*callback)(void *, const char *, size_t), const char *s, int length,
+                       int fieldWidth, int flags)
 {
     if (!(flags & FLAG_LEFT_JUSTIFIED)) {
         for (int i = length; i < fieldWidth; i++) {
@@ -215,8 +216,8 @@ int vcbprintf(void *param, size_t (*callback)(void *, const char *, size_t), con
 
     bool invalidConversion = false;
     int result = 0;
-#define INCREMENT_RESULT(x)                                                                                                                                    \
-    if (__builtin_add_overflow(result, (x), &result))                                                                                                          \
+#define INCREMENT_RESULT(x)                           \
+    if (__builtin_add_overflow(result, (x), &result)) \
     goto overflow
 
     while (*format) {

@@ -34,42 +34,40 @@
 /**
  * 异常提示信息
  */
-const char* const exceptionMessages[] = {
-    "Devide-by-zero",
-    "Debug",
-    "Non-maskable Interrupt",
-    "Breakpoint",
-    "Into Detected Overflow",
-    "Bound Range Exceeded",
-    "Invalid Opcode",
-    "No Coprocessor",
-    "Double Fault",
-    "Coprocessor Segment Overrun",
-    "Invalid TSS",
-    "Segment Not Present",
-    "Stack-Segment Fault",
-    "General Protection Fault",
-    "Page Fault",
-    "Unknown Interrupt",
-    "x87 Floating-Point",
-    "Alignment Check",
-    "Machine Check",
-    "SIMD Floating-Point",
-    "Virtualization",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved"
-};
+const char *const exceptionMessages[] = {"Devide-by-zero",
+                                         "Debug",
+                                         "Non-maskable Interrupt",
+                                         "Breakpoint",
+                                         "Into Detected Overflow",
+                                         "Bound Range Exceeded",
+                                         "Invalid Opcode",
+                                         "No Coprocessor",
+                                         "Double Fault",
+                                         "Coprocessor Segment Overrun",
+                                         "Invalid TSS",
+                                         "Segment Not Present",
+                                         "Stack-Segment Fault",
+                                         "General Protection Fault",
+                                         "Page Fault",
+                                         "Unknown Interrupt",
+                                         "x87 Floating-Point",
+                                         "Alignment Check",
+                                         "Machine Check",
+                                         "SIMD Floating-Point",
+                                         "Virtualization",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved",
+                                         "Reserved"};
 
 /**
  * Exceptions 处理CPU异常的方法
@@ -79,60 +77,60 @@ const char* const exceptionMessages[] = {
  */
 extern "C" {
 /*                               Type    Descriptipn                                 Error Code */
-    extern void isr_0(void);  /* F       Devide-by-zero Exception                    NO         */
-    extern void isr_1(void);  /* F/T     Debug Exception                             NO         */
-    extern void isr_2(void);  /* I       Non-maskable Interrupt                      NO         */
-    extern void isr_3(void);  /* T       Breakpoint Exception                        NO         */
-    extern void isr_4(void);  /* T       Into Detected Overflow Exception            NO         */
-    extern void isr_5(void);  /* F       Bound Range Exceeded Exception              NO         */
-    extern void isr_6(void);  /* F       Invalid Opcode Exception                    NO         */
-    extern void isr_7(void);  /* F       No Coprocessor Exception                    NO         */
-    extern void isr_8(void);  /* A       Double Fault Exception                      YES        */
-    extern void isr_9(void);  /* F       Coprocessor Segment Overrun Exception       No         */
-    extern void isr_10(void); /* F       Invalid TSS Exception                       Yes        */
-    extern void isr_11(void); /* F       Segment Not Present Exception               Yes        */
-    extern void isr_12(void); /* F       Stack-Segment Fault Exception               Yes        */
-    extern void isr_13(void); /* F       General Protection Fault Exception          Yes        */
-    extern void isr_14(void); /* F       Page Fault Exception                        Yes        */
-    extern void isr_15(void); /*         Unknown Interrupt Exception                 No         */
-    extern void isr_16(void); /* F       x87 Floating-Point Exception                No         */
-    extern void isr_17(void); /* F       Alignment Check Exception                   Yes        */
-    extern void isr_18(void); /* A       Machine Check                               No         */
-    extern void isr_19(void); /* F       SIMD Floating-Point Exception               No         */
-    extern void isr_20(void); /* F       Virtualization Exception                    NO         */
-    extern void isr_21(void); /* Reserved Exception */
-    extern void isr_22(void); /* Reserved Exception */
-    extern void isr_23(void); /* Reserved Exception */
-    extern void isr_24(void); /* Reserved Exception */
-    extern void isr_25(void); /* Reserved Exception */
-    extern void isr_26(void); /* Reserved Exception */
-    extern void isr_27(void); /* Reserved Exception */
-    extern void isr_28(void); /* Reserved Exception */
-    extern void isr_29(void); /* Reserved Exception */
-    extern void isr_30(void); /* Reserved Exception */
-    extern void isr_31(void); /* Reserved Exception */
+extern void isr_0(void);  /* F       Devide-by-zero Exception                    NO         */
+extern void isr_1(void);  /* F/T     Debug Exception                             NO         */
+extern void isr_2(void);  /* I       Non-maskable Interrupt                      NO         */
+extern void isr_3(void);  /* T       Breakpoint Exception                        NO         */
+extern void isr_4(void);  /* T       Into Detected Overflow Exception            NO         */
+extern void isr_5(void);  /* F       Bound Range Exceeded Exception              NO         */
+extern void isr_6(void);  /* F       Invalid Opcode Exception                    NO         */
+extern void isr_7(void);  /* F       No Coprocessor Exception                    NO         */
+extern void isr_8(void);  /* A       Double Fault Exception                      YES        */
+extern void isr_9(void);  /* F       Coprocessor Segment Overrun Exception       No         */
+extern void isr_10(void); /* F       Invalid TSS Exception                       Yes        */
+extern void isr_11(void); /* F       Segment Not Present Exception               Yes        */
+extern void isr_12(void); /* F       Stack-Segment Fault Exception               Yes        */
+extern void isr_13(void); /* F       General Protection Fault Exception          Yes        */
+extern void isr_14(void); /* F       Page Fault Exception                        Yes        */
+extern void isr_15(void); /*         Unknown Interrupt Exception                 No         */
+extern void isr_16(void); /* F       x87 Floating-Point Exception                No         */
+extern void isr_17(void); /* F       Alignment Check Exception                   Yes        */
+extern void isr_18(void); /* A       Machine Check                               No         */
+extern void isr_19(void); /* F       SIMD Floating-Point Exception               No         */
+extern void isr_20(void); /* F       Virtualization Exception                    NO         */
+extern void isr_21(void); /* Reserved Exception */
+extern void isr_22(void); /* Reserved Exception */
+extern void isr_23(void); /* Reserved Exception */
+extern void isr_24(void); /* Reserved Exception */
+extern void isr_25(void); /* Reserved Exception */
+extern void isr_26(void); /* Reserved Exception */
+extern void isr_27(void); /* Reserved Exception */
+extern void isr_28(void); /* Reserved Exception */
+extern void isr_29(void); /* Reserved Exception */
+extern void isr_30(void); /* Reserved Exception */
+extern void isr_31(void); /* Reserved Exception */
 
-    /* IRQs 声明每个IRQ专门的处理程序 */
-    extern void isr_32(void); /* Programmable Interrupt Timer Interrupt */
-    extern void isr_33(void); /* Keyboard Interrupt */
-    extern void isr_34(void); /* Cascade (used internally by the two PICs. never raised) */
-    extern void isr_35(void); /* COM2 (if enabled) */
-    extern void isr_36(void); /* COM1 (if enabled) */
-    extern void isr_37(void); /* LPT2 (if enabled) */
-    extern void isr_38(void); /* Floppy Disk */
-    extern void isr_39(void); /* LPT1 / Unreliable "spurious" interrupt (usually) */
-    extern void isr_40(void); /* CMOS real-time clock (if enabled) */
-    extern void isr_41(void); /* Free for peripherals / legacy SCSI / NIC */
-    extern void isr_42(void); /* Free for peripherals / SCSI / NIC */
-    extern void isr_43(void); /* Free for peripherals / SCSI / NIC */
-    extern void isr_44(void); /* PS2 Mouse */
-    extern void isr_45(void); /* FPU / Coprocessor / Inter-processor */
-    extern void isr_46(void); /* Primary ATA Hard Disk */
-    extern void isr_47(void); /* Secondary ATA Hard Disk */
+/* IRQs 声明每个IRQ专门的处理程序 */
+extern void isr_32(void); /* Programmable Interrupt Timer Interrupt */
+extern void isr_33(void); /* Keyboard Interrupt */
+extern void isr_34(void); /* Cascade (used internally by the two PICs. never raised) */
+extern void isr_35(void); /* COM2 (if enabled) */
+extern void isr_36(void); /* COM1 (if enabled) */
+extern void isr_37(void); /* LPT2 (if enabled) */
+extern void isr_38(void); /* Floppy Disk */
+extern void isr_39(void); /* LPT1 / Unreliable "spurious" interrupt (usually) */
+extern void isr_40(void); /* CMOS real-time clock (if enabled) */
+extern void isr_41(void); /* Free for peripherals / legacy SCSI / NIC */
+extern void isr_42(void); /* Free for peripherals / SCSI / NIC */
+extern void isr_43(void); /* Free for peripherals / SCSI / NIC */
+extern void isr_44(void); /* PS2 Mouse */
+extern void isr_45(void); /* FPU / Coprocessor / Inter-processor */
+extern void isr_46(void); /* Primary ATA Hard Disk */
+extern void isr_47(void); /* Secondary ATA Hard Disk */
 
-    extern void isr_48(void);         /* Padding */
-    extern void isr_49(void);         /* Schedule */
-    extern void syscallHandler(void); /* Syscall */
+extern void isr_48(void);         /* Padding */
+extern void isr_49(void);         /* Schedule */
+extern void syscallHandler(void); /* Syscall */
 }
 
 /**

@@ -39,7 +39,7 @@
 /**
  * 定义256个idt入口，因为CPU上有256个中断向量，虽然说后边我们只使用前32个。
  */
-struct idtEntry idt[256];
+struct idt_entry idt[256];
 
 /**
  * 设置IDT中每一个入口具体内容
@@ -58,4 +58,4 @@ void idtSetGate(uint8_t num, uint32_t offset, uint16_t selector, uint8_t attr)
  * 汇编代码lidt将会加载这里
  * 和GDTR一样，也是表长度减去1
  */
-struct idtDesc idt_descriptor = {sizeof(idt) - 1, idt};
+struct idt_desc idt_descriptor = {sizeof(idt) - 1, idt};

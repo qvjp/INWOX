@@ -33,8 +33,8 @@
 extern "C" {
 #endif
 
-char* basename(char*);
-char* dirname(char*);
+char *basename(char *);
+char *dirname(char *);
 
 #ifdef __cplusplus
 }

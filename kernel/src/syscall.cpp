@@ -69,7 +69,7 @@ extern "C" const void *getSyscallHandler(unsigned interruptNum)
 
 static FileDescription *getRootFd(int fd, const char *__restrict path)
 {
-    if(path[0] == '/') {
+    if (path[0] == '/') {
         return Process::current->rootFd;
     } else if (fd == AT_FDCWD) {
         return Process::current->cwdFd;
@@ -143,8 +143,9 @@ int Syscall::close(int fd)
     return 0;
 }
 
-pid_t Syscall::regfork(int flags, struct regfork *registers) {
-    if(!((flags & RFPROC) && (flags & RFFDG))) {
+pid_t Syscall::regfork(int flags, struct regfork *registers)
+{
+    if (!((flags & RFPROC) && (flags & RFFDG))) {
         errno = EINVAL;
         return -1;
     }
@@ -178,7 +179,7 @@ pid_t Syscall::waitpid(pid_t pid, int *status, int flags)
 
 int Syscall::fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags)
 {
-    (void) flags;
+    (void)flags;
     FileDescription *descr = getRootFd(fd, path);
     Vnode *vnode = descr->vnode->openat(path, 0, 0);
     if (!vnode) {

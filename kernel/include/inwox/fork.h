@@ -32,8 +32,8 @@
 
 // 下边宏定义为rfork的flags参数，参考Plan9/FreeBSD的rfork
 // https://9fans.github.io/plan9port/man/man3/rfork.html
-#define RFPROC  (1 << 0)        // 如果设置此位，则创建新进程，否则操作原进程
-#define RFFDG   (1 << 1)        // 如果设置此位，则复制文件描述符，否则使用共享的同一个fd表
+#define RFPROC  (1 << 0) // 如果设置此位，则创建新进程，否则操作原进程
+#define RFFDG   (1 << 1) // 如果设置此位，则复制文件描述符，否则使用共享的同一个fd表
 #define _RFFORK (RFPROC | RFFDG)
 
 struct regfork {

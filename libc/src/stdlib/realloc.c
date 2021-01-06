@@ -38,7 +38,7 @@
 static void changeChunkSize(Mem_Ctrl_Blk *chunk, size_t sizeDiff)
 {
     Mem_Ctrl_Blk *next = chunk->next;
-    Mem_Ctrl_Blk *newNextChunk = (Mem_Ctrl_Blk *)((uintptr_t) next + sizeDiff);
+    Mem_Ctrl_Blk *newNextChunk = (Mem_Ctrl_Blk *)((uintptr_t)next + sizeDiff);
     memmove(newNextChunk, next, sizeof(Mem_Ctrl_Blk));
     chunk->next = newNextChunk;
     chunk->size += sizeDiff;

@@ -32,7 +32,8 @@
 #define ATEXIT_MAX 32
 static void (*atexitHandlers[ATEXIT_MAX])(void);
 
-int atexit(void (*func)(void)) {
+int atexit(void (*func)(void))
+{
     for (size_t i = 0; i < ATEXIT_MAX; i++) {
         if (!atexitHandlers[i]) {
             atexitHandlers[i] = func;
@@ -42,7 +43,8 @@ int atexit(void (*func)(void)) {
     return -1;
 }
 
-void __callAtexitHandlers(void) {
+void __callAtexitHandlers(void)
+{
     for (ssize_t i = ATEXIT_MAX - 1; i >= 0; i--) {
         if (atexitHandlers[i]) {
             atexitHandlers[i]();

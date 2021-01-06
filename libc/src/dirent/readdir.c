@@ -47,13 +47,13 @@ struct dirent *readdir(DIR *dir)
         return NULL;
     } else if (size == 0) {
         return NULL;
-    } else if ((size_t) size <= entrySize) {
+    } else if ((size_t)size <= entrySize) {
         dir->offset++;
         return dir->dirent;
     } else {
         free(dir->dirent);
-        dir->dirent = malloc((size_t) size);
-        sys_readdir(dir->fd, dir->offset, dir->dirent, (size_t) size);
+        dir->dirent = malloc((size_t)size);
+        sys_readdir(dir->fd, dir->offset, dir->dirent, (size_t)size);
         dir->offset++;
         return dir->dirent;
     }

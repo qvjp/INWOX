@@ -44,11 +44,15 @@ static size_t stackLeft = 0;
  */
 static inline bool isUsedByKernel(inwox_phy_addr_t physicalAddress)
 {
-    return (physicalAddress >= (inwox_phy_addr_t)&bootstrapBegin && physicalAddress < (inwox_phy_addr_t)&bootstrapEnd) ||
-           (physicalAddress >= (inwox_phy_addr_t)&kernelPhysicalBegin && physicalAddress < (inwox_phy_addr_t)&kernelPhysicalEnd) || physicalAddress == 0;
+    return (physicalAddress >= (inwox_phy_addr_t)&bootstrapBegin &&
+            physicalAddress < (inwox_phy_addr_t)&bootstrapEnd) ||
+           (physicalAddress >= (inwox_phy_addr_t)&kernelPhysicalBegin &&
+            physicalAddress < (inwox_phy_addr_t)&kernelPhysicalEnd) ||
+           physicalAddress == 0;
 }
 
-static inline bool isUsedByModule(inwox_phy_addr_t physicalAddress, multiboot_mod_list *modules, uint32_t moduleCount) {
+static inline bool isUsedByModule(inwox_phy_addr_t physicalAddress, multiboot_mod_list *modules, uint32_t moduleCount)
+{
     for (size_t i = 0; i < moduleCount; i++) {
         if (physicalAddress >= modules[i].mod_start && physicalAddress < modules[i].mod_end) {
             return true;
@@ -57,8 +61,8 @@ static inline bool isUsedByModule(inwox_phy_addr_t physicalAddress, multiboot_mo
     return false;
 }
 
-static inline bool isUsedByMultiboot(inwox_phy_addr_t physicalAddress,
-        multiboot_info *multiboot) {
+static inline bool isUsedByMultiboot(inwox_phy_addr_t physicalAddress, multiboot_info *multiboot)
+{
     inwox_phy_addr_t mmapEnd = multiboot->mmap_addr + multiboot->mmap_length;
     inwox_phy_addr_t modsEnd = multiboot->mods_addr + multiboot->mods_count * sizeof(multiboot_mod_list);
     return ((physicalAddress >= (multiboot->mmap_addr & ~0xFFF) && physicalAddress < mmapEnd) ||
@@ -86,7 +90,7 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
     ptrdiff_t mmapOffset = mmapPhys - mmapAligned;
     size_t mmapSize = ALIGN_UP(mmapOffset + multiboot->mmap_length, 0x1000);
 
-    inwox_phy_addr_t modulesPhys = (inwox_phy_addr_t) multiboot->mods_addr;
+    inwox_phy_addr_t modulesPhys = (inwox_phy_addr_t)multiboot->mods_addr;
     inwox_phy_addr_t modulesAligned = modulesPhys & ~0xFFF;
     ptrdiff_t modulesOffset = modulesPhys - modulesAligned;
     size_t modulesSize = ALIGN_UP(modulesOffset + multiboot->mods_count * sizeof(multiboot_mod_list), 0x1000);
@@ -97,14 +101,15 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
     inwox_vir_addr_t mmap = mmapMapped + mmapOffset;
     inwox_vir_addr_t mmapEnd = mmap + multiboot->mmap_length;
 
-    multiboot_mod_list* modules = (multiboot_mod_list*) (modulesMapped + modulesOffset);
+    multiboot_mod_list *modules = (multiboot_mod_list *)(modulesMapped + modulesOffset);
 
     while (mmap < mmapEnd) {
         multiboot_mmap_entry *mmapEntry = (multiboot_mmap_entry *)mmap;
         if (mmapEntry->type == MULTIBOOT_MEMORY_AVAILABLE && mmapEntry->base_addr + mmapEntry->length <= UINTPTR_MAX) {
             inwox_phy_addr_t addr = (inwox_phy_addr_t)mmapEntry->base_addr;
             for (uint64_t i = 0; i < mmapEntry->length; i += 0x1000) {
-                if (isUsedByModule(addr + i, modules, multiboot->mods_count) || isUsedByKernel(addr + i) || isUsedByMultiboot(addr + i, multiboot)) {
+                if (isUsedByModule(addr + i, modules, multiboot->mods_count) || isUsedByKernel(addr + i) ||
+                    isUsedByMultiboot(addr + i, multiboot)) {
                     continue;
                 }
                 pushPageFrame(addr + i);
@@ -124,7 +129,8 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
 void PhysicalMemory::pushPageFrame(inwox_phy_addr_t physicalAddress)
 {
     if (unlikely(stackLeft == 0)) {
-        kernelSpace->mapPhysical((inwox_vir_addr_t)stack - stackUsed * 4 - 0x1000, physicalAddress, 0x1000, PROT_READ | PROT_WRITE);
+        kernelSpace->mapPhysical((inwox_vir_addr_t)stack - stackUsed * 4 - 0x1000, physicalAddress, 0x1000,
+                                 PROT_READ | PROT_WRITE);
         stackLeft += 1024;
     } else {
         stack[-++stackUsed] = physicalAddress;

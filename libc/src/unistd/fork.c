@@ -28,8 +28,9 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-DEFINE_SYSCALL_GLOBAL(SYSCALL_REGFORK, pid_t, sys_fork, (int, struct regfork*));
+DEFINE_SYSCALL_GLOBAL(SYSCALL_REGFORK, pid_t, sys_fork, (int, struct regfork *));
 
-pid_t fork(void) {
+pid_t fork(void)
+{
     return rfork(_RFFORK);
 }

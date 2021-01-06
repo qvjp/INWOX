@@ -40,9 +40,9 @@ int execl(const char *path, const char *argv0, ...)
     }
     va_end(ap);
 
-    char **argv = malloc(sizeof(char*) * (argc + 1));
+    char **argv = malloc(sizeof(char *) * (argc + 1));
     va_start(ap, argv0);
-    argv[0] = (char*) argv0;
+    argv[0] = (char *)argv0;
     for (int i = 1; i < argc; i++) {
         argv[i] = va_arg(ap, char *);
     }

@@ -33,14 +33,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-static const char* getExecutablePath(const char* command)
+static const char *getExecutablePath(const char *command)
 {
     size_t commandLength = strlen(command);
-    const char* path = getenv("PATH");
+    const char *path = getenv("PATH");
 
     while (*path) {
         size_t length = strcspn(path, ":");
-        char* buffer = malloc(commandLength + length + 2);
+        char *buffer = malloc(commandLength + length + 2);
 
         memcpy(buffer, path, length);
         buffer[length] = '/';
@@ -57,9 +57,9 @@ static const char* getExecutablePath(const char* command)
     return NULL;
 }
 
-static int executeCommand(char* arguments[])
+static int executeCommand(char *arguments[])
 {
-    const char* command = arguments[0];
+    const char *command = arguments[0];
     // shell 内置命令
     if (strcmp(command, "exit") == 0) {
         exit(0);
@@ -88,7 +88,8 @@ static int executeCommand(char* arguments[])
 
 int main(int argc, char *argv[])
 {
-    (void) argc; (void) argv;
+    (void)argc;
+    (void)argv;
 
     while (true) {
         fputs("$ ", stdout);
@@ -110,8 +111,8 @@ int main(int argc, char *argv[])
                 argumentCount++;
             }
         }
-        char** arguments = malloc((argumentCount + 1) * sizeof(char*));
-        char* str = strtok(buffer, " ");
+        char **arguments = malloc((argumentCount + 1) * sizeof(char *));
+        char *str = strtok(buffer, " ");
         for (size_t i = 0; i < argumentCount; i++) {
             arguments[i] = str;
             str = strtok(NULL, " ");

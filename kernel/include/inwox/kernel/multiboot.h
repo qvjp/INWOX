@@ -91,12 +91,12 @@ struct multiboot_elf_section_header_table {
 */
 struct multiboot_info {
     uint32_t flags;
-    uint32_t mem_lower;   /* BIOS所给可用内存 */
+    uint32_t mem_lower; /* BIOS所给可用内存 */
     uint32_t mem_upper;
     uint32_t boot_device;
     uint32_t cmdline;
-    uint32_t mods_count;  /* 和内核一起被加载的模块数量 */
-    uint32_t mods_addr;   /* 第一个模块的地址 模块的结构在下边的multiboot_mod_list中定义 */
+    uint32_t mods_count; /* 和内核一起被加载的模块数量 */
+    uint32_t mods_addr;  /* 第一个模块的地址 模块的结构在下边的multiboot_mod_list中定义 */
     multiboot_elf_section_header_table elf_sec;
     uint32_t mmap_length; /* 内存映射缓存 */
     uint32_t mmap_addr;

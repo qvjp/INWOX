@@ -104,7 +104,7 @@ ssize_t DirectoryVnode::readdir(unsigned long offset, void *buffer, size_t size)
     }
     size_t structSize = sizeof(struct dirent) + strlen(name) + 1;
     if (size >= structSize) {
-        struct dirent *entry = (struct dirent*) buffer;
+        struct dirent *entry = (struct dirent *)buffer;
         entry->d_reclen = size;
         strcpy(entry->d_name, name);
     }

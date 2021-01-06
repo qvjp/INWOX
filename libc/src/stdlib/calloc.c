@@ -31,7 +31,7 @@
 
 void *calloc(size_t num, size_t size)
 {
-    void *result = malloc(num *size);
+    void *result = malloc(num * size);
     if (result != NULL) {
         memset(result, 0, num * size);
     }

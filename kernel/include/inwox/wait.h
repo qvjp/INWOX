@@ -28,9 +28,9 @@
 #ifndef INWOX_WAIT_H_
 #define INWOX_WAIT_H_
 
-#define WNOHANG (1 << 0)
+#define WNOHANG   (1 << 0)
 #define WUNTRACED (1 << 1)
 
-#define WEXITSTATUS(status) ((status) & 0xFF)
+#define WEXITSTATUS(status) ((status)&0xFF)
 
 #endif /* INWOX_WAIT_H_ */

@@ -54,7 +54,7 @@ enum Elf_Ident {
 /**
  * ELF头
  */
-struct ElfHeader {
+struct elf_header {
     uint8_t e_ident[16];  /* 包括标示ELF格式的魔幻数字和其他与机器相关的条目 */
     uint16_t e_type;      /* 文件类型 */
     uint16_t e_machine;   /* 运行此程序需要的架构 0x03是x86架构 */
@@ -74,7 +74,7 @@ struct ElfHeader {
 /**
  * 程序头表
  */
-struct ProgramHeader {
+struct program_header {
     uint32_t p_type;   /* 当前Program header所描述的段的类型。
                         * 0 - 忽略
                         * 1 - 加载 将p_vaddr开始p_memsz长的内存设为0，然后从p_offset
@@ -90,15 +90,13 @@ struct ProgramHeader {
     uint32_t p_align;  /* 段在文件和内存中如何对齐 */
 };
 
-/* ProgramHeader中p_type为1表示加载 */
+/* program_header中p_type为1表示加载 */
 #define PT_LOAD 1
 
-inline int check_elf_magic(const struct ElfHeader *elf)
+inline int check_elf_magic(const struct elf_header *elf)
 {
-    return !((elf->e_ident[EI_MAG0] == ELFMAG0) & \
-            (elf->e_ident[EI_MAG1] == ELFMAG1) & \
-            (elf->e_ident[EI_MAG2] == ELFMAG2) & \
-            (elf->e_ident[EI_MAG3] == ELFMAG3));
+    return !((elf->e_ident[EI_MAG0] == ELFMAG0) & (elf->e_ident[EI_MAG1] == ELFMAG1) &
+             (elf->e_ident[EI_MAG2] == ELFMAG2) & (elf->e_ident[EI_MAG3] == ELFMAG3));
 }
 
 #endif /* KERNEL_ELF_H_ */

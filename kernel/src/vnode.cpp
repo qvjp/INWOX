@@ -40,7 +40,7 @@ ssize_t Vnode::read(void * /* buffer */, size_t /* size */)
     return -1;
 }
 
-ssize_t Vnode::readdir(unsigned long /* offset */, void */* buffer */, size_t /* size */)
+ssize_t Vnode::readdir(unsigned long /* offset */, void * /* buffer */, size_t /* size */)
 {
     errno = EBADF;
     return -1;

@@ -41,13 +41,13 @@ extern "C" {
 
 /**
  * @brief access的第二个参数
- * 
+ *
  * 以下权限可以进行或操作
  */
-#define F_OK 0          // 测试存在
-#define R_OK (1 << 0)   // 测试读权限
-#define W_OK (1 << 1)   // 测试写权限
-#define X_OK (1 << 2)   // 测试执行权限
+#define F_OK 0        // 测试存在
+#define R_OK (1 << 0) // 测试读权限
+#define W_OK (1 << 1) // 测试写权限
+#define X_OK (1 << 2) // 测试执行权限
 
 __attribute__((__noreturn__)) void _exit(int);
 ssize_t read(int, void *, size_t);

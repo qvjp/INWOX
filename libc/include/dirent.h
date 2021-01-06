@@ -43,10 +43,10 @@ struct __DIR {
 };
 #endif
 
-int closedir(DIR*);
+int closedir(DIR *);
 DIR *fdopendir(int);
 DIR *opendir(const char *);
-struct dirent *readdir(DIR*);
+struct dirent *readdir(DIR *);
 
 #ifdef __cplusplus
 }

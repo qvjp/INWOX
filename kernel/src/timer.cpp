@@ -32,8 +32,7 @@
 static inline void minus(struct timespec *time, unsigned long nanoseconds)
 {
     time->tv_nsec -= nanoseconds;
-    while (time->tv_nsec < 0)
-    {
+    while (time->tv_nsec < 0) {
         time->tv_sec--;
         time->tv_nsec += 1000000000L;
     }
@@ -79,7 +78,7 @@ int Syscall::nanosleep(const struct timespec *request, struct timespec *remainin
     timer.start();
     timer.wait();
 
-    if (remaining) { 
+    if (remaining) {
         remaining->tv_sec = 0;
         remaining->tv_nsec = 0;
     }

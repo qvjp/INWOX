@@ -37,6 +37,7 @@ public:
     void advance(unsigned long nanosecondes);
     void start();
     void wait();
+
 private:
     struct timespec time;
     size_t index;

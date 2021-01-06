@@ -34,7 +34,7 @@
 #include <inwox/kernel/initrd.h>
 #include <inwox/kernel/print.h>
 
-struct TarHeader {
+struct tar_header {
     char name[100];
     char mode[8];
     char uid[8];
@@ -57,10 +57,10 @@ struct TarHeader {
 DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
 {
     DirectoryVnode *root = new DirectoryVnode(nullptr, 0755);
-    TarHeader *header = (TarHeader *)initrd;
+    tar_header *header = (tar_header *)initrd;
 
     while (strcmp(header->magic, TMAGIC) == 0) {
-        size_t size = (size_t)strtoul(header->size, NULL, 8);  // 获取当前文件的大小，注意按8进制读取
+        size_t size = (size_t)strtoul(header->size, NULL, 8); // 获取当前文件的大小，注意按8进制读取
         char *path;
 
         // 获取文件路径（包含文件名）

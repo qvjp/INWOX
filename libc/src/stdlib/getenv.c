@@ -35,14 +35,13 @@ char *getenv(const char *name)
 {
     size_t nameSize = strlen(name);
     char **envp = environ;
-    while (*envp)
-    {
+    while (*envp) {
         size_t length = strcspn(*envp, "=");
         if (length == nameSize && strncmp(name, *envp, length) == 0) {
             return *envp + length + 1;
         }
         envp++;
     }
-    
+
     return NULL;
 }

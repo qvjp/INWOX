@@ -73,7 +73,7 @@
 /**
  * 定义IDT入口，指定packed是为了阻止编译器“优化”
  */
-struct idtEntry {
+struct idt_entry {
     uint16_t offset_low;
     uint16_t selector;
     uint8_t unused;
@@ -99,7 +99,7 @@ struct idtEntry {
  * 定义指向IDT的结构，包括IDT的大小和IDT的首地址，和设置GDT时一样
  * 同样这里设置为packed
  */
-struct idtDesc {
+struct idt_desc {
     uint16_t size;
     void *offset;
 } __attribute__((__packed__));

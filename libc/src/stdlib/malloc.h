@@ -33,12 +33,12 @@
 
 #if __is_inwox_libc
 #include <sys/mman.h>
-#define mapMemory(size) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+#define mapMemory(size)         mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 #define unmapMemory(addr, size) munmap(addr, size)
 #else /* if __is_inwox_libk */
 extern void *__mapMemory(size_t);
-extern void __unmapMemory(void*, size_t);
-#define mapMemory(size) __mapMemory(size)
+extern void __unmapMemory(void *, size_t);
+#define mapMemory(size)         __mapMemory(size)
 #define unmapMemory(addr, size) __unmapMemory(addr, size)
 #endif
 typedef struct Mem_Ctrl_Blk {

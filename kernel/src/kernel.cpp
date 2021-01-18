@@ -26,21 +26,20 @@
  * 内核main函数
  */
 
-#include <assert.h>
-#include <stddef.h> /* size_t */
-#include <stdint.h> /* uint8_t */
-#include <stdlib.h> /* malloc() free() */
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inwox/kernel/addressspace.h>
 #include <inwox/kernel/directory.h>
 #include <inwox/kernel/file.h>
 #include <inwox/kernel/initrd.h>
-#include <inwox/kernel/inwox.h>     /* MULTIBOOT_BOOTLOADER_MAGIC */
-#include <inwox/kernel/interrupt.h> /* Interrupt::initPic() Interrupt::enable() */
+#include <inwox/kernel/inwox.h>
+#include <inwox/kernel/interrupt.h>
 #include <inwox/kernel/physicalmemory.h>
 #include <inwox/kernel/pit.h>
 #include <inwox/kernel/ps2.h>
-#include <inwox/kernel/print.h> /* printf() */
+#include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
 
 #ifndef INWOX_VERSION
@@ -61,14 +60,14 @@ static DirectoryVnode *loadInitrd(multiboot_info *multiboot)
     DirectoryVnode *root = nullptr;
     inwox_phy_addr_t modulesAligned = multiboot->mods_addr & ~0xFFF;
     ptrdiff_t offset = multiboot->mods_addr - modulesAligned;
-    size_t mappedSize = ALIGN_UP(offset + multiboot->mods_count * sizeof(multiboot_mod_list), 0x1000);
+    size_t mappedSize = ALIGN_UP(offset + multiboot->mods_count * sizeof(multiboot_mod_list), PAGESIZE);
     inwox_vir_addr_t modulesPage = kernelSpace->mapPhysical(modulesAligned, mappedSize, PROT_READ);
 
     /* *modules是真正要处理模块的首地址 */
     const struct multiboot_mod_list *modules = (struct multiboot_mod_list *)(modulesPage + offset);
     for (size_t i = 0; i < multiboot->mods_count; i++) {
         /* 按页对齐后再分配内存 */
-        size_t size = ALIGN_UP(modules[i].mod_end - modules[i].mod_start, 0x1000);
+        size_t size = ALIGN_UP(modules[i].mod_end - modules[i].mod_start, PAGESIZE);
         inwox_vir_addr_t initrd = kernelSpace->mapPhysical(modules[i].mod_start, size, PROT_READ);
         root = Initrd::loadInitrd(initrd);
         kernelSpace->unmapPhysical(initrd, size);
@@ -81,6 +80,24 @@ static DirectoryVnode *loadInitrd(multiboot_info *multiboot)
     return root;
 }
 
+/**
+ * @brief 内核入口函数
+ * 
+ * @param magic multiboot兼容引导程序传递来的魔数
+ * @param multibootAddress  multiboot的起始地址
+ * 
+ * 上述两个参数均由kernel_main的调用方loader.s保证正确传入，在kernel_main中做校验，然后通过multiboot所
+ * 提供信息进行初始化，初始化的内容包括：
+ * 1. 初始化终端，当前为字符模式，主要将终端清屏并设置预定的背景色
+ * 2. 初始存储
+ *    1. 初始化地址空间
+ *    2. 初始化物理内存
+ * 3. 初始化PS2控制器
+ * 4. 加载initrd
+ * 5. 初始化进程
+ * 6. 运行shell
+ * 7. 设置中断
+ */
 extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
 {
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
@@ -95,11 +112,10 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     AddressSpace::initialize();
 
     Print::printf("Initializing Physical Memory...\n");
-    multiboot_info *multibootMapped = (multiboot_info *)kernelSpace->mapPhysical(multibootAddress, 0x1000, PROT_READ);
+    multiboot_info *multibootMapped = (multiboot_info *)kernelSpace->mapPhysical(multibootAddress, PAGESIZE, PROT_READ);
     memcpy(&multiboot, multibootMapped, sizeof(multiboot_info));
-    kernelSpace->unmapPhysical((inwox_vir_addr_t)multibootMapped, 0x1000);
+    kernelSpace->unmapPhysical((inwox_vir_addr_t)multibootMapped, PAGESIZE);
 
-    Print::printf("Initializing Physical Memory...\n");
     PhysicalMemory::initialize(&multiboot);
 
     Print::printf("Initializing PS/2 Controller...\n");

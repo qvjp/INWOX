@@ -35,6 +35,18 @@ class AddSymbolFileAuto (gdb.Command):
 AddSymbolFileAuto()
 end
 
+define dumpSegment
+    if $argc == 1
+        set $_node = $arg0
+    else
+        set $_node = firstSegment
+    end
+    while $_node
+        printf "value is %x, %ld\n", $_node->address, $_node->size
+        set $_node = $_node->next
+    end
+end
+
 # 连接qemu
 target remote localhost:1234
 
@@ -46,3 +58,7 @@ add-symbol-file-auto build/libc/
 
 # 根据需要添加用户态程序调试信息
 #add-symbol-file-auto build/programs/echo/echo
+
+# gdb-dashboard 设置
+# 不显示registers
+dashboard registers

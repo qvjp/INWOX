@@ -32,6 +32,7 @@
 #include <inwox/kernel/inwox.h>
 
 #define SEG_NOUNMAP (1 << 16)
+#define PAGESIZE 0x1000
 
 class MemorySegment {
 public:
@@ -45,8 +46,8 @@ public:
     MemorySegment *next;
 
 public:
-    static void addSegment(MemorySegment *segment, inwox_vir_addr_t address, size_t size, int protection);
-    static void removeSegment(MemorySegment *segment, inwox_vir_addr_t address, size_t size);
+    static void addSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size, int protection);
+    static void removeSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size);
     static inwox_vir_addr_t findFreeSegment(MemorySegment *segment, size_t size);
 
 private:

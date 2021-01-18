@@ -47,7 +47,6 @@ $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(INITRD)
 	rm -rf iso
 
 $(INITRD): $(SYSROOT)
-	echo "INWOX 0.0.1-dev" > $(BIN_DIR)/inwox
 	cd $(SYSROOT) && tar cvf ../$(INITRD) --format=ustar *
 
 programs:
@@ -76,4 +75,4 @@ clean:
 	rm -rf $(ISO)
 	rm -rf ./sysroot ./iso
 
-.PHONY: all kernel iso qemu clean libc install-headers install-libc strip-debug programs tests
+.PHONY: all kernel iso qemu-curses qemu-curses-dbg clean libc install-headers install-libc strip-debug programs tests

@@ -23,7 +23,25 @@
 
  /**
   * kernel/linker.ld
-  * 加载内核到1MB位置，1M以下部分被BIOS和GRUB占用。
+  * 加载内核到物理内存1MB位置，1M以下部分被BIOS和GRUB占用。
+  * 将内核映射到虚拟内存的0xC0000000（3G）处，以实现Higher Half Kernel
+  * 具体布局如下：
+  * |   BIOS/GRUB    |
+  * +----------------+ 1M                          <-bootstrapBegin
+  * | bootstrap_text |
+  * |----------------|
+  * | bootstrap_bss  |
+  * |----------------| 1M + sizeof(bootstrap*)     <-bootstrapEnd、kernelPhysicalBegin
+  * |      text      | \
+  * |----------------|  \__3G  <-kernelVirtualBegin
+  * |     rodata     |
+  * |----------------|
+  * |      data      |
+  * |----------------|
+  * |      bss       |
+  * +----------------+                             <-kernelPhysicalEnd
+  * |                | \
+  * |                |  \__3G + sizeof(bootstrap*) <-kernelVirtualEnd
   */
 
 /**
@@ -58,30 +76,30 @@ SECTIONS {
     bootstrapEnd = ALIGN(4K);
     numBootstrapPages = (bootstrapEnd - bootstrapBegin) / 4K;
 
-    /* 内核0xC0100000开始 */
+    /* 内核0xC000000开始 */
     . += KERNEL_VIRTUAL;
     kernelVirtualBegin = ALIGN(4K);
     kernelPhysicalBegin = kernelVirtualBegin - KERNEL_VIRTUAL;
 
-    /* 4K（页大小）对齐，加载到1M处。 */
+    /* 4K（页大小）对齐，按顺序加载到bootstrap后 */
     .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_VIRTUAL)
     {
         *(.text)    /* 所有文件的所有text section */
     }
 
-    /* 只读数据 4K对齐，加载到1M + .处。 */
+    /* 只读数据 4K对齐，按顺序加载 */
     .rodata ALIGN(4K) : AT(ADDR(.rodata) - KERNEL_VIRTUAL)
     {
         *(.rodata)  /* 所有文件的所有只读section */
     }
 
-    /* 可读可写数据（已被初始化）4K对齐，加载到1M + .处。 */
+    /* 可读可写数据（已被初始化）4K对齐，按顺序加载 */
     .data ALIGN(4K) : AT(ADDR(.data) - KERNEL_VIRTUAL)
     {
         *(.data)    /* 所有文件的所有data section */
     }
 
-    /* 可读可写数据（未被初始化）和栈 4K对齐，加载到1M + .处。 */
+    /* 可读可写数据（未被初始化）和栈 4K对齐，按顺序加载 */
     .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_VIRTUAL)
     {
         *(COMMON)   /* 所有文件的所有COMMON section */

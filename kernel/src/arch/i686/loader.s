@@ -24,15 +24,21 @@
 /**
  * kernel/src/arch/i686/loader.s
  * multiboot header和程序入口
+ * 主要干了以下几件事：
+ * 1. 定义了multiboot header，让grub知道这是内核，可以加载
+ * 2. 在低地址空间进行的操作主要是设置页目录和页表，开启分页，涉及到的页表有:
+ *    1. bootstrapPageTable用于进入高地址空间前的直接映射
+ *    2. kernelPageTable用于进入高地址空间后
+ *    3. physicalMemroyStackPageTable用于物理内存管理中管理栈的存放
+ *    在分页过程中，会使用递归映射来节省空间占用
+ * 3. 开启分页后，进入高地址空间内核，然后进行：
+ *    1. 设置GDT
+ *    2. 设置IDT
+ *    3. 设置系统栈
+ *    4. 调用高级语言内核
  */
  
 .extern kernel_main
-
-/* 使这几个地址在C中可用 */
-.extern bootstrapBegin
-.extern bootstrapEnd
-.extern kernelPhysicalBegin
-.extern kernelPhysicalEnd
 .global kernelPageDirectory
 
 .global _start

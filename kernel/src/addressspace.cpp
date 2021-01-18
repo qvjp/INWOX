@@ -24,22 +24,39 @@
 /**
  * kernel/src/addressspace.cpp
  * 实现地址空间的基本操作
+ * 每个进程拥有自己的地址空间，使其以为自己独享整个物理内存
  */
 
 #include <assert.h>
 #include <errno.h>
-#include <string.h> /* memset() */
+#include <string.h>
 #include <inwox/kernel/addressspace.h>
-#include <inwox/kernel/physicalmemory.h> /* pushPageFrame popPageFrame */
-#include <inwox/kernel/print.h>          /* Print::printf() */
+#include <inwox/kernel/physicalmemory.h>
+#include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
 #include <inwox/kernel/syscall.h>
 
+/**
+ * 内核地址空间
+ */
 AddressSpace AddressSpace::_kernelSpace;
+
+/**
+ * 内核地址空间指针
+ */
 AddressSpace *kernelSpace;
 
+/**
+ * 第一个地址空间，通过它可以访问整个地址空间链表
+ */
 static AddressSpace *firstAddressSpace = nullptr;
 
+/**
+ * @brief 将物理内存保护位转为页的访问标识
+ * 
+ * @param protection 物理内存保护位
+ * @return int 页访问权限标识
+ */
 static inline int protectionToFlags(int protection)
 {
     int flags = PAGE_PRESENT;
@@ -50,24 +67,31 @@ static inline int protectionToFlags(int protection)
 }
 
 /**
- * 每个进程对应一个地址空间，地址空间包含两部分
- * 所使用的页目录和指向下一个地址空间的指针。
+ * @brief 创建一个新的地址空间
+ * 
+ * 对于每个用户进程，都有自己独立的地址空间，每个地址空间有自己的页目录、页表结构，
+ * 并且所有的地址空间连成一个链表，若创建新的地址空间，则将其链入表头
+ * 
+ * 内核地址空间和用户地址空间互相独立，内核地址空间不链入用户地址空间链表，但每个用户空间都
+ * 有一份内核页目录的拷贝，之所以要进行拷贝，是因为一个时刻只有一个地址空间被激活，地址空
+ * 间的这个部分包含内核在代表进程执行指令时（比如当应用执行系统调用时）使用的代码、数据和栈
  */
 AddressSpace::AddressSpace()
 {
-    if (this == &_kernelSpace) {
+    if (this == &_kernelSpace) {  // 具体初始化在initialize()进行
         pageDir = 0;
         firstSegment = nullptr;
         next = nullptr;
     } else {
-        // 用户态新建地址空间时，先分配物理内存用来存放该地址空间的页目录，并将页目录复制过去，
+        // 用户态新建地址空间时，先分配物理内存用来存放该地址空间的页目录，并将内核页目录复制过去
         pageDir = PhysicalMemory::popPageFrame();
-        inwox_vir_addr_t kernelPageDir = (RECURSIVE_MAPPING + 0x3FF000); // FFFFF000为4G地址空间的最后4K，存放页目录
+        inwox_vir_addr_t kernelPageDir = (RECURSIVE_MAPPING + 0x3FF000);  // FFFFF000为4G地址空间的最后4K，存放页目录
         inwox_vir_addr_t newPageDir = kernelSpace->map(pageDir, PROT_WRITE);
-        memcpy((void *)newPageDir, (const void *)kernelPageDir, 0x1000);
+        memcpy((void *)newPageDir, (const void *)kernelPageDir, PAGESIZE);
         kernelSpace->unMap(newPageDir);
 
-        firstSegment = new MemorySegment(0, 0x1000, PROT_NONE | SEG_NOUNMAP, nullptr, nullptr);
+        // 创建地址空间时，会为此地址空间创建一个segment
+        firstSegment = new MemorySegment(0, PAGESIZE, PROT_NONE | SEG_NOUNMAP, nullptr, nullptr);
         MemorySegment::addSegment(firstSegment, 0xC0000000, -0xC0000000, PROT_NONE | SEG_NOUNMAP);
 
         next = firstAddressSpace;
@@ -75,6 +99,12 @@ AddressSpace::AddressSpace()
     }
 }
 
+/**
+ * @brief 销毁一个地址空间
+ * 
+ * 1. 释放本地址空间的内存（segment在地址空间布局整齐，可以方便的将全部内存进行释放）
+ * 2. 删除地址空间的页目录
+ */
 AddressSpace::~AddressSpace()
 {
     MemorySegment *currentSegment = firstSegment;
@@ -88,62 +118,77 @@ AddressSpace::~AddressSpace()
     PhysicalMemory::pushPageFrame(pageDir);
 }
 
-static MemorySegment segment1(0, 0xC0000000, PROT_NONE, nullptr, nullptr);
-static MemorySegment segment2(0xC0000000, 0x1000, PROT_READ | PROT_WRITE, &segment1, nullptr);
-static MemorySegment segment3((inwox_vir_addr_t)&kernelVirtualBegin,
+/**
+ * 需要在编译期先声明如下的段，因为在内存管理初始化前就要用到
+ */
+static MemorySegment userSegment(0, 0xC0000000, PROT_NONE, nullptr, nullptr);
+static MemorySegment videoSegment(0xC0000000, PAGESIZE, PROT_READ | PROT_WRITE, &userSegment, nullptr);
+static MemorySegment kernelSegment((inwox_vir_addr_t)&kernelVirtualBegin,
                               (inwox_vir_addr_t)&kernelVirtualEnd - (inwox_vir_addr_t)&kernelVirtualBegin,
-                              PROT_READ | PROT_WRITE | PROT_EXEC, &segment2, nullptr);
-static MemorySegment segment4(RECURSIVE_MAPPING, -RECURSIVE_MAPPING, PROT_READ | PROT_WRITE, &segment3, nullptr);
+                              PROT_READ | PROT_WRITE | PROT_EXEC, &videoSegment, nullptr);
+static MemorySegment recursiveMappingSegment(RECURSIVE_MAPPING, -RECURSIVE_MAPPING, PROT_READ | PROT_WRITE, &kernelSegment, nullptr);
 
 /**
- * 通过页目录和页表号找到对应的虚拟地址
+ * @brief 将页目录页表索引转为虚拟地址
+ * 
+ * @param pdIndex 页目录索引
+ * @param ptIndex 页表索引
+ * @return inwox_vir_addr_t 对应的虚拟地址
  */
-static inline inwox_vir_addr_t offset2address(size_t pdOffset, size_t ptOffset)
+static inline inwox_vir_addr_t IndexToaddress(size_t pdIndex, size_t ptIndex)
 {
-    assert(pdOffset <= 0x3FF);
-    assert(ptOffset <= 0x3FF);
-    return (pdOffset << 22) | (ptOffset << 12);
+    // 页目录页表的最后一个0x400/0x400递归索引，所以可用的索引肯定小于等于0x3FF/0x3FF
+    assert(pdIndex <= 0x3FF);
+    assert(ptIndex <= 0x3FF);
+    return (pdIndex << 22) | (ptIndex << 12);
 }
 
 /**
- * 虚拟地址转换到对应的页目录号和页表号
+ * @brief 将虚拟地址转为页目录页表索引
+ * 
+ * @param virtualAddress 虚拟地址
+ * @param pdIndex 页目录索引
+ * @param ptIndex 页表索引
  */
-static inline void address2offset(inwox_vir_addr_t virtualAddress, size_t &pdOffset, size_t &ptOffset)
+static inline void addressToIndex(inwox_vir_addr_t virtualAddress, size_t &pdIndex, size_t &ptIndex)
 {
     assert(!(virtualAddress & 0xFFF));
-    /* 高10位是页目录偏移 */
-    pdOffset = virtualAddress >> 22;
-    /* 中间10位是页表偏移 */
-    ptOffset = (virtualAddress >> 12) & 0x3FF;
+    // 高10位是页目录索引
+    pdIndex = virtualAddress >> 22;
+    // 中间10位是页表索引
+    ptIndex = (virtualAddress >> 12) & 0x3FF;
 }
 
 /**
- * 初始化地址空间
- * 在开启分页时曾经将内核虚拟地址映射到其物理地址（identity mapping）
- * 分页开启后这个映射不再需要，取消这个映射。
+ * @brief 初始化地址空间
+ * 
+ * 干如下几件事:
+ * 1. 设置内核页目录
+ * 2. 将启动过程所用内存取消映射
+ * 3. 将段信息设置给内核空间
  */
 void AddressSpace::initialize()
 {
     kernelSpace = &_kernelSpace;
     kernelSpace->pageDir = (inwox_phy_addr_t)&kernelPageDirectory;
-    inwox_vir_addr_t p = (inwox_vir_addr_t)&bootstrapBegin;
 
+    inwox_vir_addr_t p = (inwox_vir_addr_t)&bootstrapBegin;
     while (p < (inwox_vir_addr_t)&bootstrapEnd) {
         kernelSpace->unMap(p);
-        p += 0x1000;
+        p += PAGESIZE;
     }
-    /**
-     * 可以将下边这个映射干掉是因为第一个页表对应的内存是已知的最高4M。
-     */
+    // 可以将下边这个映射删掉是因为此地址为整个地址空间的最高4M，用于存放分页系统的页目录和页表，而
+    // 对分页系统的访问不能使用虚拟地址，否则会产生死循环
     kernelSpace->unMap(RECURSIVE_MAPPING);
-    kernelSpace->firstSegment = &segment1;
-    segment1.next = &segment2;
-    segment2.next = &segment3;
-    segment3.next = &segment4;
+    kernelSpace->firstSegment = &userSegment;
+    userSegment.next = &videoSegment;
+    videoSegment.next = &kernelSegment;
+    kernelSegment.next = &recursiveMappingSegment;
 }
 
 /**
- * 将当前地址空间激活
+ * @brief 将当前地址空间激活
+ * 
  * 也就是将当前的页目录设置给%cr3
  */
 void AddressSpace::activate()
@@ -152,14 +197,19 @@ void AddressSpace::activate()
 }
 
 /**
- * 启动新进程时，fork前一个进程的地址空间
+ * @brief fork地址空间
+ * 
+ * 启动新进程时，fork父进程地址空间
+ * 1. 创建一个新的地址空间
+ * 2. 复制原地址空间内存
+ * @return AddressSpace* 新地址空间
  */
 AddressSpace *AddressSpace::fork()
 {
     AddressSpace *result = new AddressSpace();
     MemorySegment *segment = firstSegment->next;
     while (segment) {
-        // 找到未使用的segment，分配并复制父进程的地质空间内容
+        // 找到未使用的segment，分配并复制父进程的地址空间内容
         if (!(segment->flags & SEG_NOUNMAP)) {
             size_t size = segment->size;
             result->mapMemory(segment->address, size, segment->flags);
@@ -176,29 +226,31 @@ AddressSpace *AddressSpace::fork()
 }
 
 /**
- * 获取虚拟地址对应的物理地址
+ * @brief 通过虚拟地址获取映射的物理地址
+ * 
+ * @param virtualAddress 虚拟地址
+ * @return inwox_phy_addr_t 映射的物理地址
  */
 inwox_phy_addr_t AddressSpace::getPhysicalAddress(inwox_vir_addr_t virtualAddress)
 {
-    size_t pdOffset;
-    size_t ptOffset;
-    address2offset(virtualAddress, pdOffset, ptOffset);
+    size_t pdIndex;
+    size_t ptIndex;
+    addressToIndex(virtualAddress, pdIndex, ptIndex);
 
     uintptr_t *pageDirectory;
     uintptr_t *pageTable = nullptr;
     inwox_phy_addr_t result = 0;
-    if (this == kernelSpace) {
-        /* 内核态页目录从RECURSIVE_MAPPING + 0x3FF000开始 */
+    if (this == kernelSpace) {  // 内核页目录存放在固定位置，地址空间最高4K（0xFFFF F000）
         pageDirectory = (uintptr_t *)(RECURSIVE_MAPPING + 0x3FF000);
-        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + 0x1000 * pdOffset);
-    } else {
+        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + PAGESIZE * pdIndex);
+    } else {  // 用户态页表使用时分配，使用完解分配
         pageDirectory = (uintptr_t *)kernelSpace->map(pageDir, PROT_READ);
     }
-    if (pageDirectory[pdOffset]) {
+    if (pageDirectory[pdIndex]) {
         if (this != kernelSpace) {
-            pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, PROT_READ);
+            pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdIndex] & ~0xFFF, PROT_READ);
         }
-        result = pageTable[ptOffset] & ~0xFFF;
+        result = pageTable[ptIndex] & ~0xFFF;
     }
     if (this != kernelSpace) {
         if (pageTable) {
@@ -210,33 +262,39 @@ inwox_phy_addr_t AddressSpace::getPhysicalAddress(inwox_vir_addr_t virtualAddres
 }
 
 /**
- * 判断所给页目录页表所指内存页是否空闲
+ * @brief 判断指定的页目录页表是否可用
+ * 
+ * @param pdIndex 页目录索引
+ * @param ptIndex 页表索引
+ * @return true 该索引未使用
+ * @return false 该索已使用
  */
-bool AddressSpace::isFree(size_t pdOffset, size_t ptOffset)
+bool AddressSpace::isFree(size_t pdIndex, size_t ptIndex)
 {
-    if (pdOffset == 0 && ptOffset == 0) {
+    if (pdIndex == 0 && ptIndex == 0) {
         return false;
     }
     uintptr_t *pageDirectory;
     uintptr_t *pageTable = nullptr;
     bool result;
 
-    if (this == kernelSpace) {
+    if (this == kernelSpace) { // 内核页目录存放在固定位置，地址空间最高4K（0xFFFF F000）
         pageDirectory = (uintptr_t *)(RECURSIVE_MAPPING + 0x3FF000);
-        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + 0x1000 * pdOffset);
-    } else {
+        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + PAGESIZE * pdIndex);
+    } else { // 用户态页表使用时分配，使用完解分配
         pageDirectory = (uintptr_t *)kernelSpace->map(pageDir, PROT_READ);
     }
 
-    if (!pageDirectory[pdOffset]) {
+    if (!pageDirectory[pdIndex]) { // 整个页目录项所指的页表都未使用，直接返回true
         result = true;
-    } else {
+    } else { // 否则判断页表项所指是否被分配，同样对于用户态页表需要先映射到虚拟空间，内核页表则常驻虚拟地址空间最高端
         if (this != kernelSpace) {
-            pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, PROT_READ);
+            pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdIndex] & ~0xFFF, PROT_READ);
         }
-        result = !pageTable[ptOffset];
+        result = !pageTable[ptIndex];
     }
 
+    // 对用户态每次访问完分页系统都将页目录、页表取消映射
     if (this != kernelSpace) {
         if (pageTable) {
             kernelSpace->unMap((inwox_vir_addr_t)pageTable);
@@ -250,8 +308,18 @@ bool AddressSpace::isFree(size_t pdOffset, size_t ptOffset)
  * 将物理地址映射到虚拟地址
  * flags 0x3是可读可写，0x1是只读，0x0不可用
  */
+
+
+/**
+ * @brief 将物理页映射到虚拟地址
+ * 
+ * @param physicalAddress 物理内存开始位置
+ * @param protection 保护位（包括读（PROT_READ）、写（PROT_WRITE）、执行（PROT_EXEC）及无权限（PROT_NONE））
+ * @return inwox_vir_addr_t 映射后的虚拟地址
+ */
 inwox_vir_addr_t AddressSpace::map(inwox_phy_addr_t physicalAddress, int protection)
 {
+    // 页目录开始到结束的索引
     size_t begin;
     size_t end;
     if (this == kernelSpace) {
@@ -262,11 +330,11 @@ inwox_vir_addr_t AddressSpace::map(inwox_phy_addr_t physicalAddress, int protect
         end = 0x300;
     }
 
-    /* 找到没有映射的页，并映射 */
-    for (size_t pdOffset = begin; pdOffset < end; pdOffset++) {
-        for (size_t ptOffset = 0; ptOffset < 0x400; ptOffset++) {
-            if (isFree(pdOffset, ptOffset)) {
-                return mapAt(pdOffset, ptOffset, physicalAddress, protection);
+    /* 找到空闲内存页，并映射 */
+    for (size_t pdIndex = begin; pdIndex < end; pdIndex++) {
+        for (size_t ptIndex = 0; ptIndex < 0x400; ptIndex++) {
+            if (isFree(pdIndex, ptIndex)) {
+                return mapAt(pdIndex, ptIndex, physicalAddress, protection);
             }
         }
     }
@@ -274,93 +342,135 @@ inwox_vir_addr_t AddressSpace::map(inwox_phy_addr_t physicalAddress, int protect
 }
 
 /**
- * 下边两个函数是将虚拟地址和物理地址映射起来
- * 分别通过具体的虚拟地址和通过PDE、PTE
- * flags和map函数一样，都是0x3是可读可写，0x1是只读，0x0不可用
+ * @brief 将物理内存（页大小）映射到指定的虚拟内存，此操作会写页目录页表
+ * 
+ * @param virtualAddress 虚拟内存 4K对齐
+ * @param physicalAddress 物理内存 4K对齐
+ * @param protection 映射方式（包括读（PROT_READ）、写（PROT_WRITE）、执行（PROT_EXEC）及无权限（PROT_NONE））
+ * @return inwox_vir_addr_t 映射后的虚拟地址
  */
 inwox_vir_addr_t AddressSpace::mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, int protection)
 {
-    size_t pdOffset;
-    size_t ptOffset;
-    address2offset(virtualAddress, pdOffset, ptOffset);
-    return mapAt(pdOffset, ptOffset, physicalAddress, protection);
+    size_t pdIndex;
+    size_t ptIndex;
+    addressToIndex(virtualAddress, pdIndex, ptIndex);
+    return mapAt(pdIndex, ptIndex, physicalAddress, protection);
 }
 
+
+/**
+ * @brief 将物理地址映射到指定的页目录页表，此操作会写页目录页表
+ * 
+ * @param pdIndex 页目录索引
+ * @param ptIndex 页表索引
+ * @param physicalAddress 待映射物理地址，4K对齐
+ * @param protection 映射方式（包括读（PROT_READ）、写（PROT_WRITE）、执行（PROT_EXEC）及无权限（PROT_NONE））
+ * @return inwox_vir_addr_t 映射后的虚拟地址
+ */
 inwox_vir_addr_t AddressSpace::mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, int protection)
-{
+{ 
     assert(!(protection & ~_PROT_FLAGS));
     assert(!(physicalAddress & 0xFFF));
 
     int flags = protectionToFlags(protection);
 
     if (this != kernelSpace) {
-        // Memory in user space is always accessable by user.
+        // 用户空间分配的内存全部标记为用户可访问
         flags |= PAGE_USER;
     }
 
     return mapAtWithFlags(pdIndex, ptIndex, physicalAddress, flags);
 }
 
-inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdOffset, size_t ptOffset, inwox_phy_addr_t physicalAddress,
+/**
+ * @brief 将物理地址设置到页表页目录中，返回对应的虚拟地址
+ * 
+ * @param pdIndex 页目录索引
+ * @param ptIndex 页表索引
+ * @param physicalAddress 待映射物理地址，4K对齐
+ * @param flags 映射方式
+ * @return inwox_vir_addr_t 映射后的虚拟地址
+ */
+inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress,
                                               int flags)
 {
+    // 只可以使用低12位
     assert(!(flags & ~0xFFF));
-    uintptr_t *pageDirectory;
+    uintptr_t *pageDirectory = nullptr;
     uintptr_t *pageTable = nullptr;
 
-    if (this == kernelSpace) {
-        /* 页目录从0xFFFFF000（RECURSIVE_MAPPING+0x3FF000）开始 */
+    if (this == kernelSpace) {  // 内核页目录存放在地址空间最高4K（0xFFFF F000），且常驻内存
         pageDirectory = (uintptr_t *)(RECURSIVE_MAPPING + 0x3FF000);
-        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + 0x1000 * pdOffset);
-    } else {
+        pageTable = (uintptr_t *)(RECURSIVE_MAPPING + PAGESIZE * pdIndex);
+    } else {  // 用户态进程的页目录要动态分配，使用时调入虚拟内存中
         pageDirectory = (uintptr_t *)kernelSpace->map(pageDir, PROT_READ | PROT_WRITE);
     }
 
-    if (!pageDirectory[pdOffset]) {
+    // 若页表还未分配，则分配一个页的作为页表，并设置到页目录中
+    if (!pageDirectory[pdIndex]) {
         inwox_phy_addr_t pageTablePhys = PhysicalMemory::popPageFrame();
         int pdFlags = PAGE_PRESENT | PAGE_WRITABLE;
+        // 对于用户空间的操作,都加上用户可用标识
         if (this != kernelSpace) {
             pdFlags |= PAGE_USER;
         }
-        pageDirectory[pdOffset] = pageTablePhys | pdFlags;
-        if (this != kernelSpace) {
+        pageDirectory[pdIndex] = pageTablePhys | pdFlags;
+        if (this != kernelSpace) {  // 对于用户地址空间，直接将申请到的物理内存映射一个虚拟地址作为页表
             pageTable = (uintptr_t *)kernelSpace->map(pageTablePhys, PROT_READ | PROT_WRITE);
         }
-        memset(pageTable, 0, 0x1000);
+        // 注意新分配的页表需要清零
+        memset(pageTable, 0, PAGESIZE);
 
+        // 对于内核地址空间，需要在全部地址空间映射这个页表
         if (this == kernelSpace) {
             AddressSpace *addressSpace = firstAddressSpace;
             while (addressSpace) {
                 uintptr_t *pageDir = (uintptr_t *)map(addressSpace->pageDir, PROT_READ | PROT_WRITE);
-                pageDir[pdOffset] = pageTablePhys | 0x3;
+                pageDir[pdIndex] = pageTablePhys | PAGE_PRESENT | PAGE_WRITABLE;
                 unMap((inwox_vir_addr_t)pageDir);
                 addressSpace = addressSpace->next;
             }
         }
+    // 对于已经存在的页表，只需找到对应的页表虚拟地址
     } else if (this != kernelSpace) {
-        pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdOffset] & ~0xFFF, PROT_READ | PROT_WRITE);
+        pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdIndex] & ~0xFFF, PROT_READ | PROT_WRITE);
     }
-    pageTable[ptOffset] = physicalAddress | flags;
 
+    // 将物理地址设置到页表中
+    pageTable[ptIndex] = physicalAddress | flags;
+
+    // 对于用户空间,每次映射完内存,将页目录和页表释放掉
+    // 内核的页目录页表常驻内存最高区域
     if (this != kernelSpace) {
         kernelSpace->unMap((inwox_vir_addr_t)pageTable);
         kernelSpace->unMap((inwox_vir_addr_t)pageDirectory);
     }
-    inwox_vir_addr_t virtualAddress = offset2address(pdOffset, ptOffset);
+    inwox_vir_addr_t virtualAddress = IndexToaddress(pdIndex, ptIndex);
 
-    /* 由于虚拟地址指向的物理地址改变了，所以要更新TLB */
+    // 由于虚拟地址指向的物理地址改变了，所以要更新TLB
     __asm__ __volatile__("invlpg (%0)" ::"r"(virtualAddress));
 
     return virtualAddress;
 }
 
+/**
+ * @brief 复制地址空间的一部分
+ * 
+ * 将地址空间的一段虚拟内存复制到新地址空间，返回新地址空间对应的虚拟地址
+ * 
+ * @param sourceSpace 源地址空间
+ * @param sourceVirtualAddress 源地址空间待复制虚拟内存开始地址
+ * @param size 要复制的大小
+ * @param protection 复制模式
+ * @return inwox_vir_addr_t 复制后新地址空间的虚拟地址
+ */
 inwox_vir_addr_t AddressSpace::mapFromOtherAddressSpace(AddressSpace *sourceSpace,
                                                         inwox_vir_addr_t sourceVirtualAddress, size_t size,
                                                         int protection)
 {
     inwox_vir_addr_t destination = MemorySegment::findFreeSegment(firstSegment, size);
 
-    for (size_t i = 0; i < size; i += 0x1000) {
+    for (size_t i = 0; i < size; i += PAGESIZE) {
         inwox_phy_addr_t physicalAddress = sourceSpace->getPhysicalAddress(sourceVirtualAddress + i);
         if (!physicalAddress || !mapAt(destination + i, physicalAddress, protection)) {
             return 0;
@@ -372,17 +482,34 @@ inwox_vir_addr_t AddressSpace::mapFromOtherAddressSpace(AddressSpace *sourceSpac
     return destination;
 }
 
+/**
+ * @brief 分配虚拟内存
+ * 
+ * @param size 待分配内存大小
+ * @param protection 内存访问权限，PROT_READ/PROT_WRITE/PROT_EXEC/PROT_NONE，必须指定至少一个权限
+ * @return inwox_vir_addr_t 返回分配好的虚拟内存
+ */
 inwox_vir_addr_t AddressSpace::mapMemory(size_t size, int protection)
 {
     inwox_vir_addr_t virtualAddress = MemorySegment::findFreeSegment(firstSegment, size);
     return mapMemory(virtualAddress, size, protection);
 }
 
+/**
+ * @brief 映射虚拟内存到物理内存
+ * 
+ * 将传入的虚拟内存地址分配一个物理内存地址，并返回虚拟地址
+ *  
+ * @param virtualAddress 
+ * @param size 
+ * @param protection 
+ * @return inwox_vir_addr_t 
+ */
 inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t size, int protection)
 {
     inwox_phy_addr_t physicalAddress;
 
-    for (size_t i = 0; i < size; i += 0x1000) {
+    for (size_t i = 0; i < size; i += PAGESIZE) {
         physicalAddress = PhysicalMemory::popPageFrame();
         if (!physicalAddress || !mapAt(virtualAddress + i, physicalAddress, protection)) {
             return 0;
@@ -394,16 +521,34 @@ inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t
     return virtualAddress;
 }
 
+
+/**
+ * @brief 将指定的物理内存映射到虚拟地址空间
+ * 
+ * @param physicalAddress 物理内存开始地址
+ * @param size 物理内存大小
+ * @param protection 映射保护位
+ * @return inwox_vir_addr_t 映射后的虚拟地址
+ */
 inwox_vir_addr_t AddressSpace::mapPhysical(inwox_phy_addr_t physicalAddress, size_t size, int protection)
 {
     inwox_vir_addr_t virtualAddress = MemorySegment::findFreeSegment(firstSegment, size);
     return mapPhysical(virtualAddress, physicalAddress, size, protection);
 }
 
+/**
+ * @brief 将物理内存映射到虚拟地址空间，按页大小进行操作
+ * 
+ * @param virtualAddress 虚拟地址
+ * @param physicalAddress 物理地址
+ * @param size 要映射内存的长度
+ * @param protection 映射方式（包括读（PROT_READ）、写（PROT_WRITE）、执行（PROT_EXEC）及无权限（PROT_NONE））
+ * @return inwox_vir_addr_t 映射后的虚拟地址
+ */
 inwox_vir_addr_t AddressSpace::mapPhysical(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress,
                                            size_t size, int protection)
 {
-    for (size_t i = 0; i < size; i += 0x1000) {
+    for (size_t i = 0; i < size; i += PAGESIZE) {
         if (!mapAt(virtualAddress + i, physicalAddress + i, protection)) {
             return 0;
         }
@@ -414,16 +559,30 @@ inwox_vir_addr_t AddressSpace::mapPhysical(inwox_vir_addr_t virtualAddress, inwo
     return virtualAddress;
 }
 
+/**
+ * @brief 取消内存页映射
+ * 
+ * @param virtualAddress 待操作内存开始地址
+ */
 void AddressSpace::unMap(inwox_vir_addr_t virtualAddress)
 {
     size_t pdIndex, ptIndex;
-    address2offset(virtualAddress, pdIndex, ptIndex);
+    addressToIndex(virtualAddress, pdIndex, ptIndex);
     mapAtWithFlags(pdIndex, ptIndex, 0, 0);
 }
 
+/**
+ * @brief 取消内存映射
+ * 
+ * 按页进行释放，释放后内存归还物理内存管理器，可再次分配给其他调用
+ * 同时从段链中移除此段空间
+ * 
+ * @param virtualAddress 开始地址，必须是页面的整数倍
+ * @param size 待取消映射的内存长度，不需要页对齐
+ */
 void AddressSpace::unmapMemory(inwox_vir_addr_t virtualAddress, size_t size)
 {
-    for (size_t i = 0; i < size; i += 0x1000) {
+    for (size_t i = 0; i < size; i += PAGESIZE) {
         inwox_phy_addr_t physicalAddress = getPhysicalAddress(virtualAddress + i);
         unMap(virtualAddress + i);
         PhysicalMemory::pushPageFrame(physicalAddress);
@@ -432,38 +591,83 @@ void AddressSpace::unmapMemory(inwox_vir_addr_t virtualAddress, size_t size)
     MemorySegment::removeSegment(firstSegment, virtualAddress, size);
 }
 
+/**
+ * @brief 取消内存映射
+ * 
+ * 只将映射取消（虚拟地址不能访问物理地址），但不归还物理内存
+ * 
+ * @param virtualAddress 
+ * @param size 
+ */
 void AddressSpace::unmapPhysical(inwox_vir_addr_t virtualAddress, size_t size)
 {
-    for (size_t i = 0; i < size; i += 0x1000) {
+    for (size_t i = 0; i < size; i += PAGESIZE) {
         unMap(virtualAddress + i);
     }
 
     MemorySegment::removeSegment(firstSegment, virtualAddress, size);
 }
 
+/**
+ * @brief 系统调用mmap实现函数
+ * 
+ * @param addr 如果为NULL，由内核选择新映射所在的虚拟地址位置（页面对齐），若不为NULL，则将addr作为参考，在其附近（页面对齐）处找合适位置开始映射
+ * @param size 要映射区域的长度（必须大于0）
+ * @param protection 描述了映射的内存保护模式（不能与打开的文件冲突）可以指定为如下几个权限或它们或运算的结果
+ *            PROT_EXEC  页可以被执行
+ *            PROT_READ  也可以被读取
+ *            PROT_WRITE 页可以被写入
+ *            PROT_NONE  页无权访问
+ * @param flags 确定对此段内存的操作是否对映射同一区域的其他进程可见、或其他控制操作
+ *            MAP_PRIVATE 创建一个私有的、写时复制的映射，映射的更新对映射同一文件的其他进程不可见
+ *            MAP_SHARED 共享映射，映射的修改对其他映射相同文件的进程可见
+ *            MAP_ANONYMOUS 没有提供待映射的文件，分配的内存将初始化为0，参数fd、offset忽略
+ * @param fd 如果指定fd（否则flags为MAP_ANONYMOUS），将使用fd表示的文件的offset偏移处开始的长度为size的内容映射到内存
+ * @param offset 同fd一起使用，文件偏移位置，页面对齐
+ * @return void* 新映射的虚拟地址
+ */
 static void *mmapImplementation(void * /*addr*/, size_t size, int protection, int flags, int /*fd*/, off_t /*offset*/)
 {
-    if (size == 0 || !(flags & MAP_PRIVATE)) {
+    // 目前只能分配私有内存
+    if (size <= 0 || !(flags & MAP_PRIVATE)) {
         errno = EINVAL;
         return MAP_FAILED;
     }
 
+    // 对于匿名映射，在当前进程的地址空间分配一块指定大小、保护模式的内存
     if (flags & MAP_ANONYMOUS) {
         AddressSpace *addressSpace = Process::current->addressSpace;
         return (void *)addressSpace->mapMemory(size, protection);
     }
 
-    // TODO: Implement other flags than MAP_ANONYMOUS
+    // 实现其他flags
     errno = ENOTSUP;
     return MAP_FAILED;
 }
 
+/**
+ * @brief 系统调用mmap
+ * 
+ * mmap即把文件的连续一段映射为一段连续内存，文件是通用概念，甚至也可以不指定，具体见实现函数mmapImplementation
+ * 
+ * @param request 参数见mmapImplementation描述
+ * @return void* 返回新映射的虚拟地址
+ */
 void *Syscall::mmap(__mmapRequest *request)
 {
     return mmapImplementation(request->_addr, request->_size, request->_protection, request->_flags, request->_fd,
                               request->_offset);
 }
 
+/**
+ * @brief 系统调用munmap
+ * 
+ * 取消对一块内存的映射，再次访问该地址会产生错误。进程终止时会自动取消映射，关闭文件描述符不会取消
+ * 
+ * @param addr 开始地址，必须是页面的整数倍
+ * @param size 待取消映射的内存长度，不需要页对齐
+ * @return int 成功返回0，失败-1
+ */
 int Syscall::munmap(void *addr, size_t size)
 {
     if (size == 0 || (inwox_vir_addr_t)addr & 0xFFF) {
@@ -478,13 +682,26 @@ int Syscall::munmap(void *addr, size_t size)
 }
 
 /**
- * 下边两个函数供libk调用
- * 分配/释放大小为pages_number个页的连续内存
+ * @brief 分配内存，用于libk
+ * 
+ * 对于libk分配内存，直接使用kernelSpace分配内存即可分配指定大小的连续虚拟内存
+ * 
+ * @param size 分配内存的大小，单位字节
+ * @return void* 返回已分配的虚拟内存
  */
 extern "C" void *__mapMemory(size_t size)
 {
     return (void *)kernelSpace->mapMemory(size, PROT_READ | PROT_WRITE);
 }
+
+/**
+ * @brief 解除内存的分配，用于libk
+ * 
+ * 对于libk分配内存，直接使用kernelSpace内存映射即可
+ * 
+ * @param addr 待解除映射的虚拟内存地址
+ * @param size 内存的大小，单位字节
+ */
 extern "C" void __unmapMemory(void *addr, size_t size)
 {
     kernelSpace->unmapMemory((inwox_vir_addr_t)addr, size);

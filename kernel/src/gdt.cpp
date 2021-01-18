@@ -30,7 +30,7 @@
 #include <inwox/kernel/process.h>
 
 /**
- * 申明系统唯一的tss，以后每次任务调度只需修改esp0
+ * 声明系统唯一的tss，以后每次任务调度只需修改esp0
  */
 struct tss_entry tss = {
     0,    /* prev_tss */

@@ -28,6 +28,9 @@
 #ifndef INWOX_MMAN_H_
 #define INWOX_MMAN_H_
 
+/**
+ * 内存的保护掩码，用于内存映射是权限的控制
+ */
 #define PROT_READ  (1 << 0)
 #define PROT_WRITE (1 << 1)
 #define PROT_EXEC  (1 << 2)
@@ -35,9 +38,12 @@
 
 #define _PROT_FLAGS (PROT_READ | PROT_WRITE | PROT_EXEC | PROT_NONE)
 
-#define MAP_PRIVATE   (1 << 0) /* 私有的、写时复制的 */
-#define MAP_ANONYMOUS (1 << 1) /* 匿名对象，相应的虚拟页面是请求二进制0的 */
-#define MAP_SHARED    (1 << 2) /* 共享对象 */
+/**
+ * 内存映射的flags，用于mmap/munmap
+ */
+#define MAP_PRIVATE   (1 << 0) /* 私有的、写时复制的映射，映射的更新对映射同一文件的其他进程不可见 */
+#define MAP_ANONYMOUS (1 << 1) /* 映射的内存不基于任何后端文件，内容将被初始化为0 */
+#define MAP_SHARED    (1 << 2) /* 共享映射，映射的修改对其他映射相同文件的进程可见 */
 
 #define MAP_FAILED ((void *)0)
 

@@ -28,13 +28,13 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <stdlib.h> /* malloc */
-#include <string.h> /* memset memcpy */
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
-#include <inwox/kernel/elf.h> /* ElfHeader ProgramHeader */
+#include <inwox/kernel/elf.h>
 #include <inwox/kernel/file.h>
-#include <inwox/kernel/physicalmemory.h> /* popPageFrame */
-#include <inwox/kernel/print.h>          /* printf */
+#include <inwox/kernel/physicalmemory.h>
+#include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
 #include <inwox/kernel/terminal.h>
 
@@ -69,7 +69,7 @@ Process::Process()
 Process::~Process()
 {
     assert(terminated);
-    kernelSpace->unmapMemory((inwox_vir_addr_t)kstack, 0x1000);
+    kernelSpace->unmapMemory((inwox_vir_addr_t)kstack, PAGESIZE);
     free(children);
 }
 
@@ -112,7 +112,7 @@ uintptr_t Process::loadELF(uintptr_t elf, AddressSpace *newAddressSpace)
         inwox_vir_addr_t loadAddressAligned = programHeader[i].p_paddr & ~0xFFF;
         ptrdiff_t offset = programHeader[i].p_paddr - loadAddressAligned;
         const void *src = (void *)(elf + programHeader[i].p_offset);
-        size_t size = ALIGN_UP(programHeader[i].p_memsz + offset, 0x1000);
+        size_t size = ALIGN_UP(programHeader[i].p_memsz + offset, PAGESIZE);
         /* 将申请到的物理内存映射到连续虚拟内存 */
         newAddressSpace->mapMemory(loadAddressAligned, size, PROT_READ | PROT_WRITE | PROT_EXEC);
         inwox_vir_addr_t dest =
@@ -149,7 +149,7 @@ struct context *Process::schedule(struct context *context)
             current = idleProcess;
         }
     }
-    setKernelStack((uintptr_t)current->kstack + 0x1000);
+    setKernelStack((uintptr_t)current->kstack + PAGESIZE);
     current->addressSpace->activate();
     return current->interruptContext;
 }
@@ -167,7 +167,7 @@ int Process::copyArguments(char *const argv[], char *const envp[], char **&newAr
         stringSizes += strlen(envp[envc]) + 1;
     }
     stringSizes = ALIGN_UP(stringSizes, alignof(char *));
-    size_t size = ALIGN_UP(stringSizes + (argc + envc + 2) * sizeof(char *), 0x1000);
+    size_t size = ALIGN_UP(stringSizes + (argc + envc + 2) * sizeof(char *), PAGESIZE);
     inwox_vir_addr_t page = newAddressSpace->mapMemory(size, PROT_READ | PROT_WRITE);
     inwox_vir_addr_t pageMapped = kernelSpace->mapFromOtherAddressSpace(newAddressSpace, page, size, PROT_WRITE);
     char *nextString = (char *)pageMapped;
@@ -208,10 +208,10 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
      * 分配两个栈，内核栈用来保存上下文信息
      * 用户栈处理其他
      */
-    kstack = (void *)kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
-    inwox_vir_addr_t stack = newAddressSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
+    kstack = (void *)kernelSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
+    inwox_vir_addr_t stack = newAddressSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
 
-    struct context *newInterruptContext = (struct context *)((uintptr_t)kstack + 0x1000 - sizeof(struct context));
+    struct context *newInterruptContext = (struct context *)((uintptr_t)kstack + PAGESIZE - sizeof(struct context));
     memset(newInterruptContext, 0, sizeof(struct context));
     char **newArgv;
     char **newEnvp;
@@ -226,7 +226,7 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
                                           * 一样道理。
                                           */
     newInterruptContext->eflags = 0x200; /* 开启中断 */
-    newInterruptContext->useresp = stack + 0x1000;
+    newInterruptContext->useresp = stack + PAGESIZE;
     newInterruptContext->ss = 0x23; /* 用户数据段 */
     if (!fdInitialized) {
         fd[0] = new FileDescription(&terminal); /* 文件描述符0指向 stdin */
@@ -296,8 +296,8 @@ Process *Process::regfork(int flags, struct regfork *registers)
     children[numChildren - 1] = process;
 
     // fork 寄存器
-    process->kstack = (void *)kernelSpace->mapMemory(0x1000, PROT_READ | PROT_WRITE);
-    process->interruptContext = (struct context *)((uintptr_t)process->kstack + 0x1000 - sizeof(struct context));
+    process->kstack = (void *)kernelSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
+    process->interruptContext = (struct context *)((uintptr_t)process->kstack + PAGESIZE - sizeof(struct context));
     process->interruptContext->eax = registers->rf_eax;
     process->interruptContext->ebx = registers->rf_ebx;
     process->interruptContext->ecx = registers->rf_ecx;

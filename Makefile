@@ -55,6 +55,9 @@ programs:
 tests:
 	$(MAKE) -C tests
 
+qemu: $(ISO)
+	qemu-system-i386 -cdrom $^ -m 8M
+
 # How To Exit
 # Windows Terminal: Alt + 2 -> q
 # macOS Terminal: esc + 2 -> q

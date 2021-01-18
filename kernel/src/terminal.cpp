@@ -77,13 +77,15 @@ static void printChar(char c)
                 video[i] = video[i + 2 * 80];
             }
             /* 最后一行全部置成灰色 */
-            for (size_t i = 2 * 24 * 80; i < 2 * 25 * 80; i++) {
-                video[i] = 0;
+            for (size_t i = 2 * 24 * 80; i < 2 * 25 * 80; i+=2) {
+                video[i] = ' ';
+                video[i+1] = FontColor;
             }
             cursorPostY = 24;
         }
-        if (c == '\n')
+        if (c == '\n') {
             return;
+        }
     }
     video[cursorPostY * 2 * 80 + 2 * cursorPostX] = c;
     video[cursorPostY * 2 * 80 + 2 * cursorPostX + 1] = FontColor;

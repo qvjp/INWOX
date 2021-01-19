@@ -28,6 +28,8 @@ COMMON_OBJ = \
 	stdlib/calloc \
 	stdlib/free \
 	stdlib/malloc \
+	stdlib/rand \
+	stdlib/rand_r \
 	stdlib/realloc \
 	stdlib/strtol \
 	stdlib/strtoul \

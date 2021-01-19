@@ -22,45 +22,22 @@
  */
 
 /**
- * lib/include/stdlib.h
- * 标准库定义
+ * libc/src/stdlib/rand_r.c
+ * 伪随机数生成函数
  */
 
-#ifndef STDLIB_H
-#define STDLIB_H
+#include <stdlib.h>
 
-#define __need_size_t
-#include <sys/types.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-#define EXIT_FAILURE 1
-#define EXIT_SUCCESS 0
-
-#define RAND_MAX (0x7fffffff) // rand()可生成的最大随机数
-
-__attribute__((__noreturn__)) void _Exit(int);
-__attribute__((__noreturn__)) void exit(int);
-
-void free(void *);
-void *malloc(size_t);
-void *calloc(size_t, size_t);
-void *realloc(void *, size_t);
-long strtol(const char *__restrict, char **__restrict, int);
-unsigned long strtoul(const char *__restrict, char **__restrict, int);
-int rand(void);
-int rand_r(unsigned int *);
-void srand(unsigned int);
-
-__attribute__((__noreturn__)) void abort(void);
-int atexit(void (*)(void));
-int atoi(const char *);
-char *getenv(const char *);
-
-#ifdef __cplusplus
+static unsigned temper(unsigned x)
+{
+	x ^= x >> 11;
+	x ^= x << 7 & 0x9D2C5680;
+	x ^= x << 15 & 0xEFC60000;
+	x ^= x >> 18;
+	return x;
 }
-#endif /* __cplusplus */
 
-#endif /* STDLIB_H */
+int rand_r(unsigned *seed)
+{
+	return temper(*seed = *seed * 1103515245 + 12345) / 2;
+}

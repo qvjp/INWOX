@@ -55,6 +55,7 @@ ssize_t readdir(int fd, unsigned long offset, void *buffer, size_t size);
 int nanosleep(const struct timespec *request, struct timespec *remaining);
 int tcgetattr(int fd, struct termios *result);
 int tcsetattr(int fd, int flags, const struct termios *termio);
+int fchdirat(int dirfd, const char *path);
 void badSyscall();
 } /* namespace Syscall */
 

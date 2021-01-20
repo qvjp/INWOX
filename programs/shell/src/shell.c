@@ -33,6 +33,25 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+static int cd(int argc, char *argv[])
+{
+    const char *newCwd;
+    if (argc >= 2) {
+        newCwd = argv[1];
+    } else {
+        newCwd = getenv("HOME");
+        if (!newCwd) {
+            fputs("HOME not set\n", stderr);
+            return 1;
+        }
+    }
+    if (chdir(newCwd) == -1) {
+        fputs("Error: chdir failed\n", stderr);
+        return 1;
+    }
+    return 0;
+}
+
 static const char *getExecutablePath(const char *command)
 {
     size_t commandLength = strlen(command);
@@ -57,12 +76,15 @@ static const char *getExecutablePath(const char *command)
     return NULL;
 }
 
-static int executeCommand(char *arguments[])
+static int executeCommand(int argc, char *arguments[])
 {
     const char *command = arguments[0];
     // shell 内置命令
     if (strcmp(command, "exit") == 0) {
         exit(0);
+    }
+    if (strcmp(command, "cd") == 0) {
+        return cd(argc, arguments);
     }
 
     pid_t pid = fork();
@@ -112,14 +134,16 @@ int main(int argc, char *argv[])
             }
         }
         char **arguments = malloc((argumentCount + 1) * sizeof(char *));
-        char *str = strtok(buffer, " ");
-        for (size_t i = 0; i < argumentCount; i++) {
-            arguments[i] = str;
-            str = strtok(NULL, " ");
+        char *token = strtok(buffer, " ");
+        size_t argCount = 0;
+        while (token) {
+            arguments[argCount++] = token;
+            token = strtok(NULL, " ");
         }
-        arguments[argumentCount] = NULL;
+        
+        arguments[argCount] = NULL;
 
-        executeCommand(arguments);
+        executeCommand(argCount, arguments);
         free(arguments);
     }
 }

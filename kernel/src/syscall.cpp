@@ -27,6 +27,7 @@
  */
 
 #include <errno.h>
+#include <sys/stat.h>
 #include <inwox/fcntl.h>
 #include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
@@ -54,6 +55,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::nanosleep,
     (void*) Syscall::tcgetattr,
     (void*) Syscall::tcsetattr,
+    (void*) Syscall::fchdirat,
 };
 
 /**
@@ -67,7 +69,14 @@ extern "C" const void *getSyscallHandler(unsigned interruptNum)
         return syscallList[interruptNum];
 }
 
-static FileDescription *getRootFd(int fd, const char *__restrict path)
+/**
+ * @brief 获取文件句柄
+ * 
+ * @param fd 若path不以'/'开头，则获取文件描述符fd对应的文件句柄
+ * @param path 若以'/'开头，获取系统根目录文件句柄
+ * @return FileDescription* 文件句柄
+ */
+static FileDescription *getRootFd(int fd, const char *path)
 {
     if (path[0] == '/') {
         return Process::current->rootFd;
@@ -158,7 +167,7 @@ int Syscall::execve(const char *path, char *const argv[], char *const envp[])
     if (path == NULL || path[0] == '\0') {
         return -1;
     }
-    FileDescription *descr = Process::current->rootFd->openat(path, 0, 0);
+    FileDescription *descr = getRootFd(AT_FDCWD, path)->openat(path, 0, 0);
     if (!descr || Process::current->execute(descr, argv, envp) == -1) {
         return -1;
     }
@@ -204,6 +213,29 @@ int Syscall::tcsetattr(int fd, int flags, const struct termios *termio)
 {
     FileDescription *descr = Process::current->fd[fd];
     return descr->tcsetattr(flags, termio);
+}
+
+/**
+ * @brief 修改调用进程的工作路径
+ * 
+ * @param dirfd 同其他*at函数一致，表明相对此文件描述符dirfd解析后边的path
+ * @param path 修改后的路径
+ * @return int 返回0成功，-1失败
+ */
+int Syscall::fchdirat(int dirfd, const char *path)
+{
+    FileDescription *descr = getRootFd(dirfd, path);
+    FileDescription *newCwd = descr->openat(path, 0, 0);
+    if (!newCwd) {
+        return -1;
+    }
+    if (!S_ISDIR(newCwd->vnode->mode)) {
+        errno = ENOTDIR;
+        return -1;
+    }
+    delete Process::current->cwdFd;
+    Process::current->cwdFd = newCwd;
+    return 0;
 }
 
 /**

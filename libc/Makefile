@@ -43,6 +43,7 @@ COMMON_OBJ = \
 	string/strcpy \
 	string/strcspn \
 	string/strdup \
+	string/strerror \
 	string/strlen \
 	string/strnlen \
 	string/strncmp \

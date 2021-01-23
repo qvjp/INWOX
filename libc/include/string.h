@@ -46,6 +46,7 @@ void *memset(void *, int, size_t);
 char *strchr(const char *, int);
 char *stpcpy(char *__restrict, const char *__restrict);
 char *strdup(const char *);
+char *strerror(int);
 size_t strlen(const char *);
 size_t strnlen(const char *, size_t);
 char *strcpy(char *__restrict, const char *__restrict);

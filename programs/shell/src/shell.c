@@ -26,6 +26,7 @@
  * 简单shell
  */
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,7 +97,10 @@ static int executeCommand(int argc, char *arguments[])
             command = getExecutablePath(command);
         }
         if (command) {
-            execv(command, arguments);
+            if (execv(command, arguments) == -1) {
+                printf("%s: %s\n", command, strerror(errno));
+                _Exit(127);
+            }
         }
         fputs("Bad command\n", stderr);
         _Exit(127);

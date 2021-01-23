@@ -12,8 +12,10 @@ int main(int argc, char *argv[])
     }
     for (int i = 1; i < argc; i++) {
         struct stat st;
-        if (stat(argv[i], &st) < 0)
+        if (stat(argv[i], &st) < 0) {
+            perror("stat");
             continue;
+        }
 
         if (S_ISDIR(st.st_mode)) {
             listDirectory(argv[i]);
@@ -26,8 +28,10 @@ int main(int argc, char *argv[])
 static void listDirectory(const char *path)
 {
     DIR *dir = opendir(path);
-    if (!dir)
+    if (!dir) {
+        perror("open directory");
         return;
+    }
 
     struct dirent *entry = readdir(dir);
 

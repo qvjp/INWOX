@@ -47,7 +47,7 @@ static int cd(int argc, char *argv[])
         }
     }
     if (chdir(newCwd) == -1) {
-        fputs("Error: chdir failed\n", stderr);
+        perror("chdir");
         return 1;
     }
     return 0;
@@ -90,7 +90,7 @@ static int executeCommand(int argc, char *arguments[])
 
     pid_t pid = fork();
     if (pid < 0) {
-        fputs("fork() failed\n", stderr);
+        perror("fork");
         return -1;
     } else if (pid == 0) {
         if (!strchr(command, '/')) {
@@ -98,15 +98,17 @@ static int executeCommand(int argc, char *arguments[])
         }
         if (command) {
             if (execv(command, arguments) == -1) {
-                printf("%s: %s\n", command, strerror(errno));
-                _Exit(127);
+                perror("execv");
             }
+        } else {
+            fputs("Bad command\n", stderr);
         }
-        fputs("Bad command\n", stderr);
         _Exit(127);
     } else {
         int status;
-        waitpid(pid, &status, 0);
+        if (waitpid(pid, &status, 0) == -1) {
+            perror("waitpid");
+        }
         return WEXITSTATUS(status);
     }
     return -1;

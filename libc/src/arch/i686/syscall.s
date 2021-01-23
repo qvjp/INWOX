@@ -48,7 +48,7 @@ __syscall:
 
     int $0x49
 
-    # 错误码用ecx传递，如果不为0设置errno
+    # 错误码用ecx传递，如果不为0设置errno，如果为0，则errno使用内核默认设置的0
     test %ecx, %ecx
     jz 1f
     mov %ecx, errno

@@ -78,6 +78,7 @@ LIBC_OBJ = \
 	stdio/fwrite \
 	stdio/getc \
 	stdio/getchar \
+	stdio/perror \
 	stdio/printf \
 	stdio/putchar \
 	stdio/putc \

@@ -10,5 +10,6 @@ int main(int argc, char *argv[])
     }
 
     unsigned long time = strtoul(argv[1], NULL, 10);
+    
     sleep(time);
 }

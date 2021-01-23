@@ -21,41 +21,20 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/src/arch/i686/syscall.s
- * 系统调用Handler
+/* libc/src/stdio/perror.c
+ * 打印系统错误信息
  */
- 
-.section .text
-.global syscallHandler
-.type syscallHandler, @function
-syscallHandler:
 
-    mov %esp, %ebp          /* 保存esp */
-    push %edi               /* 处理系统调用参数 */
-    push %esi
-    push %edx
-    push %ecx
-    push %ebx
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 
-    push %eax               /* 系统调用号 */
-
-    mov $0x10, %cx          /* 进入内核态执行 */
-    mov %cx, %ds
-    mov %cx, %es
-
-    call getSyscallHandler  /* 将系统调用号转换为具体系统调用地址给eax */
-
-    add $4, %esp            /* %esp加4是为了将栈顶原素指向前边push的%ebx，作为具体系统调用的参数 */
-    movl $0, errno          /* errno默认置为0，若系统调用使errno发生改变，则设置成相应的值 */
-    call *%eax              /* 系统调用处理程序 */
-
-    mov $0x23, %cx          /* 切换回用户段 */
-    mov %cx, %ds
-    mov %cx, %es
-
-    mov errno, %ecx         /* 系统调用时设置错误码 */
-    mov %ebp, %esp
-    iret                    /* 返回用户态 */
-
-.size syscallHandler, . - syscallHandler
+void perror(const char *s)
+{
+    if (s && *s) {
+        fputs(s, stderr);
+        fputs(": ", stderr);
+    }
+    fputs(strerror(errno), stderr);
+    fputc('\n', stderr);
+}

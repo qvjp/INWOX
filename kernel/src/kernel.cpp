@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,6 +41,7 @@
 #include <inwox/kernel/ps2.h>
 #include <inwox/kernel/print.h>
 #include <inwox/kernel/process.h>
+#include <inwox/kernel/terminal.h>
 
 #ifndef INWOX_VERSION
 #define INWOX_VERSION ""
@@ -100,13 +101,13 @@ static DirectoryVnode *loadInitrd(multiboot_info *multiboot)
  */
 extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
 {
+    terminal.initTerminal();
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-        Print::warnTerminal();
+        terminal.warnTerminal();
         Print::printf("Invalid magic number: 0x%x\n", magic);
         return;
     }
 
-    Print::initTerminal();
     Print::printf("Welcome to INWOX " INWOX_VERSION "\n");
     Print::printf("Initializing AddressSpace...\n");
     AddressSpace::initialize();

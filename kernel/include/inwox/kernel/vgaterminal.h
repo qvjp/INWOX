@@ -21,35 +21,25 @@
  * SOFTWARE.
  */
 
-/**
- * kernel/src/print.cpp
- * 格式化输出至屏幕
+/* kernel/include/inwox/kernel/vgaterminal.h
+ * VGA Terminal
  */
 
-#include <stdarg.h> /* va_* */
-#include <stdio.h>
-#include <stdint.h> /* uint8_t uint32_t */
-#include <inwox/kernel/print.h>
-#include <inwox/kernel/terminal.h>
+#ifndef KERNEL_VGATERMINAL_H_
+#define KERNEL_VGATERMINAL_H_
 
-static size_t print_callback(void *, const char *string, size_t length)
-{
-    return (size_t)terminal.write(string, length);
+#include <stdint.h>
+#include <stddef.h>
+typedef uint8_t color_t;
+
+namespace VgaTerminal {
+void backspace();
+void fillRect(size_t x1, size_t x2, size_t y1, size_t y2, char ch, color_t color);
+void init();
+void printCharacter(char c);
+void printCharacterRaw(char c);
+void printEscapeCode(char c);
+void warnTerminal();
 }
 
-void Print::printf(const char *format, ...)
-{
-    /*
-     * 在这里写一下C语言中可变参数的基本用法
-     *
-     * 其中va是指variable-argument(可变参数)
-     * va_list是一个arg_ptr,指向参数的指针
-     * va_start()初始化va_list对象
-     * va_arg()返回参数指针当前指向的值
-     * va_end()和va_start()对应，调用过va_start后就必须调用va_end
-     */
-    va_list vl;
-    va_start(vl, format);
-    vcbprintf(nullptr, print_callback, format, vl);
-    va_end(vl);
-}
+#endif /* KERNEL_VGATERMINAL_H_ */

@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@
 #include <inwox/kernel/port.h>    /* outportb() */
 #include <inwox/kernel/print.h>   /* printf() warnTerminal() */
 #include <inwox/kernel/process.h> /* Process::schedule(r) */
+#include <inwox/kernel/terminal.h>
 
 /**
  * 挨个设置IDT中的ISR，下列的isr_*只是占位符，无实际逻辑，内部都是通过调用interrupt_handler实现
@@ -132,7 +133,7 @@ extern "C" struct context *interruptHandler(struct context *r)
 {
     struct context *newContext = r;
     if (r->int_no < 32) {
-        Print::warnTerminal();
+        terminal.warnTerminal();
         Print::printf("eax: 0x%x, ebx: 0x%x, ecx: 0x%x, edx: 0x%x\n", r->eax, r->ebx, r->ecx, r->edx);
         Print::printf("edi: 0x%x, esi: 0x%x, ebp: 0x%x, esp: 0x%x\n", r->edi, r->esi, r->ebp, r->esp);
         Print::printf("cs: 0x%x, eip: 0x%x, eflags: 0x%x, ss: 0x%x\n", r->cs, r->eip, r->eflags, r->ss);

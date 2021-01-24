@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +30,11 @@
 
 #include <inwox/termios.h>
 #include <inwox/kernel/keyboard.h>
+#include <inwox/kernel/vgaterminal.h>
 #include <inwox/kernel/vnode.h>
 #include <stdint.h>
 
 #define CIRCULAR_BUFFER_SIZE 4096
-
-typedef uint8_t color_t;
 
 class TerminalBuffer {
 public:
@@ -60,8 +59,6 @@ public:
     virtual ssize_t write(const void *buffer, size_t size);
     virtual void initTerminal();
     virtual void warnTerminal();
-    virtual void setFontColor(color_t color);
-    virtual color_t getFontColor();
     virtual int tcgetattr(struct termios *termios);
     virtual int tcsetattr(int flags, const struct termios *termio);
 

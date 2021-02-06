@@ -29,6 +29,7 @@ OBJ = \
 	syscall.o \
 	terminal.o \
 	timer.o \
+	uname.o \
 	vgaterminal.o \
 	vnode.o
 

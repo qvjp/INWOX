@@ -99,6 +99,7 @@ LIBC_OBJ = \
 	sys/mman/munmap \
 	sys/stat/fstatat \
 	sys/stat/stat \
+	sys/utsname/uname \
 	sys/wait/waitpid \
 	termios/tcgetattr \
 	termios/tcsetattr \

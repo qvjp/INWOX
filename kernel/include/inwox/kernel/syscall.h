@@ -33,6 +33,7 @@
 #define __need_mode_t
 #define __need_pid_t
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <inwox/fork.h>
 #include <inwox/syscall.h>
 #include <inwox/timespec.h>
@@ -56,6 +57,7 @@ int nanosleep(const struct timespec *request, struct timespec *remaining);
 int tcgetattr(int fd, struct termios *result);
 int tcsetattr(int fd, int flags, const struct termios *termio);
 int fchdirat(int dirfd, const char *path);
+int uname(struct utsname *uname);
 void badSyscall();
 } /* namespace Syscall */
 

@@ -71,6 +71,7 @@ void kernelPhysicalBegin();
 void kernelPhysicalEnd();
 void kernelPageDirectory();
 void kernelVirtualBegin();
+void kernelReadOnlyEnd();
 void kernelVirtualEnd();
 }
 

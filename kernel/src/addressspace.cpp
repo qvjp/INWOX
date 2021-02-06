@@ -123,10 +123,13 @@ AddressSpace::~AddressSpace()
  */
 static MemorySegment userSegment(0, 0xC0000000, PROT_NONE, nullptr, nullptr);
 static MemorySegment videoSegment(0xC0000000, PAGESIZE, PROT_READ | PROT_WRITE, &userSegment, nullptr);
-static MemorySegment kernelSegment((inwox_vir_addr_t)&kernelVirtualBegin,
-                              (inwox_vir_addr_t)&kernelVirtualEnd - (inwox_vir_addr_t)&kernelVirtualBegin,
-                              PROT_READ | PROT_WRITE | PROT_EXEC, &videoSegment, nullptr);
-static MemorySegment recursiveMappingSegment(RECURSIVE_MAPPING, -RECURSIVE_MAPPING, PROT_READ | PROT_WRITE, &kernelSegment, nullptr);
+static MemorySegment readOnlySegment((inwox_vir_addr_t) &kernelVirtualBegin,
+                                    (inwox_vir_addr_t) &kernelReadOnlyEnd - (inwox_vir_addr_t) &kernelVirtualBegin,
+                                    PROT_READ | PROT_EXEC, &videoSegment, nullptr);
+static MemorySegment writeableSegment((inwox_vir_addr_t)&kernelReadOnlyEnd,
+                              (inwox_vir_addr_t)&kernelVirtualEnd - (inwox_vir_addr_t)&kernelReadOnlyEnd,
+                              PROT_READ | PROT_WRITE, &readOnlySegment, nullptr);
+static MemorySegment recursiveMappingSegment(RECURSIVE_MAPPING, -RECURSIVE_MAPPING, PROT_READ | PROT_WRITE, &writeableSegment, nullptr);
 
 /**
  * @brief 将页目录页表索引转为虚拟地址
@@ -182,8 +185,9 @@ void AddressSpace::initialize()
     kernelSpace->unMap(RECURSIVE_MAPPING);
     kernelSpace->firstSegment = &userSegment;
     userSegment.next = &videoSegment;
-    videoSegment.next = &kernelSegment;
-    kernelSegment.next = &recursiveMappingSegment;
+    videoSegment.next = &readOnlySegment;
+    readOnlySegment.next = &writeableSegment;
+    writeableSegment.next = &recursiveMappingSegment;
 }
 
 /**

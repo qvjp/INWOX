@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -93,6 +93,9 @@ SECTIONS {
         *(.rodata)  /* 所有文件的所有只读section */
     }
 
+    kernelReadOnlyEnd = ALIGN(4K);
+    numReadOnlyPages = (kernelReadOnlyEnd - kernelVirtualBegin) / 4K;
+
     /* 可读可写数据（已被初始化）4K对齐，按顺序加载 */
     .data ALIGN(4K) : AT(ADDR(.data) - KERNEL_VIRTUAL)
     {
@@ -108,5 +111,5 @@ SECTIONS {
 
     kernelVirtualEnd = ALIGN(4K);
     kernelPhysicalEnd = kernelVirtualEnd - KERNEL_VIRTUAL;
-    numKernelPages = (kernelVirtualEnd - kernelVirtualBegin) / 4K;
+    numWritablePages = (kernelVirtualEnd - kernelReadOnlyEnd) / 4K;
 }

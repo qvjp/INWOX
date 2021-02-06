@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,11 @@
 .set MB_FLAGS,      MB_ALIGN | MB_MEMINFO   /* 这是Multiboot的“flag” */
 .set MB_CHECKSUM,   - (MB_MAGIC + MB_FLAGS) /* 校验上边的常量，提供的Multiboot */
 
+.set CR0_WRITE_PROTECT, (1 << 16)   /* 控制寄存器cr0保护位 */
+.set CR0_PAGING_ENABLE, (1 << 31)   /* 控制寄存器cr0开启分页位，若置为0，则去cr3读取页目录 */
+.set PAGE_READONLY, 0x1   /* 页只读标识 */
+.set PAGE_WRITE, 0x3      /* 页可写标识 */
+
 /**
  * 下边两个section是启用分页前，以地址0x100000起始运行的代码
  */
@@ -92,21 +97,21 @@
          * 到的页表。
          * kernelPageTable是跳到高地址空间执行后，所使用的页表。
          */
-        movl $(bootstrapPageTable + 0x3), kernelPageDirectory
+        movl $(bootstrapPageTable + PAGE_WRITE), kernelPageDirectory
         /* 将内核映射到0xC00即3GB地址 */
-        movl $(kernelPageTable + 0x3), kernelPageDirectory + 0xC00
+        movl $(kernelPageTable + PAGE_WRITE), kernelPageDirectory + 0xC00
 
         /* 倒数第二个PDT指向虚拟内存的 4G-8M->4G-4M，这里用来存放物理内存管理的栈 */
-        movl $(physicalMemroyStackPageTable + 0x3), kernelPageDirectory + 0xFF8
+        movl $(physicalMemroyStackPageTable + PAGE_WRITE), kernelPageDirectory + 0xFF8
 
         /* 页目录中最后一项指向自己，开启递归页目录，也就是将页目录映射到虚拟地址的0xFFC0 0000（4G-4M） */
-        movl $(kernelPageDirectory + 0x3), kernelPageDirectory + 0xFFC
+        movl $(kernelPageDirectory + PAGE_WRITE), kernelPageDirectory + 0xFFC
 
         /* identity mapping bootstrap section */
         mov $numBootstrapPages, %ecx
         /* 最低的1M空间被BISO和GRUB使用，为了使映射更加明了，直接映射没有映射最开始1M */
         mov $(bootstrapPageTable + 1024), %edi
-        mov $(bootstrapBegin + 0x3), %edx
+        mov $(bootstrapBegin + PAGE_WRITE), %edx
     1:
         mov %edx, (%edi)
         /* bootstrapPageTable中每项大小为4 bytes */
@@ -119,10 +124,22 @@
                      *  2. 如果%ecx == 0，向下执行，!= 0 跳转到标号执行
                      */
 
-        /* 映射高地址内核 */
-        mov $numKernelPages, %ecx
+        /* 映射内核只读部分 */
+        mov $numReadOnlyPages, %ecx
         add $(kernelPageTable - bootstrapPageTable), %edi
-        mov $(kernelPhysicalBegin + 0x3), %edx
+        mov $(kernelPhysicalBegin + PAGE_READONLY), %edx
+    1:
+        mov %edx, (%edi)
+        /* 页表项中每项4bytes */
+        add $4, %edi
+        /* 一个页4096个bytes */
+        add $4096, %edx
+        /* 循环直到最后一个表项 */
+        loop 1b
+
+        # 映射内核可写部分
+        mov $numWritablePages, %ecx
+        or $PAGE_WRITE, %edx
     1:
         mov %edx, (%edi)
         /* kernelPageTable中每项大小为4 bytes */
@@ -139,7 +156,7 @@
         mov $kernelPageDirectory, %ecx  /* 保存顶级页表（页目录）地址 */
         mov %ecx, %cr3                  /* 告诉CPU页目录地址 */
         mov %cr0, %ecx                  /* 保存cr0原来的值到%ecx */
-        or $0x80000001, %ecx            /* 开启分页和保护 */
+        or $(CR0_WRITE_PROTECT | CR0_PAGING_ENABLE), %ecx /* 开启分页和保护 */
         mov %ecx, %cr0                  /* 更新cr0 ，分页开启 */
 
         /* 跳到高地址空间执行 */

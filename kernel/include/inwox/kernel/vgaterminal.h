@@ -39,6 +39,8 @@ void init();
 void printCharacter(char c);
 void printCharacterRaw(char c);
 void printEscapeCode(char c);
+void updateCursorPosition();
+void setCursorVisibility(bool v);
 void warnTerminal();
 }
 

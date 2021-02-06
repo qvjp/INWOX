@@ -51,6 +51,7 @@
 
 #include <string.h>
 #include <inwox/kernel/inwox.h>
+#include <inwox/kernel/port.h>
 #include <inwox/kernel/vgaterminal.h>
 
 #define HEIGHT 25
@@ -475,6 +476,7 @@ void VgaTerminal::fillRect(size_t x1, size_t x2, size_t y1, size_t y2, char ch, 
 
 void VgaTerminal::init()
 {
+    setCursorVisibility(true);
     fillRect(0, WIDTH, 0, HEIGHT, '\0', DEFAULT_COLOR);
     cursorPosX = 0;
     cursorPosY = 0;
@@ -488,4 +490,25 @@ void VgaTerminal::warnTerminal()
             *(videoOffset(i, j) + 1) = fontColor;
         }
     }
+}
+
+void VgaTerminal::setCursorVisibility(bool v)
+{
+    if (v) {
+        Hardwarecommunication::outportb(0x3D4, 0x0A);  // 设置光标开始行为14并使光标可见
+        Hardwarecommunication::outportb(0x3D5, 0x0E);
+    } else {
+        Hardwarecommunication::outportb(0x3D4, 0x0A);
+        Hardwarecommunication::outportb(0x3D5, 0x20);
+    }
+}
+
+// http://web.stanford.edu/class/cs140/projects/pintos/specs/freevga/vga/crtcreg.htm#0D
+void VgaTerminal::updateCursorPosition()
+{
+    uint16_t position = cursorPosX + cursorPosY * WIDTH;
+    Hardwarecommunication::outportb(0x3D4, 0x0E);   // 告诉vga接下来设置光标的高比特位
+    Hardwarecommunication::outportb(0x3D5, (position >> 8) & 0xFF);
+    Hardwarecommunication::outportb(0x3D4, 0x0F);   // 告诉vga接下来设置光标的低比特位
+    Hardwarecommunication::outportb(0x3D5, position & 0xFF);
 }

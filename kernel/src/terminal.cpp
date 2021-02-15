@@ -86,12 +86,8 @@ char TerminalBuffer::read()
     return result;
 }
 
-void Terminal::onKeyboardEvent(int key)
+void Terminal::handleCharacter(char c)
 {
-    char c = Keyboard::getCharFromKey(key);
-    if (!c) {
-        return;
-    }
     if ((termio.c_lflag & ICANON) && c == '\b') {
         if (terminalBuffer.backspace() && (termio.c_lflag & ECHO)) {
             VgaTerminal::backspace();
@@ -102,6 +98,33 @@ void Terminal::onKeyboardEvent(int key)
         }
         terminalBuffer.write(c, termio.c_lflag & ICANON);
     }
+}
+
+void Terminal::handleSequence(const char *sequence)
+{
+    // 非规范模式下才将输入序列发送到终端
+    if (!(termio.c_lflag & ICANON)) {
+        while (*sequence) {
+            if (termio.c_lflag & ECHO) {
+                VgaTerminal::printCharacterRaw(*sequence);
+            }
+            terminalBuffer.write(*sequence++, false);
+        }
+    }
+}
+
+void Terminal::onKeyboardEvent(int key)
+{
+    char c = Keyboard::getCharFromKey(key);
+    if (c) {
+        handleCharacter(c);
+    } else {
+        const char *sequence = Keyboard::getSequenceFromkey(key);
+        if (sequence) {
+            handleSequence(sequence);
+        }
+    }
+
     VgaTerminal::updateCursorPosition();
 }
 
@@ -147,10 +170,6 @@ int Terminal::tcsetattr(int flags, const struct termios *termio)
     return 0;
 }
 
-/**
- * 初始化终端
- * 将屏幕背景设置为灰色
- */
 void Terminal::initTerminal()
 {
     VgaTerminal::init();

@@ -63,6 +63,8 @@ public:
     virtual int tcsetattr(int flags, const struct termios *termio);
 
 private:
+    void handleCharacter(char c);
+    void handleSequence(const char *sequence);
     virtual void onKeyboardEvent(int key);
 
 private:

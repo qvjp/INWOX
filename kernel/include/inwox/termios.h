@@ -29,20 +29,30 @@
 #ifndef INWOX_TERMIOS_H_
 #define INWOX_TERMIOS_H_
 
-#define ECHO   (1 << 0)
-#define ICANON (1 << 1)
+// c_lflag
+#define ECHO   (1 << 0) // 回显输入字符到终端设备，在规范模式和非规范模式均可使用
+#define ICANON (1 << 1) // 规范输入 (canonical mode)，输入字符被装配成行，当一行已经输入后，终端驱动程序返回
+                        // 或者遇到以下条件返回：
+                        // 1. 所请求的字节数已读到时，读返回。无需读一个完整的行，如果只读了行的一部分，下次读从上一次停止处开始
+                        // 2. 当读到一个行定界符时，读返回。
+                        // 3. 信号
+                        //
+                        // 在关闭了规范输入后，系统将在读到指定量的数据或超过给定的时间后返回，包括c_cc中两个变量：VMIN、VTIME
 
-#define VMIN 0
+// c_cc
+#define VMIN 0 // 指定一个read返回前最小的字节数
 #define NCCS 1
 
+// tcsetattr
 #define TCSAFLUSH 0
 
 typedef unsigned char cc_t;
 typedef unsigned int tcflag_t;
 
+// 终端设备特性
 struct termios {
-    tcflag_t c_lflag;
-    cc_t c_cc[NCCS];
+    tcflag_t c_lflag; // local flags，用于修改驱动程序和用户之间的接口，例如打开回显、可视删除字符等
+    cc_t c_cc[NCCS];  // control characters，包含所有可以更改的特殊字符
 };
 
 #endif /* INWOX_TERMIOS_H_ */

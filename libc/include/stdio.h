@@ -41,12 +41,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#ifdef __is_inwox_libc
 struct __FILE {
     int fd;
+    int flags;
 };
-#endif
+
+#define FILE_FLAG_EOF (1 << 0)
+#define FILE_FLAG_ERROR (1 << 1)
 
 /* 标准流 */
 extern FILE *stdin;

@@ -65,9 +65,12 @@ LIBC_OBJ = \
 	dirent/readdir \
 	fcntl/open \
 	fcntl/openat \
+	stdio/clearerr \
 	stdio/dprintf \
 	stdio/fclose \
 	stdio/fdopen \
+	stdio/feof \
+	stdio/ferror \
 	stdio/fflush \
 	stdio/fgetc \
 	stdio/fgets \

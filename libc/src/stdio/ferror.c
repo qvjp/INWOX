@@ -21,19 +21,12 @@
  * SOFTWARE.
  */
 
-/* libc/src/stdio/fdopen.c
- * 为文件描述符分配具体文件
+/* libc/src/stdio/ferror.c.
+ * 获取文件错误状态
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 
-FILE *fdopen(int fd, const char *mode)
-{
-    (void)mode;
-
-    FILE *file = malloc(sizeof(FILE));
-    file->fd = fd;
-    file->flags = 0;
-    return file;
+int ferror(FILE* file) {
+    return file->flags & FILE_FLAG_ERROR;
 }

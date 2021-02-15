@@ -21,19 +21,12 @@
  * SOFTWARE.
  */
 
-/* libc/src/stdio/fdopen.c
- * 为文件描述符分配具体文件
+/* libc/src/stdio/clearerr.c.
+ * 清除eof错误
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 
-FILE *fdopen(int fd, const char *mode)
-{
-    (void)mode;
-
-    FILE *file = malloc(sizeof(FILE));
-    file->fd = fd;
-    file->flags = 0;
-    return file;
+void clearerr(FILE* file) {
+    file->flags &= ~(FILE_FLAG_EOF | FILE_FLAG_ERROR);
 }

@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,9 @@
 
 #include <stdio.h>
 
-FILE __stderr = {
+static FILE __stderr = {
     .fd = 2,
+    .flags = 0,
 };
 
 FILE *stderr = &__stderr;

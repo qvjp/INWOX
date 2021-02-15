@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@
 int fputc(int c, FILE *file)
 {
     if (write(file->fd, &c, 1) < 0) {
+        file->flags |= FILE_FLAG_ERROR;
         return EOF;
     }
     return c;

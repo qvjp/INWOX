@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ size_t fwrite(const void *restrict ptr, size_t size, size_t count, FILE *restric
     size_t i;
     for (i = 0; i < count; i++) {
         for (size_t j = 0; j < size; j++) {
-            if (fputc(p[i * size + j], file) < 0) {
+            if (fputc(p[i * size + j], file) == EOF) {
                 return i;
             }
         }

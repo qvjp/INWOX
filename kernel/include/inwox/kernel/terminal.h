@@ -43,7 +43,9 @@ public:
     bool backspace();
     char read();
     void reset();
-    void write(char c, bool canonicalMode);
+    void write(char c);
+    void endLine();
+    bool hasIncompleteLine();
 
 private:
     char circularBuffer[CIRCULAR_BUFFER_SIZE];
@@ -70,6 +72,7 @@ private:
 private:
     TerminalBuffer terminalBuffer;
     struct termios termio;
+    volatile unsigned int numEof;
 };
 
 extern Terminal terminal;

@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,8 +31,7 @@
 
 static size_t vfprintf_callback(void *file, const char *string, size_t length)
 {
-    FILE *f = (FILE *)file;
-    return write(f->fd, string, length);
+    return fwrite(string, 1, length, (FILE*)file);
 }
 
 int vfprintf(FILE *fp, const char *restrict format, va_list vl)

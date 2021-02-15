@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,14 @@
 
 int fgetc(FILE *file)
 {
+if (file->flags & FILE_FLAG_EOF) return EOF;
     unsigned char result;
-    if (read(file->fd, &result, 1) < 1) {
+    ssize_t bytesRead = read(file->fd, &result, 1);
+    if (bytesRead == 0) {
+        file->flags |= FILE_FLAG_EOF;
+        return EOF;
+    } else if (bytesRead < 0) {
+        file->flags |= FILE_FLAG_ERROR;
         return EOF;
     }
     return result;

@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,12 @@ DirectoryVnode::DirectoryVnode(DirectoryVnode *parentVnode, mode_t mode) : Vnode
     childNodes = nullptr;
     fileNames = nullptr;
     parent = parentVnode;
+}
+
+DirectoryVnode::~DirectoryVnode()
+{
+    delete childNodes;
+    delete fileNames;
 }
 
 void DirectoryVnode::addChildNode(const char *path, Vnode *vnode)

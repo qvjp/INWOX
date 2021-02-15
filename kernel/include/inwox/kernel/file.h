@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@
 class FileVnode : public Vnode {
 public:
     FileVnode(const void *data, size_t size, mode_t mode);
+    ~FileVnode();
     virtual bool isSeekable();
     virtual ssize_t pread(void *buffer, size_t size, off_t offset);
 

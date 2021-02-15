@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@
 class DirectoryVnode : public Vnode {
 public:
     DirectoryVnode(DirectoryVnode *parent, mode_t mode);
+    ~DirectoryVnode();
     void addChildNode(const char *path, Vnode *vnode);
     virtual Vnode *openat(const char *path, int flags, mode_t mode);
     virtual ssize_t readdir(unsigned long offset, void *buffer, size_t size);

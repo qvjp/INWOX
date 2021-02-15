@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,11 @@ FileVnode::FileVnode(const void *data, size_t size, mode_t mode) : Vnode(S_IFREG
     this->data = new char[size];
     memcpy(this->data, data, size);
     fileSize = size;
+}
+
+FileVnode::~FileVnode()
+{
+    delete data;
 }
 
 bool FileVnode::isSeekable()

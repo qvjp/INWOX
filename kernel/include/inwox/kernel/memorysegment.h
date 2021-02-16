@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,7 @@ public:
     static void addSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size, int protection);
     static void removeSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size);
     static inwox_vir_addr_t findFreeSegment(MemorySegment *segment, size_t size);
+    static inwox_vir_addr_t findAndAddNewSegment(MemorySegment *firstSegment, size_t size, int protection);
 
 private:
     static void addSegment(MemorySegment *firstSegment, MemorySegment *newSegment);

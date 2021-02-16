@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -242,6 +242,21 @@ MemorySegment *MemorySegment::allocateSegment(inwox_vir_addr_t address, size_t s
 void MemorySegment::deallocateSegment(MemorySegment *segment)
 {
     memset(segment, 0, sizeof(MemorySegment));
+}
+
+/**
+ * @brief 在可用的地址空间中找到一块空闲的segment，并将其加入到段链表
+ * 
+ * @param firstSegment 锻炼表首元素
+ * @param size 空闲segment大小
+ * @param protection 保护模式
+ * @return inwox_vir_addr_t segment对应的虚拟地址
+ */
+inwox_vir_addr_t MemorySegment::findAndAddNewSegment(MemorySegment *firstSegment, size_t size, int protection)
+{
+    inwox_vir_addr_t address = findFreeSegment(firstSegment, size);
+    addSegment(firstSegment, address, size, protection);
+    return address;
 }
 
 /**

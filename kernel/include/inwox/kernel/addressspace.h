@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -86,38 +86,40 @@ public:
     void activate();
     AddressSpace *fork();
     inwox_phy_addr_t getPhysicalAddress(inwox_vir_addr_t virtualAddress);
+    inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, int protection);
     inwox_vir_addr_t mapFromOtherAddressSpace(AddressSpace *sourceSpace, inwox_vir_addr_t sourceVirtualAddress,
                                               size_t size, int protection);
     inwox_vir_addr_t mapMemory(size_t size, int protection);
     inwox_vir_addr_t mapMemory(inwox_vir_addr_t virtualAddress, size_t size, int protection);
     inwox_vir_addr_t mapPhysical(inwox_phy_addr_t physicalAddress, size_t size, int protection);
-    inwox_vir_addr_t mapPhysical(inwox_phy_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, size_t size,
-                                 int protection);
+    void unMap(inwox_vir_addr_t virtualAddress);
     void unmapMemory(inwox_vir_addr_t virtualAddress, size_t size);
     void unmapPhysical(inwox_vir_addr_t firstVirtualAddress, size_t size);
 
 private:
-    bool isFree(size_t pdOffset, size_t ptOffset);
     inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, int protection);
-    inwox_vir_addr_t mapAt(inwox_vir_addr_t virtualAddress, inwox_phy_addr_t physicalAddress, int protection);
     inwox_vir_addr_t mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, int flags);
     inwox_vir_addr_t mapAtWithFlags(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, int flags);
-    void unMap(inwox_vir_addr_t virtualAddress);
 
 private:
     /**
-     * 每个进程对应一个地址空间，每个地址空间都有自己的页表，使得某逻辑地址对应于某个物理地址。
-     * 正因为每个进程都有自己的页表，才使相同的逻辑地址映射到不同的物理内存。每次创建新进程（地址空间）
+     * 每个进程对应一个地址空间，每个地址空间都有自己的页目录，使得某逻辑地址对应于某个物理地址。
+     * 正因为每个进程都有自己的页目录，才使相同的逻辑地址映射到不同的物理内存。每次创建新进程（地址空间）
      * 都会将fork父进程的页表，然后更新%cr3寄存器
      */
     inwox_phy_addr_t pageDir;
+    /*
+    * 每个地址空间都保存其页目录的虚拟地址，而非使用时临时分配
+    */
+    inwox_vir_addr_t pageDirMapped;
     /**
      * 每个进程都有自己独立的段空间，使用链表进行管理，根据首个段可以遍历整个地址空间
      */
     MemorySegment *firstSegment;
     /**
-     * 地址空间间通过next指针连成一个链，在对全部地址空间都要进行一个操作时，可以用到此字段
+     * 地址空间间通过prev和next指针连成一个链，在对全部地址空间都要进行一个操作时，可以用到此字段
      */
+    AddressSpace *prev;
     AddressSpace *next;
 
 private:

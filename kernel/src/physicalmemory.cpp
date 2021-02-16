@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@
 /**
  * 0xFFC00000即4G-4M,最高的4M是页目录页表占用，
  * 物理内存管理的栈空间紧跟着页表页目录存放，向低地址空间生长，在系统启动时默认分配4K的空间
- * 可以管理4M内存，后续动态扩展栈来管理更大内存
+ * 可以管理4M内存，后续动态扩展栈来管理更大内存，最多分配4M的空间，可用来管理全部4G内存
  */
 static inwox_phy_addr_t *const stack = (inwox_phy_addr_t *)0xFFC00000;
 /* 栈已经使用的大小（可用内存页数目） */
@@ -162,7 +162,7 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
 void PhysicalMemory::pushPageFrame(inwox_phy_addr_t physicalAddress)
 {
     if (unlikely(stackLeft == 0)) {
-        kernelSpace->mapPhysical((inwox_vir_addr_t)stack - stackUsed * 4 - PAGESIZE, physicalAddress, PAGESIZE,
+        kernelSpace->mapAt((inwox_vir_addr_t)stack - stackUsed * 4 - PAGESIZE, physicalAddress,
                                  PROT_READ | PROT_WRITE);
         stackLeft += 1024;
     } else {
@@ -182,7 +182,7 @@ inwox_phy_addr_t PhysicalMemory::popPageFrame()
         if (likely(stackLeft > 0)) {
             inwox_vir_addr_t virtualAddress = (inwox_vir_addr_t)stack - stackLeft * 4;
             inwox_phy_addr_t result = kernelSpace->getPhysicalAddress(virtualAddress);
-            kernelSpace->unmapPhysical(virtualAddress, PAGESIZE);
+            kernelSpace->unMap(virtualAddress);
             stackLeft -= 1024;
             return result;
         } else {

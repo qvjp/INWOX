@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <sched.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -361,8 +362,7 @@ Process *Process::waitpid(pid_t pid, int flags)
             Process *result = children[i];
             // 等待进程停止
             while (!result->terminated) {
-                __asm__ __volatile__("int $49");
-                __sync_synchronize();
+                sched_yield();
             }
             if (i < numChildren - 1) {
                 children[i] = children[numChildren - 1];

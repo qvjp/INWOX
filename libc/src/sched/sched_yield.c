@@ -21,66 +21,18 @@
  * SOFTWARE.
  */
 
-/* kernel/src/tiemr.cpp
- * 定时器
+/* libc/src/sched/sched_yield.c
+ * 让出处理器
  */
 
 #include <sched.h>
-#include <inwox/kernel/pit.h>
-#include <inwox/kernel/timer.h>
-#include <inwox/kernel/syscall.h>
 
-static inline void minus(struct timespec *time, unsigned long nanoseconds)
+int sched_yield(void)
 {
-    time->tv_nsec -= nanoseconds;
-    while (time->tv_nsec < 0) {
-        time->tv_sec--;
-        time->tv_nsec += 1000000000L;
-    }
-    if (time->tv_sec < 0) {
-        time->tv_sec = 0;
-        time->tv_nsec = 0;
-    }
-}
-
-static inline bool isZero(struct timespec time)
-{
-    return (time.tv_sec == 0 && time.tv_nsec == 0);
-}
-
-Timer::Timer(struct timespec time)
-{
-    this->time = time;
-    index = 0;
-}
-
-void Timer::advance(unsigned long nanosecodes)
-{
-    minus(&time, nanosecodes);
-}
-
-void Timer::start()
-{
-    index = Pit::registerTimer(this);
-}
-
-void Timer::wait()
-{
-    while (!isZero(time)) {
-        sched_yield();
-    }
-    Pit::deregisterTimer(index);
-}
-
-int Syscall::nanosleep(const struct timespec *request, struct timespec *remaining)
-{
-    Timer timer(*request);
-    timer.start();
-    timer.wait();
-
-    if (remaining) {
-        remaining->tv_sec = 0;
-        remaining->tv_nsec = 0;
-    }
+#ifdef __i386__
+    __asm__ __volatile__("int $0x31");
+#else
+# error "sched_yield not support this architecture."
+#endif
     return 0;
 }

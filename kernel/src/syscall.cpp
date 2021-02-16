@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
  */
 
 #include <errno.h>
+#include <sched.h>
 #include <sys/stat.h>
 #include <inwox/fcntl.h>
 #include <inwox/kernel/print.h>
@@ -114,8 +115,7 @@ void Syscall::pad()
 __attribute__((__noreturn__)) void Syscall::exit(int status)
 {
     Process::current->exit(status);
-    /* 退出后，调用int $49进行进程调度 */
-    __asm__ __volatile__("int $49");
+    sched_yield();
     __builtin_unreachable();
 }
 
@@ -172,7 +172,7 @@ int Syscall::execve(const char *path, char *const argv[], char *const envp[])
     if (!descr || Process::current->execute(descr, argv, envp) == -1) {
         return -1;
     }
-    __asm__ __volatile__("int $49");
+    sched_yield();
     __builtin_unreachable();
 }
 

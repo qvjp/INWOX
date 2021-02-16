@@ -21,66 +21,24 @@
  * SOFTWARE.
  */
 
-/* kernel/src/tiemr.cpp
- * 定时器
+/**
+ * lib/include/sched.h
+ * 调度函数
  */
 
-#include <sched.h>
-#include <inwox/kernel/pit.h>
-#include <inwox/kernel/timer.h>
-#include <inwox/kernel/syscall.h>
+#ifndef SCHED_H
+#define SCHED_H
 
-static inline void minus(struct timespec *time, unsigned long nanoseconds)
-{
-    time->tv_nsec -= nanoseconds;
-    while (time->tv_nsec < 0) {
-        time->tv_sec--;
-        time->tv_nsec += 1000000000L;
-    }
-    if (time->tv_sec < 0) {
-        time->tv_sec = 0;
-        time->tv_nsec = 0;
-    }
+#include <inwox/timespec.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int sched_yield(void);
+
+#ifdef __cplusplus
 }
+#endif
 
-static inline bool isZero(struct timespec time)
-{
-    return (time.tv_sec == 0 && time.tv_nsec == 0);
-}
-
-Timer::Timer(struct timespec time)
-{
-    this->time = time;
-    index = 0;
-}
-
-void Timer::advance(unsigned long nanosecodes)
-{
-    minus(&time, nanosecodes);
-}
-
-void Timer::start()
-{
-    index = Pit::registerTimer(this);
-}
-
-void Timer::wait()
-{
-    while (!isZero(time)) {
-        sched_yield();
-    }
-    Pit::deregisterTimer(index);
-}
-
-int Syscall::nanosleep(const struct timespec *request, struct timespec *remaining)
-{
-    Timer timer(*request);
-    timer.start();
-    timer.wait();
-
-    if (remaining) {
-        remaining->tv_sec = 0;
-        remaining->tv_nsec = 0;
-    }
-    return 0;
-}
+#endif /* SCHED_H */

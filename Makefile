@@ -1,10 +1,10 @@
 TO_ROOT = .
 include $(TO_ROOT)/build-config/config.mk
 
-all: build_info install-headers libc install-libc kernel programs tests strip-debug iso
+all: build-info install-headers libc install-libc kernel programs tests strip-debug iso
 	@echo -n ${COLOR_RESET}
 
-build_info:
+build-info:
 	@echo ${COLOR_YELLOW}Build beginning...
 
 install-headers:

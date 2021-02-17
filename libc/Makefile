@@ -132,10 +132,10 @@ LIBC_OBJ += \
 LIBC_OBJ := $(addprefix $(BUILD)/, $(addsuffix .o, $(LIBC_OBJ)))
 LIBK_OBJ := $(addprefix $(BUILD)/, $(addsuffix .libk.o, $(LIBK_OBJ)))
 
-all: build_info $(BUILD)/libc.a $(BUILD)/libk.a $(CRT_OBJ)
+all: build-info $(BUILD)/libc.a $(BUILD)/libk.a $(CRT_OBJ)
 	@echo -n ${COLOR_RESET}
 
-build_info:
+build-info:
 	@echo ${COLOR_GREEN}Building libc...
 
 install: install-headers install-libs

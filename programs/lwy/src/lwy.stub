@@ -1,0 +1,10 @@
+#include <stdio.h>
+
+
+int main(int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    printf("\e[0;32m%s\e[0;39m\n", src_lwy_txt);
+    return 0;
+}

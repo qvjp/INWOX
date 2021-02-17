@@ -3,10 +3,10 @@ include $(TO_ROOT)/build-config/programs.mk
 
 PROGRAMS = $(wildcard */.)
 
-all: build_info build-programs install-programs
+all: build-info build-programs install-programs
 	@echo -n ${COLOR_RESET}
 
-build_info:
+build-info:
 	@echo ${COLOR_CYAN}Building programs...
 
 build-programs: $(PROGRAMS)

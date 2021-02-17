@@ -47,10 +47,10 @@ END_OBJ = $(CRTEND_O) $(CRTN_O)
 
 OBJ := $(START_OBJ) $(addprefix $(BUILD)/, $(OBJ)) $(END_OBJ)
 
-all: build_info $(BUILD)/kernel
+all: build-info $(BUILD)/kernel
 	@echo -n ${COLOR_RESET}
 
-build_info:
+build-info:
 	@echo ${COLOR_BLUE}Building kernel...
 
 $(BUILD)/kernel: $(OBJ)

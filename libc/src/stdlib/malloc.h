@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,5 +62,8 @@ extern Mem_Ctrl_Blk *firstBigBlock;
 Mem_Ctrl_Blk *__allocateBigBlock(Mem_Ctrl_Blk *lastBigBlock, size_t size);
 void __splitBlock(Mem_Ctrl_Blk *block, size_t size);
 Mem_Ctrl_Blk *__unifyBlocks(Mem_Ctrl_Blk *first, Mem_Ctrl_Blk *second);
+
+void __lockHeap(void);
+void __unlockHeap(void);
 
 #endif /* MALLOC_H */

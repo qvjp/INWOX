@@ -30,13 +30,17 @@
 #include <assert.h>
 #include <string.h>
 #include <inwox/kernel/addressspace.h>
+#include <inwox/kernel/kthread.h>
 #include <inwox/kernel/memorysegment.h>
+#include <inwox/kernel/physicalmemory.h>
 
 /**
  * 用1页的空间存放segment的索引，当前一个segment用20个字节表示，最多可以管理204个
  * 若有更多的段需要管理，可自动分配此字段的长度
  */
 static char segmentsPage[PAGESIZE] ALIGNED(PAGESIZE) = {0};
+
+static kthread_mutex_t mutex = KTHREAD_MUTEX_INITIALIZER;
 
 /**
  * @brief 获取segment可用空间大小
@@ -82,6 +86,7 @@ MemorySegment::MemorySegment(inwox_vir_addr_t address, size_t size, int flags, M
  */
 void MemorySegment::addSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size, int protection)
 {
+    ScopedLock lock(&mutex);
     MemorySegment *newSegment = allocateSegment(address, size, protection);
     addSegment(firstSegment, newSegment);
     verifySegmentList();
@@ -96,6 +101,7 @@ void MemorySegment::addSegment(MemorySegment *firstSegment, inwox_vir_addr_t add
  */
 void MemorySegment::removeSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size)
 {
+    ScopedLock lock(&mutex);
     MemorySegment *currentSegment = firstSegment;
 
     while (currentSegment->address + currentSegment->size <= address) {
@@ -156,6 +162,7 @@ void MemorySegment::removeSegment(MemorySegment *firstSegment, inwox_vir_addr_t 
 
         currentSegment = currentSegment->next;
     }
+    verifySegmentList();
 }
 
 /**
@@ -222,7 +229,7 @@ MemorySegment *MemorySegment::allocateSegment(inwox_vir_addr_t address, size_t s
         // current到了segmentsPage的最后一个索引表示的segment，则去新的1K中分配可用segment
         if (((uintptr_t)current & 0xFFF) == (PAGESIZE - PAGESIZE % sizeof(MemorySegment))) {
             MemorySegment **nextPage = (MemorySegment **)current;
-            assert(nextPage != nullptr);
+            assert(*nextPage != nullptr);
             current = *nextPage;
         }
     }
@@ -254,8 +261,11 @@ void MemorySegment::deallocateSegment(MemorySegment *segment)
  */
 inwox_vir_addr_t MemorySegment::findAndAddNewSegment(MemorySegment *firstSegment, size_t size, int protection)
 {
+    ScopedLock lock(&mutex);
     inwox_vir_addr_t address = findFreeSegment(firstSegment, size);
-    addSegment(firstSegment, address, size, protection);
+    MemorySegment* newSegment = allocateSegment(address, size, protection);
+    addSegment(firstSegment, newSegment);
+    verifySegmentList();
     return address;
 }
 
@@ -270,8 +280,10 @@ void MemorySegment::verifySegmentList()
 
     // segmentsPage中，空闲条目个数
     int freeSegmentSpaceFound = 0;
+    MemorySegment *freeSegment = nullptr;
     while (true) {
         if (current->address == 0 && current->size == 0) {
+            freeSegment = current;
             freeSegmentSpaceFound++;
         }
         current++;
@@ -286,7 +298,14 @@ void MemorySegment::verifySegmentList()
     }
     // 当用完segmentsPage的空间后，再分配1页空间，最后一个元素指向新分配的空间
     if (freeSegmentSpaceFound == 1) {
-        *nextPage = (MemorySegment *)kernelSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
+        inwox_vir_addr_t address = findFreeSegment(kernelSpace->firstSegment, PAGESIZE);
+        inwox_phy_addr_t physical = PhysicalMemory::popPageFrame();
+        kernelSpace->mapAt(address, physical, PROT_READ | PROT_WRITE);
+        *nextPage = (MemorySegment *)address;
         memset(*nextPage, 0, PAGESIZE);
+        freeSegment->address = address;
+        freeSegment->size = PAGESIZE;
+        freeSegment->flags = PROT_READ | PROT_WRITE;
+        addSegment(kernelSpace->firstSegment, freeSegment);
     }
 }

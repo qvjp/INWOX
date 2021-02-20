@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,6 +50,7 @@ void *realloc(void *addr, size_t size)
     if (addr == NULL) {
         return malloc(size);
     }
+    __lockHeap();
     Mem_Ctrl_Blk *chunk = (Mem_Ctrl_Blk *)addr - 1;
     assert(chunk->magic == MAGIC_USED_MCB);
     if (size == 0) {
@@ -58,6 +59,7 @@ void *realloc(void *addr, size_t size)
     size = ALIGN_UP(size, alignof(max_align_t));
     ssize_t sizeDiff = size - chunk->size;
     if (sizeDiff == 0) {
+        __unlockHeap();
         return addr;
     }
 
@@ -65,9 +67,11 @@ void *realloc(void *addr, size_t size)
     if (next->magic == MAGIC_FREE_MCB) {
         if ((sizeDiff > 0 && next->size > sizeDiff + sizeof(Mem_Ctrl_Blk)) || sizeDiff < 0) {
             changeChunkSize(chunk, sizeDiff);
+            __unlockHeap();
             return addr;
         }
     }
+    __unlockHeap();
     void *newAddr = malloc(size);
     if (newAddr == NULL) {
         return NULL;

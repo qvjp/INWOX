@@ -30,6 +30,7 @@
 
 #include <inwox/termios.h>
 #include <inwox/kernel/keyboard.h>
+#include <inwox/kernel/kthread.h>
 #include <inwox/kernel/vgaterminal.h>
 #include <inwox/kernel/vnode.h>
 #include <stdint.h>
@@ -49,9 +50,9 @@ public:
 
 private:
     char circularBuffer[CIRCULAR_BUFFER_SIZE];
-    volatile size_t readIndex;
-    volatile size_t lineIndex;
-    volatile size_t writeIndex;
+    size_t readIndex;
+    size_t lineIndex;
+    size_t writeIndex;
 };
 
 class Terminal : public Vnode, public KeyboardListener {
@@ -72,7 +73,8 @@ private:
 private:
     TerminalBuffer terminalBuffer;
     struct termios termio;
-    volatile unsigned int numEof;
+    unsigned int numEof;
+    kthread_mutex_t mutex;
 };
 
 extern Terminal terminal;

@@ -30,6 +30,7 @@
  */
 
 #include <inwox/kernel/addressspace.h>
+#include <inwox/kernel/kthread.h>
 #include <inwox/kernel/physicalmemory.h>
 #include <inwox/kernel/print.h>
 
@@ -43,6 +44,8 @@ static inwox_phy_addr_t *const stack = (inwox_phy_addr_t *)0xFFC00000;
 static size_t stackUsed = 0;
 /* 栈剩余空间大小（还可以存放多少内存页） */
 static size_t stackLeft = 0;
+
+static kthread_mutex_t mutex = KTHREAD_MUTEX_INITIALIZER;
 
 /**
  * @brief 判断某物理地址是否被内核使用
@@ -161,6 +164,7 @@ void PhysicalMemory::initialize(multiboot_info *multiboot)
  */
 void PhysicalMemory::pushPageFrame(inwox_phy_addr_t physicalAddress)
 {
+    ScopedLock lock(&mutex);
     if (unlikely(stackLeft == 0)) {
         kernelSpace->mapAt((inwox_vir_addr_t)stack - stackUsed * 4 - PAGESIZE, physicalAddress,
                                  PROT_READ | PROT_WRITE);
@@ -178,6 +182,7 @@ void PhysicalMemory::pushPageFrame(inwox_phy_addr_t physicalAddress)
  */
 inwox_phy_addr_t PhysicalMemory::popPageFrame()
 {
+    ScopedLock lock(&mutex);
     if (unlikely(stackUsed == 0)) {
         if (likely(stackLeft > 0)) {
             inwox_vir_addr_t virtualAddress = (inwox_vir_addr_t)stack - stackLeft * 4;

@@ -21,41 +21,41 @@
  * SOFTWARE.
  */
 
-/* kernel/include/inwox/kernel/memorysegment.h
- * Memory segment
+/* kernel/include/inwox/kernel/kthead.h
+ * 内核线程的实用工具和同步机制
  */
 
-#ifndef KERNEL_MEMORYSEGMENT_H_
-#define KERNEL_MEMORYSEGMENT_H_
+#ifndef KERNEL_KTHREAD_H_
+#define KERNEL_KTHREAD_H_
 
 #include <stddef.h>
-#include <inwox/kernel/inwox.h>
 
-#define SEG_NOUNMAP (1 << 16)
-#define PAGESIZE 0x1000
+typedef bool kthread_mutex_t;
+#define KTHREAD_MUTEX_INITIALIZER false
 
-class MemorySegment {
+int kthread_mutex_lock(kthread_mutex_t *mutex);
+int kthread_mutex_unlock(kthread_mutex_t *mutex);
+
+/**
+ * @brief 利用c++中析构函数机制，实现代码块自动锁
+ * 
+ */
+class ScopedLock {
 public:
-    MemorySegment(inwox_vir_addr_t address, size_t size, int flags, MemorySegment *prev, MemorySegment *next);
-
-public:
-    inwox_vir_addr_t address;
-    size_t size;
-    int flags;
-    MemorySegment *prev;
-    MemorySegment *next;
-
-public:
-    static void addSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size, int protection);
-    static void removeSegment(MemorySegment *firstSegment, inwox_vir_addr_t address, size_t size);
-    static inwox_vir_addr_t findAndAddNewSegment(MemorySegment *firstSegment, size_t size, int protection);
-
+    ScopedLock(kthread_mutex_t *mutex) {
+        this->mutex = mutex;
+        if (mutex) {
+            kthread_mutex_lock(mutex);
+        }
+    }
+    ~ScopedLock() {
+        if (mutex) {
+            kthread_mutex_unlock(mutex);
+        }
+        mutex = NULL;
+    }
 private:
-    static void addSegment(MemorySegment *firstSegment, MemorySegment *newSegment);
-    static MemorySegment *allocateSegment(inwox_vir_addr_t address, size_t size, int flags);
-    static void deallocateSegment(MemorySegment *segment);
-    static inwox_vir_addr_t findFreeSegment(MemorySegment *segment, size_t size);
-    static void verifySegmentList();
+    kthread_mutex_t *mutex;
 };
 
-#endif /* KERNEL_MEMORYSEGMENT_H_ */
+#endif /* KERNEL_KTHREAD_H_ */

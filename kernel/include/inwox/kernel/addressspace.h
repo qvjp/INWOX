@@ -30,6 +30,7 @@
 
 #include <stddef.h>
 #include <inwox/mman.h>
+#include <inwox/kernel/kthread.h>
 #include <inwox/kernel/inwox.h>
 #include <inwox/kernel/memorysegment.h>
 
@@ -96,8 +97,13 @@ public:
     void unmapMemory(inwox_vir_addr_t virtualAddress, size_t size);
     void unmapPhysical(inwox_vir_addr_t firstVirtualAddress, size_t size);
 
+public:
+    /**
+     * 每个进程都有自己独立的段空间，使用链表进行管理，根据首个段可以遍历整个地址空间
+     */
+    MemorySegment *firstSegment;
+
 private:
-    inwox_vir_addr_t map(inwox_phy_addr_t physicalAddress, int protection);
     inwox_vir_addr_t mapAt(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, int flags);
     inwox_vir_addr_t mapAtWithFlags(size_t pdIndex, size_t ptIndex, inwox_phy_addr_t physicalAddress, int flags);
 
@@ -113,14 +119,11 @@ private:
     */
     inwox_vir_addr_t pageDirMapped;
     /**
-     * 每个进程都有自己独立的段空间，使用链表进行管理，根据首个段可以遍历整个地址空间
-     */
-    MemorySegment *firstSegment;
-    /**
      * 地址空间间通过prev和next指针连成一个链，在对全部地址空间都要进行一个操作时，可以用到此字段
      */
     AddressSpace *prev;
     AddressSpace *next;
+    kthread_mutex_t mutex;
 
 private:
     static AddressSpace _kernelSpace;

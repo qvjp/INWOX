@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,9 +32,10 @@
 #define __need_pid_t
 #include <sys/types.h>
 #include <inwox/fork.h>
-#include <inwox/kernel/addressspace.h> /* AddressSpace */
+#include <inwox/kernel/addressspace.h>
 #include <inwox/kernel/filedescription.h>
-#include <inwox/kernel/interrupt.h> /* struct regs */
+#include <inwox/kernel/interrupt.h>
+#include <inwox/kernel/kthread.h>
 
 #define OPEN_MAX 20
 
@@ -59,6 +60,7 @@ private:
     Process *parent;
     Process **children;
     size_t numChildren;
+    kthread_mutex_t childrenMutex;
 
 public:
     AddressSpace *addressSpace;    /* 每个进程都有自己独立的地址空间 */

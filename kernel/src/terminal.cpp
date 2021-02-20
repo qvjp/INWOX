@@ -25,6 +25,7 @@
  * Terminal class.
  */
 
+#include <sched.h>
 #include <inwox/kernel/inwox.h>
 #include <inwox/kernel/terminal.h>
 
@@ -52,6 +53,7 @@ Terminal::Terminal() : Vnode(S_IFCHR)
     termio.c_cc[VTIME] = 0;
 
     numEof = 0;
+    mutex = KTHREAD_MUTEX_INITIALIZER;
 }
 
 TerminalBuffer::TerminalBuffer()
@@ -196,6 +198,7 @@ ssize_t Terminal::read(void *buffer, size_t size)
                     return readSize;
                 }
             }
+            sched_yield();
         }
         if (numEof) {
             if (readSize) {
@@ -216,6 +219,7 @@ ssize_t Terminal::read(void *buffer, size_t size)
 
 ssize_t Terminal::write(const void *buffer, size_t size)
 {
+    ScopedLock lock(&mutex);
     const char *buf = (const char *)buffer;
 
     for (size_t i = 0; i < size; i++) {

@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ void free(void *addr)
     if (addr == NULL) {
         return;
     }
+    __lockHeap();
 
     Mem_Ctrl_Blk *block = (Mem_Ctrl_Blk *)addr - 1;
     block->magic = MAGIC_FREE_MCB;
@@ -55,4 +56,5 @@ void free(void *addr)
         }
         unmapMemory(bigBlock, bigBlock->size);
     }
+    __unlockHeap();
 }

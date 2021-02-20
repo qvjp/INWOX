@@ -51,6 +51,7 @@ AddressSpace *kernelSpace;
  */
 static AddressSpace *firstAddressSpace = nullptr;
 
+static kthread_mutex_t listMutex = KTHREAD_MUTEX_INITIALIZER;
 /**
  * @brief 将物理内存保护位转为页的访问标识
  * 
@@ -64,6 +65,11 @@ static inline int protectionToFlags(int protection)
         flags |= PAGE_WRITABLE;
     }
     return flags;
+}
+
+static inwox_vir_addr_t mapTemporarily(inwox_phy_addr_t physicalAddress, int protection)
+{
+    return kernelSpace->mapAt(0xFF7FF000, physicalAddress, protection);
 }
 
 /**
@@ -89,12 +95,13 @@ AddressSpace::AddressSpace()
         pageDir = PhysicalMemory::popPageFrame();
         inwox_vir_addr_t kernelPageDir = kernelSpace->pageDirMapped;
         pageDirMapped = kernelSpace->mapPhysical(pageDir, PAGESIZE, PROT_READ | PROT_WRITE);
-        memcpy((void *)pageDirMapped, (const void *)kernelPageDir, PAGESIZE);
 
         // 创建地址空间时，会为此地址空间创建一个segment
         firstSegment = new MemorySegment(0, PAGESIZE, PROT_NONE | SEG_NOUNMAP, nullptr, nullptr);
         MemorySegment::addSegment(firstSegment, 0xC0000000, -0xC0000000, PROT_NONE | SEG_NOUNMAP);
 
+        ScopedLock lock(&listMutex);
+        memcpy((void *)pageDirMapped, (const void *)kernelPageDir, PAGESIZE);
         // 将新地址空间放入链表头
         prev = nullptr;
         next = firstAddressSpace;
@@ -103,6 +110,7 @@ AddressSpace::AddressSpace()
         }
         firstAddressSpace = this;
     }
+    mutex = KTHREAD_MUTEX_INITIALIZER;
 }
 
 /**
@@ -113,6 +121,7 @@ AddressSpace::AddressSpace()
  */
 AddressSpace::~AddressSpace()
 {
+    kthread_mutex_lock(&listMutex);
     // 将地址空间从地址空间链表删除
     if (prev) {
         prev->next = next;
@@ -123,6 +132,7 @@ AddressSpace::~AddressSpace()
     if (this == firstAddressSpace) {
         firstAddressSpace = next;
     }
+    kthread_mutex_unlock(&listMutex);
     MemorySegment *currentSegment = firstSegment;
     while (currentSegment) {
         MemorySegment *next = currentSegment->next;
@@ -145,8 +155,9 @@ static MemorySegment readOnlySegment((inwox_vir_addr_t) &kernelVirtualBegin,
 static MemorySegment writableSegment((inwox_vir_addr_t)&kernelReadOnlyEnd,
                               (inwox_vir_addr_t)&kernelVirtualEnd - (inwox_vir_addr_t)&kernelReadOnlyEnd,
                               PROT_READ | PROT_WRITE, &readOnlySegment, nullptr);
+static MemorySegment temporarySegment(0xFF7FF000, PAGESIZE, PROT_NONE, &writableSegment, nullptr);
 // 紧挨着页目录页表的4M为物理内存段
-static MemorySegment physicalMemorySegment(RECURSIVE_MAPPING - 0x400000, 0x400000, PROT_READ | PROT_WRITE, &writableSegment, nullptr);
+static MemorySegment physicalMemorySegment(RECURSIVE_MAPPING - 0x400000, 0x400000, PROT_READ | PROT_WRITE, &temporarySegment, nullptr);
 static MemorySegment recursiveMappingSegment(RECURSIVE_MAPPING, -RECURSIVE_MAPPING, PROT_READ | PROT_WRITE, &physicalMemorySegment, nullptr);
 
 /**
@@ -205,7 +216,8 @@ void AddressSpace::initialize()
     userSegment.next = &videoSegment;
     videoSegment.next = &readOnlySegment;
     readOnlySegment.next = &writableSegment;
-    writableSegment.next = &physicalMemorySegment;
+    writableSegment.next = &temporarySegment;
+    temporarySegment.next = &physicalMemorySegment;
     physicalMemorySegment.next = &recursiveMappingSegment;
 }
 
@@ -219,6 +231,8 @@ void AddressSpace::activate()
     __asm__ __volatile__("mov %0, %%cr3" ::"r"(pageDir));
 }
 
+static kthread_mutex_t forkMutex = KTHREAD_MUTEX_INITIALIZER;
+
 /**
  * @brief fork地址空间
  * 
@@ -229,6 +243,7 @@ void AddressSpace::activate()
  */
 AddressSpace *AddressSpace::fork()
 {
+    ScopedLock lock(&forkMutex);
     AddressSpace *result = new AddressSpace();
     MemorySegment *segment = firstSegment->next;
     while (segment) {
@@ -268,28 +283,16 @@ inwox_phy_addr_t AddressSpace::getPhysicalAddress(inwox_vir_addr_t virtualAddres
     if (this == kernelSpace) {
         pageTable = (uintptr_t *)(RECURSIVE_MAPPING + PAGESIZE * pdIndex);
     } else {
-        pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdIndex] & ~0xFFF, PROT_READ);
+        kthread_mutex_lock(&kernelSpace->mutex);
+        pageTable = (uintptr_t *)mapTemporarily(pageDirectory[pdIndex] & ~0xFFF, PROT_READ);
     }
     inwox_phy_addr_t result = pageTable[ptIndex] & ~0xFFF;
 
     if (this != kernelSpace) {
         kernelSpace->unMap((inwox_vir_addr_t)pageTable);
+        kthread_mutex_unlock(&kernelSpace->mutex);
     }
     return result;
-}
-
-/**
- * @brief 将物理页映射到虚拟地址
- * 
- * @param physicalAddress 物理内存开始位置
- * @param protection 保护位（包括读（PROT_READ）、写（PROT_WRITE）、执行（PROT_EXEC）及无权限（PROT_NONE））
- * @return inwox_vir_addr_t 映射后的虚拟地址
- */
-inwox_vir_addr_t AddressSpace::map(inwox_phy_addr_t physicalAddress, int protection)
-{
-    assert(this == kernelSpace);
-    inwox_vir_addr_t address = MemorySegment::findFreeSegment(firstSegment, PAGESIZE);
-    return mapAt(address, physicalAddress, protection);
 }
 
 /**
@@ -364,13 +367,15 @@ inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdIndex, size_t ptIndex, in
         }
         pageDirectory[pdIndex] = pageTablePhys | pdFlags;
         if (this != kernelSpace) {  // 对于用户地址空间，直接将申请到的物理内存映射一个虚拟地址作为页表
-            pageTable = (uintptr_t *)kernelSpace->map(pageTablePhys, PROT_READ | PROT_WRITE);
+            kthread_mutex_lock(&kernelSpace->mutex);
+            pageTable = (uintptr_t *)mapTemporarily(pageTablePhys, PROT_READ | PROT_WRITE);
         }
         // 注意新分配的页表需要清零
         memset(pageTable, 0, PAGESIZE);
 
         // 对于内核地址空间，需要在全部地址空间映射这个页表
         if (this == kernelSpace) {
+            ScopedLock lock(&listMutex);
             AddressSpace *addressSpace = firstAddressSpace;
             while (addressSpace) {
                 uintptr_t *pd = (uintptr_t *)addressSpace->pageDirMapped;
@@ -380,7 +385,8 @@ inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdIndex, size_t ptIndex, in
         }
     // 对于已经存在的页表，只需找到对应的页表虚拟地址
     } else if (this != kernelSpace) {
-        pageTable = (uintptr_t *)kernelSpace->map(pageDirectory[pdIndex] & ~0xFFF, PROT_READ | PROT_WRITE);
+        kthread_mutex_lock(&kernelSpace->mutex);
+        pageTable = (uintptr_t *)mapTemporarily(pageDirectory[pdIndex] & ~0xFFF, PROT_READ | PROT_WRITE);
     }
 
     // 将物理地址设置到页表中
@@ -389,6 +395,7 @@ inwox_vir_addr_t AddressSpace::mapAtWithFlags(size_t pdIndex, size_t ptIndex, in
     // 对于用户空间,每次映射完内存,将页目录和页表释放掉
     // 内核的页目录页表常驻内存最高区域
     if (this != kernelSpace) {
+        kthread_mutex_unlock(&kernelSpace->mutex);
         kernelSpace->unMap((inwox_vir_addr_t)pageTable);
     }
     inwox_vir_addr_t virtualAddress = IndexToaddress(pdIndex, ptIndex);
@@ -414,13 +421,16 @@ inwox_vir_addr_t AddressSpace::mapFromOtherAddressSpace(AddressSpace *sourceSpac
                                                         inwox_vir_addr_t sourceVirtualAddress, size_t size,
                                                         int protection)
 {
+    kthread_mutex_lock(&mutex);
     inwox_vir_addr_t destination = MemorySegment::findAndAddNewSegment(firstSegment, size, protection);
-
+    kthread_mutex_unlock(&mutex);
     for (size_t i = 0; i < size; i += PAGESIZE) {
+        kthread_mutex_lock(&sourceSpace->mutex);
         inwox_phy_addr_t physicalAddress = sourceSpace->getPhysicalAddress(sourceVirtualAddress + i);
-        if (!physicalAddress || !mapAt(destination + i, physicalAddress, protection)) {
-            return 0;
-        }
+        kthread_mutex_unlock(&sourceSpace->mutex);
+        kthread_mutex_lock(&mutex);
+        mapAt(destination + i, physicalAddress, protection);
+        kthread_mutex_unlock(&mutex);
     }
 
     return destination;
@@ -435,6 +445,7 @@ inwox_vir_addr_t AddressSpace::mapFromOtherAddressSpace(AddressSpace *sourceSpac
  */
 inwox_vir_addr_t AddressSpace::mapMemory(size_t size, int protection)
 {
+    ScopedLock lock(&mutex);
     inwox_vir_addr_t virtualAddress = MemorySegment::findAndAddNewSegment(firstSegment, size, protection);
     inwox_phy_addr_t physicalAddress;
     for (size_t i = 0; i < size; i+=PAGESIZE) {
@@ -458,6 +469,7 @@ inwox_vir_addr_t AddressSpace::mapMemory(size_t size, int protection)
  */
 inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t size, int protection)
 {
+    ScopedLock lock(&mutex);
     MemorySegment::addSegment(firstSegment, virtualAddress, size, protection);
     inwox_phy_addr_t physicalAddress;
 
@@ -471,7 +483,6 @@ inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t
     return virtualAddress;
 }
 
-
 /**
  * @brief 将指定的物理内存映射到虚拟地址空间
  * 
@@ -482,6 +493,7 @@ inwox_vir_addr_t AddressSpace::mapMemory(inwox_vir_addr_t virtualAddress, size_t
  */
 inwox_vir_addr_t AddressSpace::mapPhysical(inwox_phy_addr_t physicalAddress, size_t size, int protection)
 {
+    ScopedLock lock(&mutex);
     inwox_vir_addr_t virtualAddress = MemorySegment::findAndAddNewSegment(firstSegment, size, protection);
     for (size_t i = 0; i < size; i += PAGESIZE) {
         if (!mapAt(virtualAddress + i, physicalAddress + i, protection)) {
@@ -515,6 +527,7 @@ void AddressSpace::unMap(inwox_vir_addr_t virtualAddress)
  */
 void AddressSpace::unmapMemory(inwox_vir_addr_t virtualAddress, size_t size)
 {
+    ScopedLock lock(&mutex);
     for (size_t i = 0; i < size; i += PAGESIZE) {
         inwox_phy_addr_t physicalAddress = getPhysicalAddress(virtualAddress + i);
         unMap(virtualAddress + i);
@@ -534,6 +547,7 @@ void AddressSpace::unmapMemory(inwox_vir_addr_t virtualAddress, size_t size)
  */
 void AddressSpace::unmapPhysical(inwox_vir_addr_t virtualAddress, size_t size)
 {
+    ScopedLock lock(&mutex);
     for (size_t i = 0; i < size; i += PAGESIZE) {
         unMap(virtualAddress + i);
     }

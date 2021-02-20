@@ -18,6 +18,7 @@ OBJ = \
 	interrupt.o \
 	kernel.o \
 	keyboard.o \
+	kthread.o \
 	memorysegment.o \
 	pic.o \
 	pit.o \

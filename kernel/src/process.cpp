@@ -57,7 +57,7 @@ Process::Process()
     memset(fd, 0, sizeof(fd));
     rootFd = nullptr;
     cwdFd = nullptr;
-    pid = nextPid++;
+    pid = 0;
     contextChanged = false;
     fdInitialized = false;
     terminated = false;
@@ -65,6 +65,7 @@ Process::Process()
     children = nullptr;
     numChildren = 0;
     status = 0;
+    childrenMutex = KTHREAD_MUTEX_INITIALIZER;
 }
 
 Process::~Process()
@@ -90,6 +91,7 @@ void Process::initialize(FileDescription *rootFd)
 
 void Process::addProcess(Process *process)
 {
+    process->pid =nextPid++;
     process->next = firstProcess;
     if (process->next) {
         process->next->prev = process;
@@ -209,10 +211,10 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
      * 分配两个栈，内核栈用来保存上下文信息
      * 用户栈处理其他
      */
-    kstack = (void *)kernelSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
+    void * newkstack = (void *)kernelSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
     inwox_vir_addr_t stack = newAddressSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
 
-    struct context *newInterruptContext = (struct context *)((uintptr_t)kstack + PAGESIZE - sizeof(struct context));
+    struct context *newInterruptContext = (struct context *)((uintptr_t)newkstack + PAGESIZE - sizeof(struct context));
     memset(newInterruptContext, 0, sizeof(struct context));
     char **newArgv;
     char **newEnvp;
@@ -237,15 +239,21 @@ int Process::execute(FileDescription *descr, char *const argv[], char *const env
         cwdFd = new FileDescription(*rootFd);
         fdInitialized = true;
     }
+
+    AddressSpace *oldAddressSpace = addressSpace;
+    addressSpace = newAddressSpace;
+    if (this == current) {
+        addressSpace->activate();
+    }
+    delete oldAddressSpace;
+
     Interrupt::disable();
     if (this == current) {
         contextChanged = true;
-        kernelSpace->activate();
     }
-    if (addressSpace) {
-        delete addressSpace;
-    }
-    addressSpace = newAddressSpace;
+
+    kstack = newkstack;
+
     interruptContext = newInterruptContext;
     if (this == current) {
         Interrupt::enable();
@@ -293,8 +301,10 @@ Process *Process::regfork(int flags, struct regfork *registers)
     (void)flags;
     Process *process = new Process();
     process->parent = this;
+    kthread_mutex_lock(&childrenMutex);
     children = (Process **)realloc(children, ++numChildren * sizeof(Process *));
     children[numChildren - 1] = process;
+    kthread_mutex_unlock(&childrenMutex);
 
     // fork 寄存器
     process->kstack = (void *)kernelSpace->mapMemory(PAGESIZE, PROT_READ | PROT_WRITE);
@@ -329,7 +339,9 @@ Process *Process::regfork(int flags, struct regfork *registers)
     process->fdInitialized = true;
 
     // 将进程加入进程链表
+    Interrupt::disable();
     addProcess(process);
+    Interrupt::enable();
     return process;
 }
 
@@ -357,13 +369,16 @@ Process *Process::waitpid(pid_t pid, int flags)
         return nullptr;
     }
 
+    ScopedLock lock(&childrenMutex);
     for (size_t i = 0; i < numChildren; i++) {
         if (children[i]->pid == pid) {
             Process *result = children[i];
+            kthread_mutex_unlock(&childrenMutex);
             // 等待进程停止
             while (!result->terminated) {
                 sched_yield();
             }
+            kthread_mutex_lock(&childrenMutex);
             if (i < numChildren - 1) {
                 children[i] = children[numChildren - 1];
             }

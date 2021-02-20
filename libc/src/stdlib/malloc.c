@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 -2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,16 @@
 #include <stdalign.h>
 #include <stddef.h>
 #include "malloc.h"
+
+#ifdef __is_inwox_libc
+void __lockHeap(void) {
+
+}
+
+void __unlockHeap(void) {
+
+}
+#endif
 
 /**
  * 初始时的空Big Mem_Ctrl_Blk
@@ -135,12 +145,16 @@ void __splitBlock(Mem_Ctrl_Blk *block, size_t size)
 
 void *malloc(size_t size)
 {
-    if (size == 0)
+    if (size == 0) {
         size = 1;
+    }
     size_t blockSize = sizeof(Mem_Ctrl_Blk);
+
     /* 16字节对齐 */
     size = ALIGN_UP(size, alignof(max_align_t));
     size_t totalSize = blockSize + size;
+
+    __lockHeap();
 
     Mem_Ctrl_Blk *currentBigBlock = firstBigBlock;
     Mem_Ctrl_Blk *currentBlock = currentBigBlock + 1;
@@ -154,6 +168,7 @@ void *malloc(size_t size)
                         __splitBlock(currentBlock, size);
                     }
                     currentBlock->magic = MAGIC_USED_MCB;
+                    __unlockHeap();
                     return (void *)(currentBlock + 1);
                 } else {
                     currentBlock = currentBlock->next;
@@ -172,11 +187,13 @@ void *malloc(size_t size)
                     currentBlock = currentBigBlock + 1;
                     if (!currentBigBlock) {
                         errno = ENOMEM;
+                        __unlockHeap();
                         return NULL;
                     }
                 }
                 break;
             default:
+                __unlockHeap();
                 return NULL;
         }
     }

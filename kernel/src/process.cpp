@@ -194,10 +194,10 @@ int Process::copyArguments(char *const argv[], char *const envp[], char **&newAr
     return argc;
 }
 
-int Process::execute(FileDescription *descr, char *const argv[], char *const envp[])
+int Process::execute(Vnode *vnode, char *const argv[], char *const envp[])
 {
-    FileVnode *file = (FileVnode *)descr->vnode;
-    if (!S_ISREG(descr->vnode->mode)) {
+    FileVnode *file = (FileVnode *)vnode;
+    if (!S_ISREG(vnode->mode)) {
         errno = EACCES;
         return -1;
     }

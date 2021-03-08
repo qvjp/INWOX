@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -78,7 +78,7 @@ DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
         char *fileName = basename(path2);
 
         // 打开该文件所在目录
-        DirectoryVnode *directory = (DirectoryVnode *)root->openat(dirName, 0, 0);
+        DirectoryVnode *directory = (DirectoryVnode *)resolvePath(root, dirName);
 
         if (!directory) {
             Print::printf("Could not add '%s' to nonexistent directory '%s'.\n", fileName, dirName);

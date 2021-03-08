@@ -53,6 +53,7 @@ dkms.conf
 
 *.iso
 Documents/*
+Playground/*
 
 # INWOX
 build/*

@@ -169,8 +169,9 @@ int Syscall::execve(const char *path, char *const argv[], char *const envp[])
     if (path == NULL || path[0] == '\0') {
         return -1;
     }
-    FileDescription *descr = getRootFd(AT_FDCWD, path)->openat(path, 0, 0);
-    if (!descr || Process::current->execute(descr, argv, envp) == -1) {
+    FileDescription *descr = getRootFd(AT_FDCWD, path);
+    Vnode *vnode = resolvePath(descr->vnode, path);
+    if (!vnode || Process::current->execute(vnode, argv, envp) == -1) {
         return -1;
     }
     sched_yield();
@@ -192,7 +193,7 @@ int Syscall::fstatat(int fd, const char *__restrict path, struct stat *__restric
 {
     (void)flags;
     FileDescription *descr = getRootFd(fd, path);
-    Vnode *vnode = descr->vnode->openat(path, 0, 0);
+    Vnode *vnode = resolvePath(descr->vnode, path);
     if (!vnode) {
         return -1;
     }

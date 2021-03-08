@@ -35,7 +35,7 @@ public:
     DirectoryVnode(DirectoryVnode *parent, mode_t mode);
     ~DirectoryVnode();
     void addChildNode(const char *path, Vnode *vnode);
-    virtual Vnode *openat(const char *path, int flags, mode_t mode);
+    virtual Vnode *getChildNode(const char *path);
     virtual ssize_t readdir(unsigned long offset, void *buffer, size_t size);
 
 public:

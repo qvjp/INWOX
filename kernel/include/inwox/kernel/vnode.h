@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@
 class Vnode {
 public:
     virtual bool isSeekable();
-    virtual Vnode *openat(const char *path, int flags, mode_t mode);
+    virtual Vnode *getChildNode(const char *path);
     virtual ssize_t pread(void *buffer, size_t size, off_t offset); /* pread的`p`是positional，从指定位置读 */
     virtual ssize_t write(const void *buffer, size_t size);
     virtual ssize_t read(void *buffer, size_t size);
@@ -61,5 +61,7 @@ public:
 protected:
     Vnode(mode_t mode);
 };
+
+Vnode *resolvePath(Vnode *vnode, const char *path);
 
 #endif /* KERNEL_VNODE_H_ */

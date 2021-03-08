@@ -129,13 +129,13 @@ extern "C" void kernel_main(uint32_t magic, inwox_phy_addr_t multibootAddress)
     Print::printf("Initializing Process...\n");
     Process::initialize(rootFd);
 
-    FileVnode *program = (FileVnode *)rootDir->openat("/bin/shell", 0, 0);
+    FileVnode *program = (FileVnode *)resolvePath(rootDir, "/bin/shell");
     if (program) {
         Print::printf("Launching shell...\n");
         Process *newProcess = new Process();
         const char *argv[] = {"/bin/sh", nullptr};
         const char *envp[] = {"PATH=/bin", nullptr};
-        newProcess->execute(new FileDescription(program), (char **)argv, (char **)envp);
+        newProcess->execute(program, (char **)argv, (char **)envp);
         Process::addProcess(newProcess);
     } else {
         Print::printf("launch shell failed\n");

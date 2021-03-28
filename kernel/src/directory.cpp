@@ -36,6 +36,7 @@ DirectoryVnode::DirectoryVnode(DirectoryVnode *parentVnode, mode_t mode) : Vnode
     childCount = 0;
     childNodes = nullptr;
     fileNames = nullptr;
+    mutex = KTHREAD_MUTEX_INITIALIZER;
     parent = parentVnode;
 }
 
@@ -47,6 +48,7 @@ DirectoryVnode::~DirectoryVnode()
 
 void DirectoryVnode::addChildNode(const char *path, Vnode *vnode)
 {
+    ScopedLock lock(&mutex);
     Vnode **newChildNodes = new Vnode *[childCount + 1];
     const char **newFileNames = new const char *[childCount + 1];
 
@@ -63,6 +65,7 @@ void DirectoryVnode::addChildNode(const char *path, Vnode *vnode)
 
 Vnode *DirectoryVnode::getChildNode(const char *path)
 {
+    ScopedLock lock(&mutex);
     if (strcmp(path, ".") == 0) {
         return this;
     } else if (strcmp(path, "..") == 0) {
@@ -81,6 +84,7 @@ Vnode *DirectoryVnode::getChildNode(const char *path)
 
 ssize_t DirectoryVnode::readdir(unsigned long offset, void *buffer, size_t size)
 {
+    ScopedLock lock(&mutex);
     const char *name;
     if (offset == 0) {
         name = ".";

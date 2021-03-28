@@ -69,6 +69,7 @@ public:
     FileDescription *cwdFd;
     pid_t pid;
     int status;
+    mode_t umask;
 
 public:
     static void addProcess(Process *process);

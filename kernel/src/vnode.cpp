@@ -100,6 +100,12 @@ Vnode *resolvePath(Vnode *vnode, const char *path)
     return currentVnode;
 }
 
+int Vnode::ftruncate(off_t /* length */)
+{
+    errno = EBADF;
+    return -1;
+}
+
 Vnode *Vnode::getChildNode(const char */* path */)
 {
     errno = EBADF;
@@ -107,6 +113,12 @@ Vnode *Vnode::getChildNode(const char */* path */)
 }
 
 ssize_t Vnode::pread(void * /* buffer */, size_t /* size */, off_t /* offset */)
+{
+    errno = EBADF;
+    return -1;
+}
+
+ssize_t Vnode::pwrite(const void * /* buffer */, size_t /* size */, off_t /* offset */)
 {
     errno = EBADF;
     return -1;

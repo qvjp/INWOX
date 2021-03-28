@@ -28,6 +28,7 @@
 #ifndef KERNEL_DIRECTORY_H_
 #define KERNEL_DIRECTORY_H_
 
+#include <inwox/kernel/kthread.h>
 #include <inwox/kernel/vnode.h>
 
 class DirectoryVnode : public Vnode {
@@ -44,6 +45,7 @@ public:
 private:
     Vnode **childNodes;
     const char **fileNames;
+    kthread_mutex_t mutex;
     DirectoryVnode *parent;
 };
 

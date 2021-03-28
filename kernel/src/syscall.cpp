@@ -135,7 +135,7 @@ ssize_t Syscall::write(int fd, const void *buffer, size_t size)
 int Syscall::openat(int fd, const char *path, int flags, mode_t mode)
 {
     FileDescription *descr = getRootFd(fd, path);
-    FileDescription *result = descr->openat(path, flags, mode);
+    FileDescription *result = descr->openat(path, flags, mode & ~Process::current->umask);
     if (!result) {
         return -1;
     }

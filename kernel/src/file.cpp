@@ -25,6 +25,8 @@
  * FileVnode class.
  */
 
+#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inwox/kernel/file.h>
 #include <inwox/stat.h>
@@ -34,11 +36,32 @@ FileVnode::FileVnode(const void *data, size_t size, mode_t mode) : Vnode(S_IFREG
     this->data = new char[size];
     memcpy(this->data, data, size);
     fileSize = size;
+    mutex = KTHREAD_MUTEX_INITIALIZER;
 }
 
 FileVnode::~FileVnode()
 {
     delete data;
+}
+
+int FileVnode::ftruncate(off_t length)
+{
+    if (length < 0 || length > __SIZE_MAX__) {
+        errno = EINVAL;
+        return -1;
+    }
+    ScopedLock lock(&mutex);
+    void *newData = realloc(data, (size_t)length);
+    if (!newData) {
+        errno = ENOSPC;
+        return -1;
+    }
+    data = (char *)newData;
+    if (length > fileSize) {
+        memset(data + fileSize, '\0', length - fileSize);
+    }
+    fileSize = (size_t)length;
+    return 0;
 }
 
 bool FileVnode::isSeekable()
@@ -48,6 +71,7 @@ bool FileVnode::isSeekable()
 
 ssize_t FileVnode::pread(void *buffer, size_t size, off_t offset)
 {
+    ScopedLock lock(&mutex);
     char *buf = (char *)buffer;
 
     for (size_t i = 0; i < size; i++) {
@@ -57,5 +81,30 @@ ssize_t FileVnode::pread(void *buffer, size_t size, off_t offset)
         buf[i] = data[offset + i];
     }
 
+    return size;
+}
+
+ssize_t FileVnode::pwrite(const void *buffer, size_t size, off_t offset)
+{
+    if (offset < 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    ScopedLock lock(&mutex);
+    size_t newSize;
+    if (__builtin_add_overflow(offset, size, &newSize)) {
+        errno = ENOSPC;
+        return -1;
+    }
+    if (newSize > fileSize) {
+        void *newData = realloc(data, newSize);
+        if (!newData) {
+            errno = ENOSPC;
+            return -1;
+        }
+        data = (char *)newData;
+        fileSize = newSize;
+    }
+    memcpy(data + offset, buffer, size);
     return size;
 }

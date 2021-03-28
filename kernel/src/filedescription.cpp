@@ -25,6 +25,13 @@
  * FileDescription class.
  */
 
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <inwox/fcntl.h>
+#include <inwox/kernel/directory.h>
+#include <inwox/kernel/file.h>
 #include <inwox/kernel/filedescription.h>
 
 FileDescription::FileDescription(Vnode *vnode)
@@ -33,11 +40,36 @@ FileDescription::FileDescription(Vnode *vnode)
     offset = 0;
 }
 
-FileDescription *FileDescription::openat(const char *path, int /* flags */, mode_t /* mode */)
+FileDescription *FileDescription::openat(const char *path, int flags, mode_t mode)
 {
     Vnode *node = resolvePath(vnode, path);
     if (!node) {
-        return nullptr;
+        if (!(flags & O_CREAT)) {
+            return nullptr;
+        }
+        char *pathCopy = strdup(path);
+        char *slash = strrchr(pathCopy, '/');
+        char *newFileName;
+        if (!slash || slash == pathCopy) {
+            node = vnode;
+            newFileName = slash ? pathCopy + 1 : pathCopy;
+        } else {
+            *slash = '\0';
+            newFileName = slash + 1;
+            node = resolvePath(vnode, pathCopy);
+            if (!node) {
+                free(pathCopy);
+                return nullptr;
+            }
+        }
+        FileVnode *file = new FileVnode(nullptr, 0, mode & 0777);
+        DirectoryVnode *directory = (DirectoryVnode *)node;
+        directory->addChildNode(newFileName, file);
+        free(pathCopy);
+        node = file;
+    }
+    if (flags & O_TRUNC) {
+        node->ftruncate(0);
     }
     return new FileDescription(node);
 }
@@ -62,6 +94,13 @@ ssize_t FileDescription::readdir(unsigned long offset, void *buffer, size_t size
 
 ssize_t FileDescription::write(const void *buffer, size_t size)
 {
+    if (vnode->isSeekable()) {
+        ssize_t result = vnode->pwrite(buffer, size, offset);
+        if (result != -1) {
+            offset += result;
+        }
+        return result;
+    }
     return vnode->write(buffer, size);
 }
 

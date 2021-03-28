@@ -66,6 +66,7 @@ Process::Process()
     numChildren = 0;
     status = 0;
     childrenMutex = KTHREAD_MUTEX_INITIALIZER;
+    umask = S_IWGRP | S_IWOTH;
 }
 
 Process::~Process()

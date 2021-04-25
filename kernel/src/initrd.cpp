@@ -56,11 +56,11 @@ struct tar_header {
 
 DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
 {
-    DirectoryVnode *root = new DirectoryVnode(nullptr, 0755);
+    DirectoryVnode *root = new DirectoryVnode(nullptr, 0755, 0, 0);
     tar_header *header = (tar_header *)initrd;
 
     while (strcmp(header->magic, TMAGIC) == 0) {
-        size_t size = (size_t)strtoul(header->size, NULL, 8); // 获取当前文件的大小，注意按8进制读取
+        size_t size = (size_t)strtoul(header->size, nullptr, 8); // 获取当前文件的大小，注意按8进制读取
         char *path;
 
         // 获取文件路径（包含文件名）
@@ -89,10 +89,10 @@ DirectoryVnode *Initrd::loadInitrd(inwox_vir_addr_t initrd)
         Vnode *newFile;
         mode_t mode = strtol(header->mode, nullptr, 8);
         if (header->typeflag == REGTYPE || header->typeflag == AREGTYPE) {
-            newFile = new FileVnode(header + 1, size, mode);
+            newFile = new FileVnode(header + 1, size, mode, directory->dev, 0);
             header += 1 + ALIGN_UP(size, 512) / 512;
         } else if (header->typeflag == DIRTYPE) {
-            newFile = new DirectoryVnode(directory, mode);
+            newFile = new DirectoryVnode(directory, mode, directory->dev, 0);
             header++;
         } else {
             Print::printf("Unknown typeflag '%c'\n", header->typeflag);

@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,6 +55,8 @@
 #define S_ISGID 02000
 
 struct stat {
+    __dev_t st_dev;
+    __ino_t st_ino;
     __mode_t st_mode;
 };
 

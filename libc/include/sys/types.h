@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,11 @@
 
 #include <inwox/types.h>
 
+#if defined(__need_dev_t) && !defined(__dev_t_defined)
+typedef __dev_t dev_t;
+#define __dev_t_defined
+#endif
+
 #if defined(__need_FILE) && !defined(__FILE_defined)
 typedef struct __FILE FILE;
 #define __FILE_defined
@@ -36,6 +41,11 @@ typedef struct __FILE FILE;
 #if defined(__need_fpos_t) && !defined(__fpos_t_defined)
 typedef __off_t fpos_t;
 #define __fpos_t_defined
+#endif
+
+#if defined(__need_ino_t) && !defined(__ino_t_defined)
+typedef __ino_t ino_t;
+#define __ino_t_defined
 #endif
 
 #if defined(__need_mode_t) && !defined(__mode_t_defined)
@@ -67,7 +77,9 @@ typedef __time_t time_t;
 #define __time_t_defined
 #endif
 
+#undef __need_dev_t
 #undef __need_FILE
+#undef __need_ino_t
 #undef __need_fpos_t
 #undef __need_mode_t
 #undef __need_off_t

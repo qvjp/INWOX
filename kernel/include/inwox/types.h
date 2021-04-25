@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,8 @@
 #ifndef INWOX_TYPES_H_
 #define INWOX_TYPES_H_
 
+typedef unsigned long __dev_t;
+typedef __UINTMAX_TYPE__ __ino_t;
 typedef int __mode_t;
 typedef int __pid_t;
 typedef __INTMAX_TYPE__ __off_t;

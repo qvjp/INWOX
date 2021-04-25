@@ -31,9 +31,16 @@
 #include <sys/stat.h>
 #include <inwox/kernel/vnode.h>
 
-Vnode::Vnode(mode_t mode)
+static ino_t nextIno = 0;
+
+Vnode::Vnode(mode_t mode, dev_t dev, ino_t ino)
 {
+    this->dev = dev;
+    this->ino = ino;
     this->mode = mode;
+    if (!ino) {
+        this->ino = nextIno++;
+    }
 }
 
 /* 默认实现，具体看继承函数如何实现 */
@@ -126,6 +133,8 @@ ssize_t Vnode::pwrite(const void * /* buffer */, size_t /* size */, off_t /* off
 
 int Vnode::stat(struct stat *result)
 {
+    result->st_dev = dev;
+    result->st_ino = ino;
     result->st_mode = mode;
     return 0;
 }

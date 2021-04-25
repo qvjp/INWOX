@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,11 @@
 #ifndef INWOX_DIRENT_H_
 #define INWOX_DIRENT_H_
 
+#include <inwox/types.h>
+
 struct dirent {
+    __dev_t d_dev;
+    __ino_t d_ino;
     __SIZE_TYPE__ d_reclen;
     __extension__ char d_name[];
 };

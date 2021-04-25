@@ -34,6 +34,8 @@
 #ifndef KERNEL_VNODE_H_
 #define KERNEL_VNODE_H_
 
+#define __need_dev_t
+#define __need_ino_t
 #define __need_size_t
 #define __need_ssize_t
 #define __need_off_t
@@ -58,10 +60,12 @@ public:
     virtual ~Vnode() {}
 
 public:
+    dev_t dev;
+    ino_t ino;
     mode_t mode;
 
 protected:
-    Vnode(mode_t mode);
+    Vnode(mode_t mode, dev_t dev, ino_t ino);
 };
 
 Vnode *resolvePath(Vnode *vnode, const char *path);

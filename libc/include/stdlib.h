@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,8 @@ extern "C" {
 #define EXIT_SUCCESS 0
 
 #define RAND_MAX (0x7fffffff) // rand()可生成的最大随机数
+
+char *canonicalize_file_name(const char *);
 
 __attribute__((__noreturn__)) void _Exit(int);
 __attribute__((__noreturn__)) void exit(int);

@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,6 +51,7 @@ int close(int fd);
 pid_t regfork(int flags, struct regfork *registers);
 int execve(const char *path, char *const argv[], char *const envp[]);
 pid_t waitpid(pid_t pid, int *status, int flags);
+int fstat(int fd, struct stat *result);
 int fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags);
 ssize_t readdir(int fd, unsigned long offset, void *buffer, size_t size);
 int nanosleep(const struct timespec *request, struct timespec *remaining);

@@ -96,11 +96,13 @@ LIBC_OBJ = \
 	stdio/vprintf \
 	stdio/vsprintf \
 	stdlib/atexit \
+	stdlib/canonicalize_file_name \
 	stdlib/_Exit \
 	stdlib/exit \
 	stdlib/getenv \
 	sys/mman/mmap \
 	sys/mman/munmap \
+	sys/stat/fstat \
 	sys/stat/fstatat \
 	sys/stat/stat \
 	sys/utsname/uname \

@@ -59,6 +59,7 @@ static const void *syscallList[NUM_SYSCALLS] = {
     (void*) Syscall::tcsetattr,
     (void*) Syscall::fchdirat,
     (void*) Syscall::uname,
+    (void*) Syscall::fstat,
 };
 
 /**
@@ -187,6 +188,12 @@ pid_t Syscall::waitpid(pid_t pid, int *status, int flags)
     *status = process->status;
     delete process;
     return pid;
+}
+
+int Syscall::fstat(int fd, struct stat *result)
+{
+    FileDescription *descr = Process::current->fd[fd];
+    return descr->vnode->stat(result);
 }
 
 int Syscall::fstatat(int fd, const char *__restrict path, struct stat *__restrict result, int flags)

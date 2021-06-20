@@ -1,6 +1,6 @@
 /** MIT License
  *
- * Copyright (c) 2020 Qv Junping
+ * Copyright (c) 2020 - 2021 Qv Junping
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,7 @@ extern "C" {
 #define S_ISFIFO(m) (((m)&S_IFMT) == S_IFIFO)
 #define S_ISSOCK(m) (((m)&S_IFMT) == S_IFSOCK)
 
+int fstat(int fd, struct stat *result);
 int fstatat(int fd, const char *__restrict pathname, struct stat *__restrict statbuf, int flags);
 int stat(const char *__restrict pathname, struct stat *__restrict statbuf);
 

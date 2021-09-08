@@ -21,13 +21,42 @@
  * SOFTWARE.
  */
 
-/* libc/src/unistd/environ.c
- * 环境变量
+/**
+ * libc/src/stdlib/unsetenv.c
+ * unset 环境变量
  */
 
-#include <stddef.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
-char **environ;
-char **__mallocedEnviron;
-size_t __environLength;
-size_t __environSize;
+extern char **environ;
+extern char **__mallocedEnviron;
+extern size_t __environLength;
+
+int unsetenv(const char *name)
+{
+    if (!*name || strchr(name, '=')) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (!environ) {
+        return 0;
+    }
+    size_t name_length = strlen(name);
+    for (size_t i = 0; environ[i]; i++) {
+        if (name_length == strcspn(environ[i], "=") &&
+        strncmp(environ[i], name, name_length) == 0) {
+            if (environ == __mallocedEnviron) {
+                free(environ[i]);
+                environ[i] = environ[--__environLength];
+                environ[__environLength] = NULL;
+            } else {
+                for (size_t j = i; environ[j]; j++) {
+                    environ[j] = environ[j + 1];
+                }
+            }
+        }
+    }
+    return 0;
+}

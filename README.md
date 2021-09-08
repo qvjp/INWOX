@@ -11,7 +11,7 @@ Linux环境（Ubuntu 20.04测试通过）
 
 1. 安装依赖
 
-    `sudo apt install build-essential bison flex git grub-pc-bin libgmp3-dev libisl-dev libmpc-dev libmpfr-dev mtools qemu-system-x86 texinfo xorriso`
+    `sudo apt install automake build-essential bison flex git grub-pc-bin libgmp3-dev libisl-dev libmpc-dev libmpfr-dev mtools qemu-system-x86 texinfo xorriso`
 
 2. 下载并构建交叉编译环境
 

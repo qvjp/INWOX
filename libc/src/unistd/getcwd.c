@@ -21,54 +21,35 @@
  * SOFTWARE.
  */
 
-/**
- * libc/include/unistd.h
- * 定义POSIX函数
+/* libc/src/unistd/getcwd.c
+ * getcwd
  */
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
-#ifndef UNISTD_H
-#define UNISTD_H
+char *getcwd(char *buffer, size_t size) {
+    if (buffer && size == 0) {
+        errno = EINVAL;
+        return NULL;
+    }
 
-#define __need_pid_t
-#define __need_ssize_t
-#define __need_size_t
-#define __need_FILE
-#include <sys/types.h>
-#include <inwox/fork.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
+    char *result = canonicalize_file_name(".");
+    if (!result) {
+        return NULL;
+    }
 
-/**
- * @brief access的第二个参数
- *
- * 以下权限可以进行或操作
- */
-#define F_OK 0        // 测试存在
-#define R_OK (1 << 0) // 测试读权限
-#define W_OK (1 << 1) // 测试写权限
-#define X_OK (1 << 2) // 测试执行权限
+    if (!buffer) {
+        return result;
+    }
 
-__attribute__((__noreturn__)) void _exit(int);
-ssize_t read(int, void *, size_t);
-ssize_t write(int, const void *, size_t);
-int close(int);
-int access(const char *, int);
+    if (strcpy(buffer, result) >= size) {
+        free(result);
+        errno = ERANGE;
+        return NULL;
+    }
 
-pid_t fork(void);
-pid_t rfork(int);
-char *getcwd(char *, size_t);
-int execl(const char *, const char *, ...);
-int execv(const char *, char *const[]);
-int execve(const char *, char *const[], char *const[]);
-int execvp(const char *, char *const[]);
-
-unsigned int sleep(unsigned int);
-
-int chdir(const char *);
-int fchdirat(int, const char *path);
-#ifdef __cplusplus
+    free(result);
+    return buffer;
 }
-#endif
-
-#endif /* UNISTD_H */

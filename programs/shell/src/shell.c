@@ -34,6 +34,60 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+static char *pwd;
+static size_t pwdSize;
+
+static void updateLogicalPwd(const char *path)
+{
+    if (!pwd) {
+        pwd = getcwd(NULL, 0);
+        return;
+    }
+
+    if (*path == '/') {
+        strcpy(pwd, "/");
+    }
+
+    size_t newSize = strlen(pwd) + strlen(path) + 1;
+    if (newSize > pwdSize) {
+        char *newPwd = realloc(pwd, newSize);
+        if (!newPwd) {
+            free(pwd);
+            pwd = NULL;
+            return;
+        }
+        pwd = newPwd;
+    }
+
+    char *pwdEnd = pwd + strlen(pwd);
+    const char *component = path;
+    size_t componentLength = strcspn(component, "/");
+
+    while (*component) {
+        if (componentLength == 0 || (componentLength == 1 && strncmp(component, ".", 1) == 0)) {
+        }
+        else if (componentLength == 2 && strncmp(component, "..", 2) == 0) {
+            char *lastSlash = strrchr(pwd, '/');
+            if (lastSlash == pwd) {
+                pwdEnd = pwd + 1;
+            } else if (lastSlash) {
+                pwdEnd = lastSlash;
+            }
+        } else {
+            if (pwdEnd != pwd + 1) {
+                *pwdEnd++ = '/';
+            }
+            memcpy(pwdEnd, component, componentLength);
+            pwdEnd += componentLength;
+        }
+
+        component += componentLength + 1;
+        componentLength = strcspn(component, "/");
+    }
+
+    *pwdEnd = '\0';
+}
+
 static int cd(int argc, char *argv[])
 {
     const char *newCwd;
@@ -50,6 +104,12 @@ static int cd(int argc, char *argv[])
         perror("chdir");
         return 1;
     }
+
+    updateLogicalPwd(newCwd);
+    if (!pwd || setenv("PWD", pwd, 1) < 0) {
+        unsetenv("PWD");
+    }
+
     return 0;
 }
 
@@ -119,6 +179,14 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
+    pwd = getenv("PWD");
+    if (!pwd) {
+        pwd = getcwd(NULL, 0);
+        if (pwd) {
+            setenv("PWD", pwd, 1);
+        }
+    }
+    pwdSize = pwd ? strlen(pwd) : 0;
     while (true) {
         if (feof(stdin)) {
             exit(0);
@@ -149,7 +217,7 @@ int main(int argc, char *argv[])
             arguments[argCount++] = token;
             token = strtok(NULL, " ");
         }
-        
+
         arguments[argCount] = NULL;
 
         executeCommand(argCount, arguments);

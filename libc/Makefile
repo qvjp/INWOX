@@ -121,6 +121,7 @@ LIBC_OBJ = \
 	unistd/execve \
 	unistd/fchdirat \
 	unistd/fork \
+	unistd/getcwd \
 	unistd/_exit \
 	unistd/read \
 	unistd/sleep \

@@ -18,8 +18,6 @@ gcc_repo=https://github.com/qvjp/gcc-10.1.0-inwox.git
 
 SYSROOT="$(cd "$SYSROOT" && pwd)"
 
-CPU_CORE=`cat /proc/cpuinfo | grep "processor" | wc -l`
-
 current_binutils=$(cat "$PREFIX/binutils-commit" || echo Not installed)
 current_gcc=$(cat "$PREFIX/gcc-commit" || echo Not installed)
 latest_binutils=$(git ls-remote $binutils_repo HEAD | cut -c 1-40)
@@ -52,7 +50,7 @@ mkdir -p "$BUILDDIR/build-binutils-inwox"
 cd "$BUILDDIR/build-binutils-inwox"
 "$SRCDIR/inwox-binutils/configure" --target=$TARGET --prefix="$PREFIX" --with-sysroot="$SYSROOT" \
         --disable-nls --disable-werror
-make -j"$CPU_CORE"
+make -j$(nproc)
 make install
 
 echo Building gcc...
@@ -60,7 +58,7 @@ mkdir -p "$BUILDDIR/build-gcc-inwox"
 cd "$BUILDDIR/build-gcc-inwox"
 "$SRCDIR/inwox-gcc/configure" --target=$TARGET --prefix="$PREFIX" --disable-nls \
         --enable-languages=c,c++ --with-sysroot="$SYSROOT"
-make -j"$CPU_CORE" all-gcc all-target-libgcc
+make -j$(nproc) all-gcc all-target-libgcc
 make install-gcc install-target-libgcc
 
 cd "$SRCDIR/inwox-binutils"
@@ -70,6 +68,6 @@ git rev-parse HEAD > "$PREFIX/gcc-commit"
 
 TIME_DONE=`date`
 echo Install completed
-echo "CPU CORE: $CPU_CORE"
+echo "CPU CORE: $(nproc)"
 echo "Start: $TIME_START"
 echo "Done : $TIME_DONE"

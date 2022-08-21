@@ -1,7 +1,7 @@
 TO_ROOT = .
 include $(TO_ROOT)/build-config/config.mk
 
-all: build-info install-headers libc install-libc kernel programs tests strip-debug iso
+all: build-info install-headers libc install-libc kernel programs tests gen-debug-sym iso
 	@echo -n ${COLOR_RESET}
 
 build-info:
@@ -22,12 +22,14 @@ kernel:
 iso: $(ISO)
 
 # 为调试生成kernel.sym，并删除kernel.elf中的多余调试信息
+gen-debug-sym:
+	$(ARCH)-inwox-objcopy --only-keep-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(BUILD_DIR)/kernel.sym
+
 strip-debug:
-	@echo ${COLOR_YELLOW}Building package...
-	i686-inwox-objcopy --only-keep-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(BUILD_DIR)/kernel.sym
-	i686-inwox-objcopy --strip-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
+	$(ARCH)-inwox-objcopy --strip-debug $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf
 
 $(ISO): $(BUILD_DIR)/$(ARCH)/kernel/kernel.elf $(INITRD)
+	@echo ${COLOR_YELLOW}Packing...
 	mkdir iso
 	mkdir iso/boot
 	mkdir iso/boot/grub
@@ -78,4 +80,4 @@ clean:
 	rm -rf $(ISO)
 	rm -rf ./sysroot ./iso
 
-.PHONY: all kernel iso qemu-curses qemu-curses-dbg clean libc install-headers install-libc strip-debug programs tests
+.PHONY: all kernel iso qemu-curses qemu-curses-dbg clean libc install-headers install-libc gen-debug-sym strip-debug programs tests

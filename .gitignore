@@ -58,5 +58,6 @@ Playground/*
 # INWOX
 build/*
 sysroot/*
-.vscode/*
+.vscode/*.log
 .gdb_history
+.DS_Store

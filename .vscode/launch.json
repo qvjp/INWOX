@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (LLDB)",
+            "type": "lldb",
+            "request": "custom",
+            "targetCreateCommands": ["target create ${workspaceFolder}/build/i686/kernel/kernel.elf"],
+            "processCreateCommands": ["gdb-remote localhost:1234"],
+            "preLaunchTask": "Run INWOX",
+        },
+
+        {
+            "name": "Debug (GDB)",
+            "type": "gdb",
+            "request": "attach",
+            "target": ":1234",
+            "executable": "./build/i686/kernel/kernel.elf",
+            "cwd": "${workspaceRoot}",
+            "remote": true,
+            "showDevDebugOutput": true,
+            "valuesFormatting": "parseText",
+            "preLaunchTask": "Run INWOX"
+        }
+    ]
+}

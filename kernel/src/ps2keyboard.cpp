@@ -105,12 +105,19 @@ void PS2Keyboard::handleKey(int keycode)
         listener->onKeyboardEvent(keycode);
     }
 }
+static uint8_t readDataPort()
+{
+    while (!(Hardwarecommunication::inportb(0x64) & 1)) {
+    }
+    return Hardwarecommunication::inportb(0x60);
+}
 
 static void sendKeyboardCommand(uint8_t command)
 {
     while (Hardwarecommunication::inportb(0x64) & 2) {
     }
     Hardwarecommunication::outportb(0x60, command);
+    readDataPort();
 }
 
 static void sendKeyboardCommand(uint8_t command, uint8_t data)

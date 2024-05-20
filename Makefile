@@ -64,10 +64,10 @@ qemu: $(ISO)
 # Windows Terminal: Alt + 2 -> q
 # macOS Terminal: esc + 2 -> q
 qemu-curses: $(ISO)
-	qemu-system-i386 -cdrom $^ -curses -m 8M
+	qemu-system-i386 -cdrom $^ -display curses -m 8M
 
 qemu-curses-dbg: $(ISO)
-	qemu-system-i386 -cdrom $^ -S -s -curses -m 8M
+	qemu-system-i386 -cdrom $^ -S -s -display curses -m 8M
 
 install-toolchain: install-headers
 	SYSROOT=$(SYSROOT) $(TO_ROOT)/build-config/install-toolchains.sh

@@ -1,0 +1,18 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "kernel"
+test = false
+bench = false
+
+[dependencies]
+bootloader_api = "0.11.7"
+embedded-graphics = "0.8.1"
+spin = "0.9.8"
+
+[dependencies.lazy_static]
+version = "1.5.0"
+features = ["spin_no_std"]

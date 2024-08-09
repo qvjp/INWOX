@@ -224,7 +224,10 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    if let Some(display) = &mut *DISPLAY.lock() {
-        display.write_fmt(args).unwrap();
-    }
+    use x86_64::instructions::interrupts;
+    interrupts::without_interrupts(|| {
+        if let Some(display) = &mut *DISPLAY.lock() {
+            display.write_fmt(args).unwrap();
+        }
+    });
 }

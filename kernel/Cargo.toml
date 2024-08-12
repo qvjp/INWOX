@@ -15,6 +15,7 @@ spin = "0.9.8"
 x86_64 = "0.15.1"
 pic8259 = "0.11.0"
 pc-keyboard = "0.7.0"
+uart_16550 = "0.3.1"
 
 [dependencies.lazy_static]
 version = "1.5.0"

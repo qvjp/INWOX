@@ -9,14 +9,14 @@ use embedded_graphics::{
     pixelcolor::{Rgb888, RgbColor},
     prelude::*,
     primitives::{Polyline, PrimitiveStyle},
-    text::Text,
+    text::{Baseline, Text},
     Drawable, Pixel,
 };
 use lazy_static::lazy_static;
 use spin::Mutex;
 
-const FONT_WIDTH: i32 = FONT_10X20.character_size.width as i32;
-const FONT_HEIGHT: i32 = FONT_10X20.character_size.height as i32;
+const FONT_WIDTH: usize = FONT_10X20.character_size.width as usize;
+const FONT_HEIGHT: usize = FONT_10X20.character_size.height as usize;
 
 lazy_static! {
     pub static ref DISPLAY: Mutex<Option<Display>> = Mutex::new(None);
@@ -25,12 +25,16 @@ lazy_static! {
 pub struct Display {
     framebuffer: &'static mut [u8],
     info: FrameBufferInfo,
-    writer_pos: Point,
+    writer_pos: Position,
+    background_color: Color,
 }
 
 pub fn init_display(framebuffer: &'static mut FrameBuffer) {
     let mut display = Display::new(framebuffer);
-    display.clear(Rgb888::BLACK).unwrap();
+    let color = display.background_color;
+    display
+        .clear(Rgb888::new(color.red, color.green, color.blue))
+        .unwrap();
 
     DISPLAY.lock().replace(display);
     draw_something();
@@ -41,7 +45,12 @@ impl Display {
         Self {
             info: framebuffer.info(),
             framebuffer: framebuffer.buffer_mut(),
-            writer_pos: Point::new(0, FONT_HEIGHT),
+            writer_pos: Position { x: 0, y: 0 },
+            background_color: Color {
+                red: Rgb888::CSS_DARK_GRAY.r(),
+                green: Rgb888::CSS_DARK_GRAY.g(),
+                blue: Rgb888::CSS_DARK_GRAY.b(),
+            },
         }
     }
 
@@ -57,6 +66,22 @@ impl Display {
         };
         set_pixel_in(self.framebuffer, self.info, position, color);
     }
+
+    fn fill_rect(&mut self, top_left: Point, size: Size, color: Rgb888) {
+        for i in top_left.x..(top_left.x + size.width as i32) {
+            self.draw_pixel(Point::new(i, top_left.y), color);
+        }
+        let pixel_bytes = &mut self.framebuffer;
+        for i in top_left.y..(top_left.y + size.height as i32 - 1) {
+            let src = i as usize * size.width as usize;
+            let dest = (i + 1) as usize * size.width as usize;
+            pixel_bytes.copy_within(
+                (src * self.info.bytes_per_pixel)
+                    ..((src + size.width as usize) * self.info.bytes_per_pixel),
+                dest * self.info.bytes_per_pixel,
+            );
+        }
+    }
 }
 
 impl DrawTarget for Display {
@@ -71,6 +96,18 @@ impl DrawTarget for Display {
         for Pixel(coordinates, color) in pixels.into_iter() {
             self.draw_pixel(coordinates, color);
         }
+        Ok(())
+    }
+
+    fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
+        self.fill_rect(
+            Point::new(0, 0),
+            Size::new(self.info.stride as u32, self.info.height as u32),
+            color,
+        );
+
+        self.writer_pos.x = 0;
+        self.writer_pos.y = 0;
         Ok(())
     }
 }
@@ -132,31 +169,34 @@ pub fn set_pixel_in(
 
 impl Display {
     fn new_line(&mut self) {
-        self.writer_pos.y += FONT_HEIGHT;
         self.writer_pos.x = 0;
+        self.writer_pos.y += FONT_HEIGHT;
 
-        if self.writer_pos.y >= self.info.height as i32 {
-            self.writer_pos.y -= FONT_HEIGHT;
+        if self.writer_pos.y > (self.info.height - FONT_HEIGHT) {
             self.scroll();
+            self.writer_pos.y = self.info.height - FONT_HEIGHT;
         }
     }
 
     fn scroll(&mut self) {
         let pixel_bytes = &mut self.framebuffer;
-        for i in 0..self.info.width * (self.info.height - FONT_HEIGHT as usize) {
-            let a = i * self.info.bytes_per_pixel;
-            let b = (i + self.info.width * FONT_HEIGHT as usize) * self.info.bytes_per_pixel;
-            for i in 0..self.info.bytes_per_pixel {
-                pixel_bytes[a + i] = pixel_bytes[b + i];
-            }
+        let last_len = self.info.height - FONT_HEIGHT;
+        let shift = FONT_HEIGHT - (self.info.height - self.writer_pos.y);
+
+        for i in 0..last_len {
+            let src = (i + shift) * self.info.stride;
+            let dest = i * self.info.stride;
+            pixel_bytes.copy_within(
+                (src * self.info.bytes_per_pixel)
+                    ..((src + self.info.stride) * self.info.bytes_per_pixel),
+                dest * self.info.bytes_per_pixel,
+            );
         }
-        for i in self.info.width * (self.info.height - FONT_HEIGHT as usize) + 1
-            ..self.info.width * self.info.height
-        {
-            pixel_bytes[i * self.info.bytes_per_pixel] = Rgb888::BLACK.r();
-            pixel_bytes[i * self.info.bytes_per_pixel + 1] = Rgb888::BLACK.g();
-            pixel_bytes[i * self.info.bytes_per_pixel + 2] = Rgb888::BLACK.b();
-        }
+
+        let bg = self.background_color;
+        let top_left = Point::new(0, self.info.height as i32 - FONT_HEIGHT as i32);
+        let size = Size::new(self.info.stride as u32, FONT_HEIGHT as u32);
+        self.fill_rect(top_left, size, Rgb888::new(bg.red, bg.green, bg.blue));
     }
 }
 
@@ -169,14 +209,19 @@ impl fmt::Write for Display {
     }
 
     fn write_char(&mut self, c: char) -> fmt::Result {
-        if c == '\n' || self.writer_pos.x + FONT_WIDTH > self.info.width as i32 {
+        if c == '\n' || self.writer_pos.x + FONT_WIDTH > self.info.width {
             self.new_line();
             if c == '\n' {
                 return Ok(());
             }
         }
         let style = MonoTextStyle::new(&FONT_10X20, Rgb888::YELLOW);
-        Text::new(c.encode_utf8(&mut [0; 4]), self.writer_pos, style)
+        Text::with_baseline(
+            c.encode_utf8(&mut [0; 4]),
+            Point::new(self.writer_pos.x as i32, self.writer_pos.y as i32),
+            style,
+            Baseline::Top,
+        )
             .draw(self)
             .unwrap();
         self.writer_pos.x += FONT_WIDTH;

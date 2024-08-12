@@ -6,6 +6,7 @@ use core::panic::PanicInfo;
 
 mod framebuffer;
 mod interrupt;
+mod serial;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -22,5 +23,6 @@ fn kernel_main(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     x86_64::instructions::interrupts::enable();
 
     println!("Hi, This is INWOX OS{}", '!');
+    serial_println!("Hi, This is INWOX OS{}", '!');
     loop {}
 }

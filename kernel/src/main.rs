@@ -14,6 +14,8 @@ mod interrupt;
 mod serial;
 mod memory;
 mod allocator;
+mod acpi;
+mod apic;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
@@ -32,10 +34,6 @@ bootloader_api::entry_point!(kernel_main,config = &BOOTLOADER_CONFIG);
 fn kernel_main(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     framebuffer::init_display(boot_info.framebuffer.as_mut().unwrap());
     interrupt::init_idt();
-    unsafe {
-        interrupt::PICS.lock().initialize();
-    }
-    x86_64::instructions::interrupts::enable();
 
     let physical_memory_offset = VirtAddr::new(boot_info.physical_memory_offset.into_option()
         .expect("map-physical-memory config option must be enabled"));
@@ -43,6 +41,10 @@ fn kernel_main(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_regions) };
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
 
+    acpi::init(boot_info.rsdp_addr.into_option().expect("init acpi failed"));
+
+
+    x86_64::instructions::interrupts::enable();
     println!("Hi, This is INWOX OS{}", '!');
     hlt_loop();
 }

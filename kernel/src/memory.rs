@@ -2,9 +2,11 @@ use bootloader_api::info::{MemoryRegionKind, MemoryRegions};
 use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
 use x86_64::{PhysAddr, VirtAddr};
 
+static mut PHYSICAL_MEMORY_OFFSET: VirtAddr = VirtAddr::zero();
 
 pub unsafe fn init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'static> {
     let level_4_page_table = active_level_4_table(physical_memory_offset);
+    PHYSICAL_MEMORY_OFFSET = physical_memory_offset;
     OffsetPageTable::new(level_4_page_table, physical_memory_offset)
 }
 
@@ -47,4 +49,12 @@ unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
         self.next += 1;
         frame
     }
+}
+
+pub fn phys_to_virt(phys_addr: PhysAddr) -> VirtAddr {
+    VirtAddr::new(phys_addr.as_u64() + get_physical_memory_offset().as_u64())
+}
+
+pub fn get_physical_memory_offset() -> VirtAddr {
+    unsafe { PHYSICAL_MEMORY_OFFSET }
 }

@@ -1,13 +1,10 @@
-use crate::print;
+use crate::{apic, print};
 use core::ops::IndexMut;
 use lazy_static::lazy_static;
-use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub const PIC_1_OFFSET: u8 = 32;
-pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
-
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum InterruptIndex {
@@ -30,11 +27,6 @@ lazy_static! {
     };
 }
 
-pub static PICS: Mutex<ChainedPics> = Mutex::new(
-    unsafe {
-        ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET)
-    }
-);
 
 pub fn init_idt() {
     IDT.load();
@@ -43,9 +35,7 @@ pub fn init_idt() {
 extern "x86-interrupt" fn timer_interrupt_handler(
     _stack_frame: InterruptStackFrame
 ) {
-    unsafe {
-        PICS.lock().notify_end_of_interrupt(InterruptIndex::Timer.as_u8())
-    }
+    apic::LApic::end_of_interrupt();
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(
@@ -70,8 +60,5 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
             }
         }
     }
-
-    unsafe {
-        PICS.lock().notify_end_of_interrupt(InterruptIndex::Keyboard.as_u8());
-    }
+    apic::LApic::end_of_interrupt();
 }

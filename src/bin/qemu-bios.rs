@@ -9,6 +9,8 @@ fn main() {
     qemu.arg(format!("format=raw,file={}", env!("BIOS_IMAGE")));
     qemu.arg("-serial");
     qemu.arg("stdio");
+    qemu.arg("-m");
+    qemu.arg("6G");
     let exit_status = qemu.status().unwrap();
     process::exit(exit_status.code().unwrap_or(-1));
 }

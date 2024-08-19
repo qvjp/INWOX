@@ -15,6 +15,7 @@ use embedded_graphics::{
 use lazy_static::lazy_static;
 use spin::Mutex;
 
+
 const FONT_WIDTH: usize = FONT_10X20.character_size.width as usize;
 const FONT_HEIGHT: usize = FONT_10X20.character_size.height as usize;
 
